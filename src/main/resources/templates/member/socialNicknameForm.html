@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/layout}">
+
+<head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<div layout:fragment="content">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card mt-5">
+          <div class="card-body">
+            <h2 class="card-title text-center mb-4">닉네임 설정</h2>
+
+            <form action="/members/social/nickname" method="post" th:object="${memberNicknameDto}">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <div class="form-group mb-3">
+                <label for="nickname" class="form-label">닉네임</label>
+                <input type="text" class="form-control" id="nickname" th:field="*{nickname}"
+                  placeholder="사용하실 닉네임을 입력해주세요">
+                <div class="alert alert-danger" th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}">닉네임 오류
+                </div>
+              </div>
+
+              <!-- 에러 메시지 표시 -->
+              <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">닉네임 설정</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</html>
