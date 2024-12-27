@@ -1,3 +1,169 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
   layout:decorate="~{layouts/layout}">
+
+<th:block layout:fragment="css">
+  <style>
+    .main-banner {
+      width: 100%;
+      height: 400px;
+      margin-bottom: 50px;
+    }
+
+    .main-banner .swiper-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .category-swiper {
+      width: 100%;
+      height: auto;
+      padding: 20px 40px;
+    }
+
+    .book-card {
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .book-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .book-image {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+    }
+
+    .book-info {
+      padding: 1rem;
+    }
+
+    .book-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .book-price {
+      color: #e44d26;
+      font-weight: bold;
+    }
+
+    .swiper-button-next,
+    .swiper-button-prev {
+      color: #333;
+    }
+
+    .swiper-button-next:after,
+    .swiper-button-prev:after {
+      font-size: 20px;
+    }
+
+    .category-section {
+      margin-bottom: 50px;
+    }
+  </style>
+</th:block>
+
+<div layout:fragment="content">
+  <!-- Banner Swiper -->
+  <div class="swiper main-banner">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <img src="banner1.jpg" alt="Banner 1">
+      </div>
+      <div class="swiper-slide">
+        <img src="banner2.jpg" alt="Banner 2">
+      </div>
+      <div class="swiper-slide">
+        <img src="banner3.jpg" alt="Banner 3">
+      </div>
+    </div>
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+  </div>
+
+  <!-- Category Books Section -->
+  <div class="container my-5">
+    <!-- 각 카테고리 섹션 -->
+    <div th:each="category : ${categories}" class="category-section mb-5">
+      <h2 class="text-center mb-4" th:text="${category.name}">카테고리명</h2>
+
+      <div th:id="'category-swiper-' + ${category.id}" class="swiper category-swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide" th:each="book : ${categoryBooks.get(category.id)}">
+            <div class="book-card">
+              <img th:src="${book.imageUrl}" class="book-image" th:alt="${book.title}">
+              <div class="book-info">
+                <div class="book-title" th:text="${book.title}">도서 제목</div>
+                <div class="book-author" th:text="${book.author}">저자</div>
+                <div class="book-price" th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">가격</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<th:block layout:fragment="script">
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+      // 메인 배너 Swiper
+      new Swiper('.main-banner', {
+        loop: true,
+        autoplay: {
+          delay: 3000,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+        },
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+      });
+
+      // 카테고리별 Swiper 초기화
+      document.querySelectorAll('.category-swiper').forEach((element, index) => {
+        new Swiper(element, {
+          slidesPerView: 1,
+          spaceBetween: 20,
+          navigation: {
+            nextEl: element.querySelector('.swiper-button-next'),
+            prevEl: element.querySelector('.swiper-button-prev'),
+          },
+          breakpoints: {
+            640: {
+              slidesPerView: 2,
+            },
+            768: {
+              slidesPerView: 3,
+            },
+            1024: {
+              slidesPerView: 4,
+            },
+          }
+        });
+      });
+    });
+  </script>
+</th:block>
+
+</html>
