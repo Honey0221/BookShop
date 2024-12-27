@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @EntityListeners(AuditingEntityListener.class) 
 @Entity // 나 엔티티야
-@Table(name = "member") // 테이블 명
+@Table(name = "members") // 테이블 명
 @Getter
 @Setter
 @ToString
