@@ -11,6 +11,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,8 +69,9 @@ public class Book {
   @Column(nullable = false)
   private String title;
 
-  @Column(columnDefinition = "LONGTEXT")
-  private String description;
+	@Lob
+	@Column(columnDefinition = "LONGTEXT")
+	private String description;
 
   @Column(name = "view_count", columnDefinition = "bigint default 0")
   private Long viewCount;

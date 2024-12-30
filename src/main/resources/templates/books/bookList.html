@@ -196,7 +196,7 @@
     <!-- 도서 그리드 -->
     <div class="books-grid">
       <div class="book-card" th:each="book : ${books}">
-        <a th:href="@{/book-list/{id}(id=${book.id})}">
+        <a th:href="@{/item(bookId=${book.id})}">
           <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
           <div class="book-info">
             <h3 class="book-title" th:text="${book.title}">도서 제목</h3>

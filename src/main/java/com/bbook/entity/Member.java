@@ -10,16 +10,15 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@EntityListeners(AuditingEntityListener.class) 
+// @EntityListeners(AuditingEntityListener.class) 
 @Entity // 나 엔티티야
 @Table(name = "members") // 테이블 명
 @Getter
 @Setter
 @ToString
-public class Member {
+public class Member extends BaseEntity {
     // 기본키 컬럼명 = member_id AI-> 데이터 저장시 1씩 증가
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -35,7 +34,7 @@ public class Member {
     private String nickname;
 
     @Enumerated(EnumType.STRING)
-    private Role role = Role.USER;
+    private Role role;
 
     @Column(name = "is_social_member")
     private boolean isSocialMember = false;
@@ -50,7 +49,7 @@ public class Member {
         member.setEmail(signUpDto.getEmail());
         member.setNickname(signUpDto.getNickname());
         member.setPassword(passwordEncoder.encode(signUpDto.getPassword()));
-        member.setRole(Role.USER);
+        member.setRole(Role.ADMIN);
         member.setSocialMember(false);
         return member;
     }
@@ -59,7 +58,7 @@ public class Member {
     public static Member createSocialMember(String email) {
         Member member = new Member();
         member.setEmail(email);
-        member.setRole(Role.USER);
+        member.setRole(Role.ADMIN);
         member.setSocialMember(true);
         return member;
     }

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -123,4 +124,9 @@ public class MemberService {
     public boolean existsByEmail(String email) {
         return memberRepository.findByEmail(email).isPresent();
     }
+    
+    public Long getMemberIdByEmail(String email) {
+        return memberRepository.findByEmail(email).orElseThrow().getId();
+    }
+
 }

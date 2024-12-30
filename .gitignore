@@ -34,3 +34,5 @@ out/
 ### 민감한 정보 파일 ###
 src/main/resources/application-oauth.properties
 src/main/resources/application-mail.properties
+
+target/

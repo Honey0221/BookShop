@@ -12,6 +12,8 @@ import com.bbook.entity.Book;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
+	List<Book> findByAuthor(String author);
+	
 	@Query("SELECT DISTINCT b.mainCategory FROM Book b WHERE b.mainCategory IS NOT NULL ORDER BY b.mainCategory")
 	List<String> findDistinctMainCategories();
 
