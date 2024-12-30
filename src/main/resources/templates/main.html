@@ -3,6 +3,7 @@
   layout:decorate="~{layouts/layout}">
 
 <th:block layout:fragment="css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <style>
     .main-banner {
       width: 100%;
@@ -73,224 +74,480 @@
       margin-bottom: 50px;
     }
 
-    .category-nav {
-      width: 280px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 15px;
-      background: #fff;
+    .category-container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
     }
 
     .main-categories {
       list-style: none;
       padding: 0;
       margin: 0;
-    }
-
-    .main-category-header,
-    .mid-category-header {
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
       align-items: center;
-      padding: 10px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background-color 0.2s;
     }
 
-    .main-category-header:hover,
-    .mid-category-header:hover {
-      background-color: #f5f5f5;
-    }
-
-    .toggle-btn {
-      width: 24px;
-      height: 24px;
-      min-width: 24px;
-      border: 1px solid #ddd;
+    .fixed-menu-item a,
+    .main-category-header {
+      padding: 10px 20px;
       background: #fff;
-      border-radius: 50%;
+      border: 1px solid #e0e0e0;
+      border-radius: 25px;
       cursor: pointer;
-      display: flex;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      text-decoration: none;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      margin-left: 8px;
-      transition: all 0.2s;
+      gap: 8px;
     }
 
-    .toggle-btn:hover {
-      background-color: #e9ecef;
-      border-color: #ced4da;
+    .fixed-menu-item a:hover,
+    .main-category-header:hover {
+      background-color: #f8f9fa;
+      border-color: #2196F3;
+      color: #2196F3;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+    }
+
+    .new-badge {
+      background-color: #FF5722;
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .best-badge {
+      background-color: #FFC107;
+      color: #333;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .category-divider {
+      height: 24px;
+      width: 1px;
+      background-color: #e0e0e0;
+      margin: 0 8px;
     }
 
     .mid-categories {
-      list-style: none;
-      padding-left: 20px;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 70%;
+      transform: translateX(-50%);
+      min-width: 300px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 12px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .mid-categories::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: transparent;
+    }
+
+    .mid-categories-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 0;
       margin: 0;
-    }
-
-    .detail-categories {
       list-style: none;
-      padding-left: 20px;
-      margin: 5px 0;
+      width: 100%;
     }
 
-    .detail-categories li {
-      padding: 5px 0;
+    .mid-category-item {
+      width: 100%;
     }
 
-    .detail-categories li a {
-      color: #666;
-      text-decoration: none;
+    .mid-category-item a {
       display: block;
-      padding: 5px 10px;
-      border-radius: 4px;
-      transition: all 0.2s;
-    }
-
-    .detail-categories li a:hover {
-      background-color: #f8f9fa;
-      color: #000;
-    }
-
-    .main-category-header span {
-      font-weight: 600;
-      color: #333;
-    }
-
-    .mid-category-header span {
-      font-weight: 500;
+      padding: 10px 20px;
       color: #555;
+      text-decoration: none;
+      font-size: 13px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      width: 100%;
     }
 
-    .active>.main-category-header,
-    .active>.mid-category-header {
+    .mid-category-item a:hover {
       background-color: #f8f9fa;
+      color: #2196F3;
     }
 
-    .main-categories>li:not(:last-child) {
-      border-bottom: 1px solid #eee;
+    .category-item {
+      position: relative;
     }
 
-    .mid-categories,
-    .detail-categories {
-      transition: all 0.3s ease-in-out;
+    .category-item::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: transparent;
+    }
+
+    .category-item:hover .mid-categories {
+      display: block;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      .main-categories {
+        gap: 8px;
+      }
+
+      .fixed-menu-item a,
+      .main-category-header {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+
+      .mid-categories {
+        min-width: 280px;
+        left: 0;
+        transform: none;
+      }
+    }
+
+    .recommended-section,
+    .best-section {
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      font-size: 20px;
+      color: #e44d26;
+    }
+
+    .swiper-container {
+      width: 100%;
+      padding: 20px 0;
+      position: relative;
+      overflow: visible;
+    }
+
+    .swiper-wrapper {
+      align-items: center;
+    }
+
+    .swiper-slide {
+      width: 200px;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+      transform: scale(0.8);
+    }
+
+    .swiper-slide-active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .swiper-slide-next,
+    .swiper-slide-prev {
+      opacity: 0.7;
+      transform: scale(0.9);
+    }
+
+    .swiper-button-next,
+    .swiper-button-prev {
+      color: #333;
+      background: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .swiper-button-next {
+      right: 0;
+    }
+
+    .swiper-button-prev {
+      left: 0;
+    }
+
+    .swiper-button-next:after,
+    .swiper-button-prev:after {
+      font-size: 18px;
+    }
+
+    .book-card {
+      margin: 0 auto;
+      transition: all 0.3s ease;
+    }
+
+    .book-image {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+    }
+
+    .book-info {
+      padding: 15px;
+    }
+
+    .book-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .book-price {
+      color: #e44d26;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .swiper-pagination {
+      bottom: -5px;
+    }
+
+    .swiper-pagination-bullet {
+      background: #333;
     }
   </style>
 </th:block>
 
 <div layout:fragment="content">
-  <div class="category-nav">
+  <div class="category-container">
     <ul class="main-categories">
-      <li th:each="mainCat : ${mainCategories}">
-        <div class="main-category-header">
+      <li class="fixed-menu-item">
+        <a href="/books/best">
+          베스트
+          <span class="best-badge">BEST</span>
+        </a>
+      </li>
+      <li class="fixed-menu-item">
+        <a href="/books/new">
+          신상품
+          <span class="new-badge">NEW</span>
+        </a>
+      </li>
+      <li class="fixed-menu-item">
+        <a href="/notices">
+          공지사항
+        </a>
+      </li>
+
+      <li style="border-left: 1px solid #e0e0e0; margin: 0 10px;"></li>
+
+      <li class="category-item" th:each="mainCat : ${mainCategories}">
+        <div class="main-category-header" th:data-category="${mainCat}" onmouseover="loadMidCategories(this)">
           <span th:text="${mainCat}">메인카테고리</span>
-          <button class="toggle-btn" onclick="showMidCategories(this)" th:data-category="${mainCat}">+</button>
         </div>
-        <ul class="mid-categories" th:id="'mid-' + ${#strings.replace(mainCat, ' ', '-')}" style="display: none;">
-        </ul>
+        <div class="mid-categories" th:id="'mid-' + ${#strings.replace(mainCat, ' ', '-')}">
+          <ul class="mid-categories-list">
+            <!-- 중간 카테고리가 여기에 로드됨 -->
+          </ul>
+        </div>
       </li>
     </ul>
+  </div>
+
+  <div class="recommended-section">
+    <h2 class="section-title">
+      <i class="fas fa-star"></i>
+      추천상품
+    </h2>
+    <div class="swiper-container recommended-swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide" th:each="book : ${recommendedBooks}">
+          <div class="book-card">
+            <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
+            <div class="book-info">
+              <h3 class="book-title" th:text="${book.title}">도서 제목</h3>
+              <div class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                가격
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-pagination"></div>
+    </div>
+  </div>
+
+  <div class="best-section">
+    <h2 class="section-title">
+      <i class="fas fa-crown"></i>
+      베스트상품
+    </h2>
+    <div class="swiper-container best-swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide" th:each="book : ${bestBooks}">
+          <div class="book-card">
+            <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
+            <div class="book-info">
+              <h3 class="book-title" th:text="${book.title}">도서 제목</h3>
+              <div class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                가격
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-pagination"></div>
+    </div>
   </div>
 </div>
 
 <th:block layout:fragment="script">
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script th:inline="javascript">
-    function showMidCategories(buttonElement) {
-      const mainCategory = buttonElement.getAttribute('data-category');
-      console.log('Fetching mid categories for:', mainCategory);
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function () {
+      // 중간 카테고리 로드 함수
+      const loadMidCategories = function () {
+        const mainCategories = document.querySelectorAll('.main-category-header');
+        mainCategories.forEach(mainCategoryElement => {
+          const mainCategory = mainCategoryElement.getAttribute('data-category');
+          const midCategoriesContainer = mainCategoryElement.nextElementSibling;
+          const midCategoriesList = midCategoriesContainer.querySelector('.mid-categories-list');
 
-      const safeMainCategory = mainCategory.replace(/[\/\s+]/g, '-');
-      const midCategoriesElement = document.getElementById('mid-' + safeMainCategory);
+          fetch(`/api/categories/${encodeURIComponent(mainCategory)}/mid`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(midCategories => {
+              const midCategoriesHtml = midCategories.map(midCat => `
+                <li class="mid-category-item">
+                  <a href="/books?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCat)}">
+                    ${midCat}
+                  </a>
+                </li>
+              `).join('');
 
-      if (midCategoriesElement.children.length > 0) {
-        const isHidden = midCategoriesElement.style.display === 'none';
-        midCategoriesElement.style.display = isHidden ? 'block' : 'none';
-        buttonElement.textContent = isHidden ? '-' : '+';
-        return;
-      }
-
-      fetch(`/api/categories/${encodeURIComponent(mainCategory)}/mid`)
-        .then(response => {
-          console.log('Response received:', response);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(midCategories => {
-          console.log('Mid categories:', midCategories);
-
-          const midCategoriesHtml = midCategories.map(midCat => {
-            const safeMidCat = midCat.replace(/[\/\s+]/g, '-');
-            return `
-              <li class="mid-category-item">
-                <div class="mid-category-header">
-                  <span>${midCat}</span>
-                  <button class="toggle-btn" 
-                          onclick="toggleDetailCategories(this)"
-                          data-main="${mainCategory}" 
-                          data-mid="${midCat}">+</button>
-                </div>
-                <ul id="detail-${safeMidCat}" 
-                    class="detail-categories" 
-                    style="display: none;">
-                </ul>
-              </li>
-            `;
-          }).join('');
-
-          midCategoriesElement.innerHTML = midCategoriesHtml;
-          midCategoriesElement.style.display = 'block';
-          buttonElement.textContent = '-';
-        })
-        .catch(error => {
-          console.error('Error loading mid categories:', error);
+              midCategoriesList.innerHTML = midCategoriesHtml;
+            })
+            .catch(error => {
+              console.error('Error loading mid categories:', error);
+            });
         });
-    }
+      };
 
-    function toggleDetailCategories(buttonElement) {
-      const mainCategory = buttonElement.getAttribute('data-main');
-      const midCategory = buttonElement.getAttribute('data-mid');
-      console.log('Toggling details for:', mainCategory, midCategory);
+      // 페이지 로드 시 중간 카테고리 로드
+      loadMidCategories();
 
-      const safeMidCategory = midCategory.replace(/[\/\s+]/g, '-');
-      const detailList = document.getElementById('detail-' + safeMidCategory);
+      // Swiper 설정 (기존 코드 유지)
+      const swiperConfig = {
+        slidesPerView: 5,
+        centeredSlides: true,
+        loop: true,
+        spaceBetween: 30,
+        speed: 400,
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+        },
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+        autoplay: {
+          delay: 1000,
+          disableOnInteraction: false,
+          pauseOnMouseEnter: false,
+          enabled: false
+        },
+        effect: 'coverflow',
+        coverflowEffect: {
+          rotate: 0,
+          stretch: 0,
+          depth: 100,
+          modifier: 1,
+          slideShadows: false,
+        },
+        breakpoints: {
+          320: {
+            slidesPerView: 1,
+          },
+          640: {
+            slidesPerView: 2,
+          },
+          768: {
+            slidesPerView: 3,
+          },
+          1024: {
+            slidesPerView: 5,
+          },
+        }
+      };
 
-      if (detailList.children.length > 0) {
-        const isHidden = detailList.style.display === 'none';
-        detailList.style.display = isHidden ? 'block' : 'none';
-        buttonElement.textContent = isHidden ? '-' : '+';
-        return;
-      }
+      // 추천상품 Swiper 초기화
+      const recommendedSwiper = new Swiper('.recommended-swiper', swiperConfig);
+      recommendedSwiper.autoplay.stop();
 
-      fetch(`/api/categories/detail?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCategory)}`)
-        .then(response => {
-          console.log('Response received for detail categories:', response);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(detailCategories => {
-          console.log('Detail categories:', detailCategories);
+      // 베스트상품 Swiper 초기화
+      const bestSwiper = new Swiper('.best-swiper', swiperConfig);
+      bestSwiper.autoplay.stop();
 
-          const detailCategoriesHtml = detailCategories.map(detailCat => `
-            <li>
-              <a href="/books?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCategory)}&detail=${encodeURIComponent(detailCat)}">
-                ${detailCat}
-              </a>
-            </li>
-          `).join('');
+      // 추천상품 Swiper hover 이벤트
+      const recommendedContainer = document.querySelector('.recommended-swiper');
+      recommendedContainer.addEventListener('mouseenter', function () {
+        recommendedSwiper.autoplay.start();
+      });
+      recommendedContainer.addEventListener('mouseleave', function () {
+        recommendedSwiper.autoplay.stop();
+      });
 
-          detailList.innerHTML = detailCategoriesHtml;
-          detailList.style.display = 'block';
-          buttonElement.textContent = '-';
-        })
-        .catch(error => {
-          console.error('Error loading detail categories:', error);
-        });
-    }
+      // 베스트상품 Swiper hover 이벤트
+      const bestContainer = document.querySelector('.best-swiper');
+      bestContainer.addEventListener('mouseenter', function () {
+        bestSwiper.autoplay.start();
+      });
+      bestContainer.addEventListener('mouseleave', function () {
+        bestSwiper.autoplay.stop();
+      });
+    });
+    /*]]>*/
   </script>
 </th:block>
 

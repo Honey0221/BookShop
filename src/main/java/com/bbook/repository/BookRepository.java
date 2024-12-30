@@ -30,4 +30,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 			String mainCategory,
 			String midCategory,
 			String detailCategory);
+
+	List<Book> findTop10ByOrderByIdAsc();
+
+	List<Book> findTop15ByIdGreaterThanEqualOrderByIdAsc(Long id);
 }

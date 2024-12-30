@@ -24,4 +24,16 @@ public class MainBookService {
     }
     return bookRepository.findAll();
   }
+
+  public List<Book> getRecommendedBooks() {
+    return bookRepository.findTop10ByOrderByIdAsc();
+  }
+
+  public List<Book> getBestBooks() {
+    return bookRepository.findTop15ByIdGreaterThanEqualOrderByIdAsc(20L);
+  }
+
+  public List<Book> getNewBooks() {
+    return bookRepository.findTop15ByIdGreaterThanEqualOrderByIdAsc(20L);
+  }
 }

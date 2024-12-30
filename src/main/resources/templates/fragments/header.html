@@ -1,42 +1,137 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <div th:fragment="header">
-  <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
-    <div class="container-fluid"> <!--경고에요 -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container" style="max-width: 1200px;">
+      <a class="navbar-brand" href="/">
+        <span class="brand-text">BookShop</span>
+      </a>
+
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo03"
         aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <a class="navbar-brand" href="/">Shop</a>
 
       <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">
-            <a class="nav-link" href="/admin/item/new">상품 등록</a>
+            <a class="nav-link menu-item" href="/admin/item/new">상품 등록</a>
           </li>
-          <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN')"> <!-- 관리자 권한 로그인 -->
-            <a class="nav-link" href="/admin/items">상품 관리</a>
-          </li>
-          <li class="nav-item" sec:authorize="isAuthenticated()"> <!-- 로그인 한 경우 -->
-            <a class="nav-link" href="/cart">장바구니</a>
+          <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">
+            <a class="nav-link menu-item" href="/admin/items">상품 관리</a>
           </li>
           <li class="nav-item" sec:authorize="isAuthenticated()">
-            <a class="nav-link" href="/orders">구매이력</a>
-          </li>
-          <li class="nav-item" sec:authorize="isAnonymous()"> <!-- 로그인을 하지 않은 경우 -->
-            <a class="nav-link" href="/members/login">로그인</a>
+            <a class="nav-link menu-item" href="/cart">장바구니</a>
           </li>
           <li class="nav-item" sec:authorize="isAuthenticated()">
-            <a class="nav-link" href="/members/logout">로그아웃</a>
+            <a class="nav-link menu-item" href="/orders">구매이력</a>
+          </li>
+          <li class="nav-item" sec:authorize="isAnonymous()">
+            <a class="nav-link menu-item" href="/members/login">로그인</a>
+          </li>
+          <li class="nav-item" sec:authorize="isAuthenticated()">
+            <a class="nav-link menu-item" href="/members/logout">로그아웃</a>
           </li>
         </ul>
-        <form class="d-flex" th:action="@{/}" method="get">
-          <input name="searchQuery" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        <form class="d-flex search-form" th:action="@{/}" method="get">
+          <div class="search-container">
+            <input name="searchQuery" class="form-control search-input" type="search" placeholder="도서를 검색해보세요"
+              aria-label="Search">
+            <button class="btn search-button" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
         </form>
       </div>
     </div>
   </nav>
+
+  <style>
+    .navbar {
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      padding: 1rem 0;
+    }
+
+    .container {
+      padding: 0 20px;
+    }
+
+    .navbar-brand {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      text-decoration: none;
+    }
+
+    .brand-text {
+      background: linear-gradient(45deg, #2196F3, #00BCD4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    .nav-link.menu-item {
+      color: #555;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      margin: 0 0.2rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-link.menu-item:hover {
+      color: #2196F3;
+      background-color: rgba(33, 150, 243, 0.1);
+    }
+
+    .search-container {
+      position: relative;
+      width: 300px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      padding-right: 3rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      border-color: #2196F3;
+      box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
+      outline: none;
+    }
+
+    .search-button {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #666;
+      padding: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .search-button:hover {
+      color: #2196F3;
+    }
+
+    @media (max-width: 991.98px) {
+      .search-container {
+        width: 100%;
+        margin-top: 1rem;
+      }
+
+      .navbar-nav {
+        margin-top: 1rem;
+      }
+    }
+  </style>
 </div>
 
 </html>

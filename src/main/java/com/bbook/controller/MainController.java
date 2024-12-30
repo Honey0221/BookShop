@@ -29,6 +29,14 @@ public class MainController {
 		List<String> mainCategories = mainCategoryService.getMainCategories();
 		model.addAttribute("mainCategories", mainCategories);
 
+		// 추천상품 데이터 추가
+		List<Book> recommendedBooks = mainBookService.getRecommendedBooks();
+		model.addAttribute("recommendedBooks", recommendedBooks);
+
+		// 베스트상품 데이터
+		List<Book> bestBooks = mainBookService.getBestBooks();
+		model.addAttribute("bestBooks", bestBooks);
+
 		return "main";
 	}
 
@@ -88,5 +96,27 @@ public class MainController {
 		model.addAttribute("books", books);
 
 		return "books/list";
+	}
+
+	@GetMapping("/books/best")
+	public String getBestBooks(Model model) {
+		// 베스트셀러 도서 목록을 조회하는 로직
+		List<Book> bestBooks = mainBookService.getBestBooks();
+		model.addAttribute("books", bestBooks);
+		return "books/list";
+	}
+
+	@GetMapping("/books/new")
+	public String getNewBooks(Model model) {
+		// 신간 도서 목록을 조회하는 로직
+		List<Book> newBooks = mainBookService.getNewBooks();
+		model.addAttribute("books", newBooks);
+		return "books/list";
+	}
+
+	@GetMapping("/notices")
+	public String getNotices(Model model) {
+		// 공지사항 목록을 조회하는 로직
+		return "notices/list";
 	}
 }
