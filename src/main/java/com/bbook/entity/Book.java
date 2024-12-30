@@ -70,4 +70,7 @@ public class Book {
 
   @Column(columnDefinition = "LONGTEXT")
   private String description;
+
+  @Column(name = "view_count", columnDefinition = "bigint default 0")
+  private Long viewCount;
 }

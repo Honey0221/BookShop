@@ -353,13 +353,13 @@
   <div class="category-container">
     <ul class="main-categories">
       <li class="fixed-menu-item">
-        <a href="/books/best">
+        <a href="/book-list/best">
           베스트
           <span class="best-badge">BEST</span>
         </a>
       </li>
       <li class="fixed-menu-item">
-        <a href="/books/new">
+        <a href="/book-list/new">
           신상품
           <span class="new-badge">NEW</span>
         </a>
@@ -459,7 +459,7 @@
             .then(midCategories => {
               const midCategoriesHtml = midCategories.map(midCat => `
                 <li class="mid-category-item">
-                  <a href="/books?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCat)}">
+                  <a href="/book-list/category?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCat)}">
                     ${midCat}
                   </a>
                 </li>

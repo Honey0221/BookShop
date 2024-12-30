@@ -35,7 +35,10 @@ public class SecurityConfig {
                                 .requestMatchers("/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
                                 .requestMatchers("/", "/members/**", "/item/**", "/images/**").permitAll()
                                 .requestMatchers("/emailCheck").permitAll()
-                                .requestMatchers("/api/categories/**").permitAll()
+                                .requestMatchers("/api/**").permitAll()
+                                .requestMatchers("/books/**").permitAll()
+                                .requestMatchers("/book-list/**").permitAll()
+                                .requestMatchers("/search").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()).formLogin(formLogin -> formLogin
                                                 .loginPage("/members/login")

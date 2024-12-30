@@ -33,7 +33,7 @@
             <a class="nav-link menu-item" href="/members/logout">로그아웃</a>
           </li>
         </ul>
-        <form class="d-flex search-form" th:action="@{/}" method="get">
+        <form class="d-flex search-form" th:action="@{/book-list/search}" method="get">
           <div class="search-container">
             <input name="searchQuery" class="form-control search-input" type="search" placeholder="도서를 검색해보세요"
               aria-label="Search">

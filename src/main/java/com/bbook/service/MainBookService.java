@@ -1,5 +1,6 @@
 package com.bbook.service;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import com.bbook.repository.BookRepository;
 
@@ -26,7 +27,7 @@ public class MainBookService {
   }
 
   public List<Book> getRecommendedBooks() {
-    return bookRepository.findTop10ByOrderByIdAsc();
+    return bookRepository.findTop10ByOrderByIdAsc(PageRequest.of(0, 10));
   }
 
   public List<Book> getBestBooks() {
