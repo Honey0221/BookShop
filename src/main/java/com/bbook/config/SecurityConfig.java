@@ -1,6 +1,5 @@
 package com.bbook.config;
 
-import com.bbook.entity.Member;
 import com.bbook.service.CustomUserDetailsService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +35,7 @@ public class SecurityConfig {
                                 .requestMatchers("/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
                                 .requestMatchers("/", "/members/**", "/item/**", "/images/**").permitAll()
                                 .requestMatchers("/emailCheck").permitAll()
+                                .requestMatchers("/api/categories/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()).formLogin(formLogin -> formLogin
                                                 .loginPage("/members/login")

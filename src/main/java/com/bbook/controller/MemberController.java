@@ -1,13 +1,10 @@
 package com.bbook.controller;
 
-import com.bbook.dto.MemberFormDto;
 import com.bbook.dto.MemberNicknameDto;
-import com.bbook.entity.Member;
 import com.bbook.service.MemberService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
