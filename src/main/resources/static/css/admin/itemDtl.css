@@ -10,7 +10,22 @@
 .book-title {
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 20px;
+}
+
+.average-rating {
+    font-size: 1.2rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.rating-value {
+    font-weight: 500;
+}
+
+.rating-stars {
+    color: #ffc107;
+    font-size: 0.9rem;
 }
 
 .book-info span:first-child {
@@ -123,4 +138,26 @@
 #totalPrice {
     color: #dc3545;
     font-weight: bold;
+}
+
+.review-login-message {
+    color: red;
+    text-align: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.review-login-message p {
+  margin-bottom: 0;
+}
+
+.review-login-message a {
+    color: #4e73df;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.review-login-message a:hover {
+    text-decoration: underline;
 }

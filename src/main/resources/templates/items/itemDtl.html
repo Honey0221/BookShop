@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/layout}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/layout}">
+
+
 <th:block layout:fragment="css">
-  <link th:href="@{/css/itemDtl.css}" rel="stylesheet">
+  <link th:href="@{/css/admin/itemDtl.css}" rel="stylesheet">
 </th:block>
 <th:block layout:fragment="script">
-  <script th:src="@{/js/itemDtl.js}"></script>
+  <script th:src="@{/js/admin/itemDtl.js}"></script>
 </th:block>
 <div layout:fragment="content">
   <div class="container">
@@ -14,15 +15,23 @@
       <!-- 책 이미지 -->
       <div class="col-md-5">
         <div class="book-img">
-          <img th:src="${book.imageUrl}" class="img-fluid"
-               th:alt="${book.title}">
-        </div>
+          <img th:src="${book.imageUrl}" class="img-fluid" th:alt="${book.title}">
+        </div>W
       </div>
 
       <!-- 책 정보 -->
       <div class="col-md-7">
         <div class="book-info">
-          <h2 class="book-title" th:text="${book.title}"></h2>
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="book-title" th:text="${book.title}"></h2>
+            <div class="average-rating">
+              <span class="rating-stars text-warning">
+                <i class="fas fa-star"></i>
+              </span>
+              <span class="rating-value" th:text="|${#numbers.formatDecimal(avgRating, 1, 1)}|">
+              </span>
+            </div>
+          </div>
           <div class="book-author mb-3">
             <span>저자:</span>
             <span th:text="${book.author}"></span>
@@ -33,21 +42,19 @@
           </div>
           <div class="book-price mb-4">
             <span>가격:</span>
-            <span
-                th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
+            <span th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
             </span>
           </div>
 
           <div class="quantity-group mb-4">
             <label for="quantity">수량:</label>
-            <input type="number" id="quantity" name="quantity"
-                   class="form-control d-inline-block w-auto" value="1" min="1">
+            <input type="number" id="quantity" name="quantity" class="form-control d-inline-block w-auto" value="1"
+              min="1">
           </div>
 
           <div class="total-price mb-4">
             <span>총 결제 가격:</span>
-            <span id="totalPrice"
-                  th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
+            <span id="totalPrice" th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
             </span>
           </div>
 
@@ -71,49 +78,103 @@
       <div class="col-12">
         <ul class="nav nav-tabs" id="bookTab" role="tablist">
           <li class="nav-item">
-            <a class="nav-link active" id="description-tab" data-bs-toggle="tab"
-               href="#description" role="tab">상세 설명</a>
+            <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#description" role="tab">상세
+              설명</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" id="review-tab" data-bs-toggle="tab"
-               href="#review" role="tab">리뷰</a>
+            <a class="nav-link" id="review-tab" data-bs-toggle="tab" href="#review" role="tab">리뷰</a>
           </li>
         </ul>
         <div class="tab-content mt-3" id="bookTabContent">
-          <div class="tab-pane fade show active" id="description"
-               role="tabpanel">
+          <div class="tab-pane fade show active" id="description" role="tabpanel">
             <p th:text="${book.description}"></p>
           </div>
           <div class="tab-pane fade" id="review" role="tabpanel">
+            <!-- 리뷰 작성 버튼 -->
+            <div sec:authorize="isAuthenticated()" class="d-flex justify-content-end mb-3">
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                리뷰 작성
+              </button>
+            </div>
+            <div sec:authorize="!isAuthenticated()" class="review-login-message">
+              <p>리뷰를 작성하려면 <a href="/members/login">로그인</a>이 필요합니다.</p>
+            </div>
             <!-- 리뷰 목록 -->
             <div class="review-list">
               <div id="reviewContainer">
                 <!-- 리뷰들이 여기에 동적으로 추가됨 -->
               </div>
             </div>
-            <!-- 리뷰 작성 -->
-            <div class="review-form mb-4">
-              <h4 class="mt-2">리뷰 작성</h4>
-              <form id="reviewForm">
-                <input type="hidden" th:name="${_csrf.parameterName}"
-                       th:value="${_csrf.token}">
-                <input type="hidden" id="bookId" th:value="${book.id}">
-                <div class="mb-3">
-                  <label for="rating" class="form-label">평점</label>
-                  <select id="rating" class="form-select" required>
-                    <option value="5">★★★★★</option>
-                    <option value="4">★★★★☆</option>
-                    <option value="3">★★★☆☆</option>
-                    <option value="2">★★☆☆☆</option>
-                    <option value="1">★☆☆☆☆</option>
-                  </select>
+            <!-- 리뷰 모달 -->
+            <div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="reviewModalLabel">리뷰 작성</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form id="reviewForm">
+                      <input type="hidden" id="bookId" th:value="${book.id}">
+                      <div class="mb-3">
+                        <label for="rating" class="form-label">평점</label>
+                        <select id="rating" class="form-select" required>
+                          <option value="5">★★★★★</option>
+                          <option value="4">★★★★☆</option>
+                          <option value="3">★★★☆☆</option>
+                          <option value="2">★★☆☆☆</option>
+                          <option value="1">★☆☆☆☆</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="content" class="form-label">리뷰 내용</label>
+                        <textarea id="content" rows="3" class="form-control" required></textarea>
+                      </div>
+                      <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소
+                        </button>
+                        <button type="submit" class="btn btn-primary">등록
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="content" class="form-label">리뷰 내용</label>
-                  <textarea id="content" rows="3" class="form-control" required></textarea>
+              </div>
+            </div>
+            <div class="modal fade" id="editReviewModal" tabindex="-1" role="dialog">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">리뷰 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form id="editReviewForm">
+                      <input type="hidden" id="editReviewId">
+                      <div class="mb-3">
+                        <label for="editRating" class="form-label">평점</label>
+                        <select class="form-select" id="editRating">
+                          <option value="5">★★★★★</option>
+                          <option value="4">★★★★☆</option>
+                          <option value="3">★★★☆☆</option>
+                          <option value="2">★★☆☆☆</option>
+                          <option value="1">★☆☆☆☆</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="editContent" class="form-label">리뷰 내용</label>
+                        <textarea class="form-control" id="editContent" rows="3" required></textarea>
+                      </div>
+                      <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소
+                        </button>
+                        <button type="submit" class="btn btn-primary">수정
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
-                <button type="submit" class="btn btn-primary">등록</button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -126,14 +187,12 @@
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           <div class="col" th:each="authorBook : ${authorBooks}">
             <div class="card h-100">
-              <a th:href="@{/item(bookId=${authorBook.id})}"
-                 class="text-decoration-none">
-                <img th:src="${authorBook.imageUrl}" class="card-img-top"
-                     th:alt="${authorBook.title}">
+              <a th:href="@{/item(bookId=${authorBook.id})}" class="text-decoration-none">
+                <img th:src="${authorBook.imageUrl}" class="card-img-top" th:alt="${authorBook.title}">
                 <div class="card-body">
                   <h5 class="card-title" th:text="${authorBook.title}"></h5>
-                  <p class="card-text price"
-                     th:text="${#numbers.formatInteger(authorBook.price, 0, 'COMMA') + '원'}"></p>
+                  <p class="card-text price" th:text="${#numbers.formatInteger(authorBook.price, 0, 'COMMA') + '원'}">
+                  </p>
                 </div>
               </a>
             </div>
@@ -141,7 +200,5 @@
         </div>
       </div>
     </div>
-
-
   </div>
 </div>

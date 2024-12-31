@@ -1,51 +1,26 @@
 package com.bbook.repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.bbook.dto.ReviewDto;
 import com.bbook.entity.Reviews;
 
-import lombok.RequiredArgsConstructor;
+public interface ReviewRepository extends JpaRepository<Reviews, Long> {
 
-@Repository
-@RequiredArgsConstructor
-public class ReviewRepository {
-	private final JdbcTemplate jdbcTemplate;
+	@Query("SELECT new com.bbook.dto.ReviewDto(r.id, r.memberId, r.bookId, r.rating, " +
+			"r.content, m.nickname, r.createdAt) " +
+			"FROM Reviews r " +
+			"LEFT JOIN Member m ON r.memberId = m.id " +
+			"WHERE r.bookId = :bookId " +
+			"ORDER BY r.createdAt DESC")
+	Page<ReviewDto> findByBookId(@Param("bookId") Long bookId, Pageable pageable);
 
-	public void save(Reviews reviews) {
-		String sql = "INSERT INTO reviews (member_id, book_id, rating, content, "
-				+ "created_at) VALUES (?, ?, ?, ?, ?)";
+	@Query("select coalesce(avg(r.rating), 0.0) from Reviews r where r.bookId = :bookId")
+	Double getAverageRatingByBookId(@Param("bookId") Long bookId);
 
-		jdbcTemplate.update(sql,
-				reviews.getMember_id(),
-				reviews.getBook_id(),
-				reviews.getRating(),
-				reviews.getContent(),
-				LocalDateTime.now()
-		);
-	}
-
-	public List<ReviewDto> findByBookId(Long bookId) {
-		String sql = "SELECT r.*, m.name as member_name FROM reviews r " +
-				"LEFT JOIN member m ON r.member_id = m.member_id " +
-				"WHERE r.book_id = ? " +
-				"ORDER BY r.created_at DESC";
-
-		return jdbcTemplate.query(sql,
-				(rs, rowNum) -> ReviewDto.builder()
-						.id(rs.getLong("id"))
-						.memberId(rs.getLong("member_id"))
-						.bookId(rs.getLong("book_id"))
-						.rating(rs.getInt("rating"))
-						.content(rs.getString("content"))
-						.memberName(rs.getString("member_name"))
-						.createdAt(rs.getTimestamp("created_at").toLocalDateTime())
-						.build(),
-				bookId
-		);
-	}
+	long countByBookId(Long bookId);
 }

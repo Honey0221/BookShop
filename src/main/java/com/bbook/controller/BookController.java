@@ -2,7 +2,9 @@ package com.bbook.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.bbook.constant.ActivityType;
 import com.bbook.entity.Book;
 import com.bbook.service.BookDetailService;
+import com.bbook.service.ReviewService;
 import com.bbook.service.MemberService;
 import com.bbook.service.MemberActivityService;
 
@@ -24,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping(value = "/item")
 public class BookController {
 	private final BookDetailService bookDetailService;
+	private final ReviewService reviewService;
 	private final MemberActivityService memberActivityService;
 	private final MemberService memberService;
 
@@ -32,17 +36,21 @@ public class BookController {
 		Book book = bookDetailService.getBookById(id);
 		model.addAttribute("book", book);
 
-		List<Book> authorBooks = new ArrayList<>(bookDetailService
+		Double avgRating = reviewService.getAverageRatingByBookId(book.getId());
+		model.addAttribute("avgRating", avgRating);
+
+		Set<Book> authorBooks = new HashSet<>(bookDetailService
 				.getBooksByAuthor(book.getAuthor()).stream()
-				.filter(b -> !b.getId().equals(id)).toList());
+				.filter(b -> !b.getId().equals(book.getId())).toList());
 
-		Collections.shuffle(authorBooks);
-		authorBooks = authorBooks.stream().limit(4).toList();
+		List<Book> randomBooks = new ArrayList<>(authorBooks);
+		Collections.shuffle(randomBooks);
+		randomBooks = randomBooks.stream().limit(4).toList();
 
-		model.addAttribute("authorBooks", authorBooks);
+		model.addAttribute("authorBooks", randomBooks);
 
 		Optional<String> memberEmail = memberService.getCurrentMemberEmail();
-		if (memberEmail.isPresent()){
+		if (memberEmail.isPresent()) {
 			memberActivityService.saveActivity(memberEmail.get(), book.getId(), ActivityType.VIEW);
 		}
 

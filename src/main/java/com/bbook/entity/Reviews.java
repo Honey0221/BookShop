@@ -25,10 +25,10 @@ public class Reviews {
 	private Long id;
 
 	@Column(nullable = false)
-	private Long member_id;
+	private Long memberId;
 
 	@Column(nullable = false)
-	private Long book_id;
+	private Long bookId;
 
 	@Column(nullable = false)
 	private int rating;

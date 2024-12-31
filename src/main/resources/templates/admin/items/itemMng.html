@@ -3,17 +3,102 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/layout2}">
 <th:block layout:fragment="css">
-  <style>
-
-  </style>
+  <link th:href="@{/css/admin/itemMng.css}" rel="stylesheet">
 </th:block>
 <th:block layout:fragment="script">
-  <script th:inline="javascript">
-
-  </script>
+  <script th:src="@{/js/admin/itemMng.js}"></script>
 </th:block>
 <div layout:fragment="content">
-  <h1>
-    상품 관리 페이지입니다
-  </h1>
+  <div class="container">
+    <h2 class="mb-4">상품 관리</h2>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark text-center">
+        <tr>
+          <th style="width: 5%">ID</th>
+          <th style="width: 25%">제목</th>
+          <th style="width: 15%">저자</th>
+          <th style="width: 15%">출판사</th>
+          <th style="width: 7%">재고</th>
+          <th style="width: 10%">가격</th>
+          <th style="width: 8%">상태</th>
+          <th style="width: 10%">등록일</th>
+          <th style="width: 5%"></th>
+        </tr>
+        </thead>
+        <tbody class="text-center">
+        <tr th:each="book : ${books}">
+          <td class="small" th:text="${book.id}"></td>
+          <td class="text-start" th:text="${book.title}"></td>
+          <td class="small" th:text="${book.author}"></td>
+          <td class="small" th:text="${book.publisher}"></td>
+          <td class="small" th:text="${book.stock}"></td>
+          <td class="small" th:text="${#numbers.formatInteger(book.price, 0, 'COMMA')}"></td>
+          <td>
+            <span th:class="${book.bookStatus.name() == 'SELL' ?
+                  'badge bg-success' : 'badge bg-danger'}"
+                  th:text="${book.bookStatus.name() == 'SELL' ? '판매중' : '품절'}"
+                  style="font-size: 0.75rem;">
+            </span>
+          </td>
+          <td class="small" th:text="${#temporals.format(book.createdAt,
+                  'yyyy-MM-dd HH:mm')}"></td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-sm btn-primary edit-btn">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-danger delete-btn"
+                      th:data-id="${book.id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav th:if="${books.totalPages > 0}" aria-label="Page navigation"
+         class="mt-3">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" th:classappend="${books.first} ? 'disabled'">
+          <a class="page-link" th:href="@{/admin/itemMng(page=0)}">
+            <i class="fas fa-angle-double-left"></i>
+          </a>
+        </li>
+
+        <li class="page-item" th:classappend="${books.number < 10} ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/admin/itemMng(page=${((books.number / 10) * 10) - 1})}">
+            <i class="fas fa-angle-left"></i>
+          </a>
+        </li>
+
+        <li class="page-item"
+            th:each="page : ${#numbers.sequence(((books.number / 10) * 10),
+             ((books.number / 10) * 10) + 9)}"
+            th:if="${page < books.totalPages}"
+            th:classappend="${page == books.number} ? 'active'">
+          <a class="page-link" th:href="@{/admin/itemMng(page=${page})}"
+             th:text="${page + 1}"></a>
+        </li>
+
+        <li class="page-item"
+            th:classappend="${((books.number / 10) * 10) + 10 >= books.totalPages}
+             ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/admin/itemMng(page=${((books.number / 10) * 10) + 10})}">
+            <i class="fas fa-angle-right"></i>
+          </a>
+        </li>
+
+        <li class="page-item" th:classappend="${books.last} ? 'disabled'">
+          <a class="page-link" th:href="@{/admin/itemMng(page=${books.totalPages - 1})}">
+            <i class="fas fa-angle-double-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
 </div>

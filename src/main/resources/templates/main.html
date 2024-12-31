@@ -373,7 +373,7 @@
       <li style="border-left: 1px solid #e0e0e0; margin: 0 10px;"></li>
 
       <li class="category-item" th:each="mainCat : ${mainCategories}">
-        <div class="main-category-header" th:data-category="${mainCat}" onmouseover="loadMidCategories(this)">
+        <div class="main-category-header" th:data-category="${mainCat}">
           <span th:text="${mainCat}">메인카테고리</span>
         </div>
         <div class="mid-categories" th:id="'mid-' + ${#strings.replace(mainCat, ' ', '-')}">

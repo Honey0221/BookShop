@@ -39,6 +39,7 @@ public class SecurityConfig {
                                 .requestMatchers("/books/**").permitAll()
                                 .requestMatchers("/book-list/**").permitAll()
                                 .requestMatchers("/search").permitAll()
+                                .requestMatchers("/reviews", "/reviews/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()).formLogin(formLogin -> formLogin
                                                 .loginPage("/members/login")
@@ -53,7 +54,12 @@ public class SecurityConfig {
                                                 .successHandler(successHandler)
                                                 .failureHandler(failureHandler)
                                                 .userInfoEndpoint(userInfo -> userInfo
-                                                                .userService(customOauth2UserService)));
+                                                                .userService(customOauth2UserService)))
+                                .csrf(csrf -> csrf
+                                                .ignoringRequestMatchers("/item/**")
+                                                .ignoringRequestMatchers("/items/**")
+                                                .ignoringRequestMatchers("/reviews/**")
+                                                .ignoringRequestMatchers("/api/**"));
 
                 http.exceptionHandling(exception -> exception
                                 .authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
