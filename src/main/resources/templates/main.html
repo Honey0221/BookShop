@@ -393,7 +393,7 @@
     <div class="swiper-container recommended-swiper">
       <div class="swiper-wrapper">
         <div class="swiper-slide" th:each="book : ${recommendedBooks}">
-          <div class="book-card">
+          <div class="book-card" th:data-book-id="${book.id}">
             <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
             <div class="book-info">
               <h3 class="book-title" th:text="${book.title}">도서 제목</h3>
@@ -418,7 +418,7 @@
     <div class="swiper-container best-swiper">
       <div class="swiper-wrapper">
         <div class="swiper-slide" th:each="book : ${bestBooks}">
-          <div class="book-card">
+          <div class="book-card" th:data-book-id="${book.id}">
             <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
             <div class="book-info">
               <h3 class="book-title" th:text="${book.title}">도서 제목</h3>
@@ -518,6 +518,20 @@
           1024: {
             slidesPerView: 5,
           },
+        },
+        on: {
+          click: function (swiper, event) {
+            // 클릭된 슬라이드의 book-card를 찾아서 처리
+            const clickedSlide = swiper.clickedSlide;
+            if (clickedSlide) {
+              const bookCard = clickedSlide.querySelector('.book-card');
+              if (bookCard) {
+                // 클릭한 상품의 상세 페이지로 이동
+                const bookId = bookCard.dataset.bookId; // data-book-id 속성 필요
+                window.location.href = `/item?bookId=${bookId}`;
+              }
+            }
+          }
         }
       };
 
