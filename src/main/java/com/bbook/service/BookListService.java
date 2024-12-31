@@ -6,6 +6,7 @@ import com.bbook.dto.BookListDto;
 import com.bbook.entity.Book;
 import com.bbook.repository.BookRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +19,12 @@ public class BookListService {
 
     private final BookRepository bookRepository;
 
+    // 단일 책 조회
+    public Book getBook(Long bookId) {
+        return bookRepository.findById(bookId)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "책을 찾을 수 없습니다. ID: " + bookId));
+    }
     // 카테고리 조회 메서드
     public List<String> getMainCategories() {
         return bookRepository.findDistinctMainCategories();

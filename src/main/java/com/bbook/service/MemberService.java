@@ -1,5 +1,6 @@
 package com.bbook.service;
 
+import com.bbook.config.SecurityUtil;
 import com.bbook.dto.MemberSignUpDto;
 import com.bbook.entity.Member;
 import com.bbook.repository.MemberRepository;
@@ -8,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +24,13 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityUtil securityUtil;  // 현재 로그인한 사용자 정보 조회 유틸
+
+    // 현재 로그인한 사용자의 ID 조회
+    @Transactional
+    public Optional<String> getCurrentMemberEmail() {
+        return securityUtil.getCurrentUsername();  // 현재 로그인한 사용자의 이메일 조회
+    }
 
     // 일반 회원가입
     @Transactional
