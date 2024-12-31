@@ -304,7 +304,7 @@
         const bookCard = document.createElement('div');
         bookCard.className = 'book-card';
         bookCard.innerHTML = `
-          <a href="/book-list/${book.id}">
+          <a href="/item?bookId=${book.id}">
             <img src="${book.imageUrl}" alt="${book.title}" class="book-image">
             <div class="book-info">
               <h3 class="book-title">${book.title}</h3>
