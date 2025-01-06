@@ -60,10 +60,18 @@ $(document).ready(function() {
         updateAvgRating(reviewFormData.bookId);
         updateReviewCount();
 
-        showAlert('리뷰가 등록되었습니다.', 'success');
+        Swal.fire({
+          title: "리뷰가 등록되었습니다.",
+          icon: "success",
+          confirmButtonText: "확인"
+        });
       },
       error: function () {
-        showAlert('리뷰 등록에 실패했습니다.', 'error');
+        Swal.fire({
+          title: "리뷰 등록에 실패했습니다.",
+          icon: "error",
+          confirmButtonText: "확인"
+        });
       }
     });
   });
@@ -296,7 +304,10 @@ function loadReviews(page = 0) {
       });
     },
     error: function () {
-      showAlert('리뷰 목록을 불러오는데 실패했습니다.', 'error');
+      Swal.fire({
+        title: "리뷰 목록을 불러오는데 실패했습니다.",
+        confirmButtonText: "확인"
+      });
     }
   });
 }
@@ -337,11 +348,19 @@ function editReview(reviewId) {
         updateAvgRating($("#bookId").val());
         updateReviewCount();
 
-        showAlert('리뷰가 수정되었습니다', 'success');
+        Swal.fire({
+          title: '리뷰가 수정되었습니다.',
+          icon: 'success',
+          confirmButtonText: '확인'
+        });
       },
       error: function (error) {
         console.log("수정 실패 ", error);
-        showAlert('리뷰 수정에 실패했습니다.', 'error');
+        Swal.fire({
+          title: '리뷰 수정에 실패했습니다.',
+          icon: 'error',
+          confirmButtonText: '확인'
+        });
       }
     });
   });
@@ -373,12 +392,91 @@ function deleteReview(reviewId) {
           updateAvgRating($("#bookId").val());
           updateReviewCount();
 
-          showAlert('삭제되었습니다', 'success');
+          Swal.fire({
+            title: '삭제되었습니다.',
+            icon: 'success',
+            confirmButtonText: '확인'
+          });
         },
         error: function () {
-          showAlert('리뷰 삭제에 실패했습니다', 'error');
+          Swal.fire({
+            title: '리뷰 삭제에 실패했습니다.',
+            icon: 'error',
+            confirmButtonText: '확인'
+          });
         }
       });
     }
   });
+}
+
+
+function order() {
+    const bookId = document.getElementById('bookId').value;
+    const quantity = document.getElementById('quantity').value;
+    const price = parseInt($("#totalPrice").text().replace(/[^0-9]/g, ""));
+
+    const paramData = {
+        bookId: Number(bookId),
+        count: parseInt(quantity),
+        totalPrice: price
+    }
+
+    $.ajax({
+        url: "/order/payment",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(paramData),
+        success: function(response) {
+            location.href = '/order/payment';
+        },
+        error: function(jqXHR) {
+            if(jqXHR.status == '401') {
+                if(confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    location.href = '/members/login';
+                }
+            } else {
+                alert(jqXHR.responseText);
+            }
+        }
+    });
+}
+
+function addCart() {
+    // bookId 값을 hidden input에서 가져오기
+    const bookId = document.getElementById('bookId').value;
+    console.log("Raw bookId value:", bookId);
+    
+    const quantity = document.getElementById('quantity').value;
+    console.log("Raw quantity value:", quantity);
+    
+
+    const url = "/cart";
+    const paramData = {
+        bookId: Number(bookId),
+        count: parseInt(quantity)
+    };
+
+    console.log("전송할 데이터:", paramData);
+
+    $.ajax({
+        url: url,
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(paramData),
+
+        success: function(result, status) {
+            alert("상품을 장바구니에 담았습니다.");
+        },
+        error: function(jqXHR, status, error) {
+            console.log("에러 발생:", error);
+            if(jqXHR.status == '401') {
+                if(confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    location.href = '/members/login';
+                }
+            } else {
+                alert(jqXHR.responseText);
+            }
+        }
+    });
 }
