@@ -2,13 +2,25 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
   xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/layout}">
 
+<head>
 
-<th:block layout:fragment="css">
-  <link th:href="@{/css/admin/itemDtl.css}" rel="stylesheet">
-</th:block>
-<th:block layout:fragment="script">
-  <script th:src="@{/js/admin/itemDtl.js}"></script>
-</th:block>
+
+  <th:block layout:fragment="css">
+    <link th:href="@{/css/bookDtl.css}" rel="stylesheet">
+  </th:block>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const bookId = /*[[${book.id}]]*/ null;
+    console.log("bookId:", bookId); // 디버깅용
+    /*]]>*/
+  </script>
+
+  <th:block layout:fragment="script">
+    <script th:src="@{/js/bookDtl.js}"></script>
+  </th:block>
+</head>
+
 <div layout:fragment="content">
   <div class="container">
     <div class="row">
@@ -16,7 +28,7 @@
       <div class="col-md-5">
         <div class="book-img">
           <img th:src="${book.imageUrl}" class="img-fluid" th:alt="${book.title}">
-        </div>W
+        </div>
       </div>
 
       <!-- 책 정보 -->
@@ -31,6 +43,15 @@
               <span class="rating-value" th:text="|${#numbers.formatDecimal(avgRating, 1, 1)}|">
               </span>
             </div>
+            <button type="button" class="btn btn-link p-0 ms-2" id="loginBtn"
+              sec:authorize="!isAuthenticated()">
+              <i class="far fa-heart text-danger fs-5"></i>
+            </button>
+            <button type="button" class="btn btn-link p-0 ms-2" id="wishBtn"
+              sec:authorize="isAuthenticated()">
+              <i class="far fa-heart text-danger fs-5"
+                 th:classappend="${isWished ? 'fas' : 'far'}"></i>
+            </button>
           </div>
           <div class="book-author mb-3">
             <span>저자:</span>
@@ -59,10 +80,10 @@
           </div>
 
           <div class="button-group">
-            <button type="button" class="btn btn-primary" id="cartBtn">
+            <button type="button" onclick="addCart()" class="btn btn-primary" id="cartBtn">
               <i class="fas fa-shopping-cart"></i> 장바구니
             </button>
-            <button type="button" class="btn btn-success" id="orderBtn">
+            <button type="button" onclick="order()" class="btn btn-success" id="orderBtn">
               <i class="fas fa-credit-card"></i> 바로구매
             </button>
             <button type="button" class="btn btn-warning" id="shareKakaoBtn">
@@ -162,7 +183,8 @@
                         </select>
                       </div>
                       <div class="mb-3">
-                        <label for="editContent" class="form-label">리뷰 내용</label>
+                        <label for="editContent" class="form-label">리뷰
+                          내용</label>
                         <textarea class="form-control" id="editContent" rows="3" required></textarea>
                       </div>
                       <div class="modal-footer px-0 pb-0">

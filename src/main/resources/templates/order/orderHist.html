@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout}">
+<head>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<th:block layout:fragment="script">
+  <script th:inline="javascript">
+    function cancelOrder(orderId) {
+        if (!confirm('주문을 취소하시겠습니까?\n취소 시 전체 금액이 환불됩니다.')) {
+            return;
+        }
+
+        const token = $("meta[name='_csrf']").attr("content");
+        const header = $("meta[name='_csrf_header']").attr("content");
+
+        $.ajax({
+            url: `/order/${orderId}/cancel`,
+            type: 'POST',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert(response.message || '주문 취소에 실패했습니다.');
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON || {};
+                alert(response.message || '주문 취소 중 오류가 발생했습니다.');
+            }
+        });
+    }
+  </script>
+</th:block>
+
+
+<th:block layout:fragment="css">
+  <style>
+    .content-mg {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    /* 주문 내역 헤더 */
+    .order-history-header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .order-history-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    /* 주문 카드 스타일 */
+    .order-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    
+    .order-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      background: #f8f9fa;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .order-date {
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .order-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    /* 뱃지 스타일 */
+    .badge {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 20px;
+      color: #fff;
+    }
+    
+    .badge-success {
+      background-color: #1f8ce6;
+    }
+    
+    .badge-danger {
+      background-color: #e64d3d;
+    }
+    
+    /* 취소 버튼 스타일 */
+    .btn-cancel {
+      padding: 6px 16px;
+      font-size: 13px;
+      border-radius: 4px;
+      background-color: #fff;
+      color: #e64d3d;
+      border: 1px solid #e64d3d;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .btn-cancel:hover {
+      background-color: #e64d3d;
+      color: #fff;
+    }
+    
+    /* 주문 상품 영역 */
+    .order-items {
+      padding: 20px;
+    }
+    
+    .order-item {
+      display: flex;
+      align-items: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .order-item:last-child {
+      border-bottom: none;
+    }
+    
+    .item-image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      margin-right: 24px;
+    }
+    
+    .item-info {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .item-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .item-details {
+      color: #666;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* 페이지네이션 스타일 */
+    .pagination {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .page-link {
+      color: #666;
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .page-item.active .page-link {
+      background-color: #1f8ce6;
+      border-color: #1f8ce6;
+      color: #fff;
+    }
+    
+    .page-item.disabled .page-link {
+      color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .page-link:hover:not(.disabled) {
+      background-color: #f8f9fa;
+      border-color: #1f8ce6;
+      color: #1f8ce6;
+    }
+  </style>
+</th:block>
+
+<div layout:fragment="content" class="content-mg">
+  <div class="order-history-header">
+    <h2 class="order-history-title">주문/배송 조회</h2>
+  </div>
+  
+  <div th:each="order : ${orders.getContent()}" class="order-card">
+    <div class="order-header">
+      <span class="order-date" th:text="${order.orderDate}"></span>
+      <div class="order-status">
+        <th:block th:switch="${order.orderStatus}">
+          <th:block th:case="${T(com.bbook.constant.OrderStatus).PAID}">
+            <span class="badge badge-success">결제완료</span>
+            <button type="button" class="btn-cancel" 
+                    th:onclick="'cancelOrder(' + ${order.orderId} + ')'">주문취소</button>
+          </th:block>
+          <th:block th:case="${T(com.bbook.constant.OrderStatus).CANCEL}">
+            <span class="badge badge-danger">환불완료</span>
+          </th:block>
+        </th:block>
+      </div>
+    </div>
+    
+    <div class="order-items">
+      <div th:each="orderItem : ${order.orderItemDtoList}" class="order-item">
+        <img th:src="${orderItem.imgUrl}" class="item-image" th:alt="${orderItem.bookName}">
+        <div class="item-info">
+          <div class="item-name" th:text="${orderItem.bookName}"></div>
+          <div class="item-details">
+            <span th:text="${#numbers.formatInteger(orderItem.orderPrice, 0, 'COMMA') + '원'}"></span>
+            <span>|</span>
+            <span th:text="${orderItem.count + '개'}"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div th:with="start=${(orders.number/maxPage)*maxPage + 1},
+end=(${(orders.totalPages == 0) ? 1 : (start + (maxPage-1) < orders.totalPages ?
+start + (maxPage - 1) : orders.totalPages)})">
+    <ul class="pagination justify-content-center">
+
+      <li class="page-item" th:classappend="${orders.number eq 0}?'disabled' : ''">
+        <a th:href="@{'/orders/'+ ${orders.number-1}}" aria-label="Previous" class="page-link">
+          <span aria-hidden="true">Previous</span>
+        </a>
+      </li>
+
+      <li class="page-item" th:each="page: ${#numbers.sequence(start,end)}"
+          th:classappend="${orders.number eq page-1}? ' active':''">
+        <a th:href="@{'/orders/'+${page-1}}" th:inline="text" class="page-link">[[${page}]]</a>
+      </li>
+
+      <li class="page-item" th:classappend="${orders.number+1 ge orders.totalPages}?'disabled' : ''">
+        <a th:href="@{'/orders/'+${orders.number+1}}" aria-label="Next" class="page-link">
+          <span aria-hidden="true">Next</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+</html>

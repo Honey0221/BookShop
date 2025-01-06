@@ -19,6 +19,7 @@ import com.bbook.service.BookDetailService;
 import com.bbook.service.ReviewService;
 import com.bbook.service.MemberService;
 import com.bbook.service.MemberActivityService;
+import com.bbook.service.WishBookService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +31,7 @@ public class BookController {
 	private final ReviewService reviewService;
 	private final MemberActivityService memberActivityService;
 	private final MemberService memberService;
+	private final WishBookService wishBookService;
 
 	@GetMapping
 	public String getBook(@RequestParam(name = "bookId") Long id, Model model) {
@@ -52,8 +54,12 @@ public class BookController {
 		Optional<String> memberEmail = memberService.getCurrentMemberEmail();
 		if (memberEmail.isPresent()) {
 			memberActivityService.saveActivity(memberEmail.get(), book.getId(), ActivityType.VIEW);
+			// 찜하기 상태 확인
+			Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
+			boolean isWished = wishBookService.isWished(memberId, book.getId());
+			model.addAttribute("isWished", isWished);
 		}
 
-		return "items/itemDtl";
+		return "books/bookDtl";
 	}
 }

@@ -1,7 +1,6 @@
 package com.bbook.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,10 +16,10 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReviewService {
 	private final ReviewRepository reviewRepository;
 
-	@Transactional
 	public void saveReview(ReviewDto reviewDto) {
 		Reviews review = Reviews.builder()
 				.memberId(reviewDto.getMemberId())
@@ -33,7 +32,6 @@ public class ReviewService {
 		reviewRepository.save(review);
 	}
 
-	@Transactional(readOnly = true)
 	public Page<ReviewDto> getBookReviews(
 			Long bookId, Long currentMemberId, Pageable pageable) {
 		Page<ReviewDto> reviews = reviewRepository.findByBookId(bookId, pageable);
@@ -73,7 +71,6 @@ public class ReviewService {
 		reviewRepository.save(reviews);
 	}
 
-	@Transactional(readOnly = true)
 	public long getReviewCount(Long bookId) {
 		return reviewRepository.countByBookId(bookId);
 	}

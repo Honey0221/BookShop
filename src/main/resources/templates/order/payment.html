@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout}">
+
+<head>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link rel="stylesheet" th:href="@{/css/payment.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<div layout:fragment="content" class="payment-container">
+    <div class="payment-header">
+        <h2>주문/결제</h2>
+    </div>
+
+    <div class="order-items">
+        <h3>주문 상품</h3>
+        <div class="order-item-container">
+            <div class="order-item">
+                <div class="item-image-container">
+                    <img th:src="${orderDto.imageUrl}" 
+                         class="item-image" 
+                         th:alt="${orderDto.orderName}">
+                </div>
+                <span class="item-name" th:text="${orderDto.orderName}">상품명</span>
+                <span class="item-quantity" th:text="'수량: ' + ${orderDto.count} + '개'">수량</span>
+                <span class="item-price">가격</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="delivery-info">
+        <h3>배송 정보</h3>
+        <table class="info-table">
+            <tr>
+                <th>받는 사람</th>
+                <td th:text="${orderDto.name}">수령인</td>
+            </tr>
+            <tr>
+                <th>연락처</th>
+                <td th:text="${orderDto.phone}">연락처</td>
+            </tr>
+            <tr>
+                <th>배송 주소</th>
+                <td th:text="${orderDto.address}">주소</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="point-info">
+        <h3>포인트 사용</h3>
+        <div class="point-container">
+            <div class="available-points">
+                <span>사용 가능한 포인트:</span>
+                <span th:text="${#numbers.formatInteger(memberPoint, 0, 'COMMA') + 'P'}">0P</span>
+            </div>
+            <div class="point-input-container">
+                <input type="number" id="usePoint" name="usePoint" placeholder="사용할 포인트를 입력하세요"
+                       th:max="${memberPoint}" min="0" step="100">
+                <button type="button" class="point-apply-btn" onclick="applyPoint()">포인트 적용</button>
+            </div>
+            <p class="point-notice">* 포인트는 100P 단위로 사용 가능합니다.</p>
+        </div>
+    </div>
+
+    <div class="payment-methods">
+        <h3>결제 수단 선택</h3>
+        <div class="payment-method-option" onclick="selectPaymentMethod('kakaopay')" id="kakaopay-option">
+            <label>
+                <input type="radio" name="paymentMethod" id="kakaopay" value="kakaopay">
+                <i class="fas fa-comment"></i>
+                카카오페이
+            </label>
+        </div>
+        <div class="payment-method-option" onclick="selectPaymentMethod('card')" id="card-option">
+            <label>
+                <input type="radio" name="paymentMethod" id="card" value="card">
+                <i class="far fa-credit-card"></i>
+                신용/체크카드
+            </label>
+        </div>
+    </div>
+
+    <div class="order-summary">
+        <h3>결제 상세</h3>
+        <dl class="summary-list">
+            <div class="summary-item">
+                <dt>상품금액</dt>
+                <dd><span id="productPrice" th:text="${#numbers.formatInteger(orderDto.totalPrice, 0, 'COMMA') + '원'}">0원</span></dd>
+            </div>
+            <div class="summary-item">
+                <dt>포인트 사용</dt>
+                <dd>-<span id="usedPoint">0</span>원</dd>
+            </div>
+            <div class="summary-item">
+                <dt>
+                    배송비
+                    <button type="button" class="btn-shipping-info" onclick="showShippingInfo()">
+                        <i class="fas fa-circle-info"></i>
+                    </button>
+                </dt>
+                <dd><span id="deliveryFee">0원</span></dd>
+            </div>
+            <div class="summary-item total">
+                <dt>최종 결제 금액</dt>
+                <dd><span id="finalTotalPrice" class="price-spot">0원</span></dd>
+            </div>
+        </dl>
+    </div>
+
+    <div class="modal" id="shippingInfoModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">배송비 안내</h5>
+                    <button type="button" class="close" onclick="closeModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="shipping-info">
+                        <p class="main-info">
+                            <i class="fas fa-truck"></i>
+                            <strong>15,000원 이상 구매 시 무료배송</strong>
+                        </p>
+                        <div class="detail-info-box">
+                            <ul class="detail-info">
+                                <li><i class="fas fa-circle-info"></i> 15,000원 미만 주문 시 배송비 3,000원이 부과됩니다.</li>
+                                <li><i class="fas fa-circle-info"></i> 도서산간 지역은 추가 배송비가 발생할 수 있습니다.</li>
+                                <li><i class="fas fa-clock"></i> 평일 오후 2시 이전 주문건 당일 출고</li>
+                                <li><i class="fas fa-box"></i> 안전한 배송을 위해 모든 제품은 안전포장 처리됩니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="payment-button" onclick="requestPayment()">
+        결제하기
+    </button>
+</div>
+
+<th:block layout:fragment="script">
+    <!-- jQuery -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <!-- iamport.payment.js -->
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var orderDto = {
+            orderName: /*[[${orderDto.orderName}]]*/ '',
+            totalPrice: /*[[${orderDto.totalPrice}]]*/ 0,
+            email: /*[[${orderDto.email}]]*/ '',
+            name: /*[[${orderDto.name}]]*/ '',
+            phone: /*[[${orderDto.phone}]]*/ '',
+            address: /*[[${orderDto.address}]]*/ ''
+        };
+        /*]]>*/
+    </script>
+    <script th:src="@{/js/payment.js}"></script>
+</th:block>
+
+</html> 

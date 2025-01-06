@@ -1,7 +1,8 @@
 .admin-nav {
   background-color: #f8f9fa;
   padding: 1rem;
-  margin-bottom: 1rem;
+  margin: 0 auto;
+  max-width: 1200px;
 }
 
 .admin-nav .nav-item {
@@ -46,14 +47,11 @@
 }
 
 .stats-container {
-    display: grid;
-    grid-template-columns: 30% 70%;
-    gap: 30px;
-    margin-bottom: 30px;
     width: 100%;
 }
 
 .stat-box {
+    height: 200px;
     background: white;
     border-radius: 12px;
     padding: 20px;

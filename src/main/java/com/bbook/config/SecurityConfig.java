@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 .requestMatchers("/search").permitAll()
                                 .requestMatchers("/reviews", "/reviews/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
+
                                 .anyRequest().authenticated()).formLogin(formLogin -> formLogin
                                                 .loginPage("/members/login")
                                                 .defaultSuccessUrl("/")
@@ -59,7 +60,10 @@ public class SecurityConfig {
                                                 .ignoringRequestMatchers("/item/**")
                                                 .ignoringRequestMatchers("/items/**")
                                                 .ignoringRequestMatchers("/reviews/**")
-                                                .ignoringRequestMatchers("/api/**"));
+                                                .ignoringRequestMatchers("/api/**")
+                                                .ignoringRequestMatchers("/cart/**")
+                                                .ignoringRequestMatchers("/wish/**")
+                                                .ignoringRequestMatchers("/order/payment/**"));
 
                 http.exceptionHandling(exception -> exception
                                 .authenticationEntryPoint(new CustomAuthenticationEntryPoint()));

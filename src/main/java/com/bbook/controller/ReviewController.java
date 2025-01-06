@@ -1,6 +1,5 @@
 package com.bbook.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -20,9 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.bbook.constant.ActivityType;
 import com.bbook.dto.ReviewDto;
 import com.bbook.dto.ReviewRequestDto;
 import com.bbook.dto.ReviewUpdateDto;
+import com.bbook.service.MemberActivityService;
 import com.bbook.service.MemberService;
 import com.bbook.service.ReviewService;
 
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class ReviewController {
 	private final ReviewService reviewService;
 	private final MemberService memberService;
+	private final MemberActivityService memberActivityService;
 
 	@PostMapping
 	@ResponseBody
@@ -41,12 +43,14 @@ public class ReviewController {
 			@RequestBody ReviewRequestDto request,
 			@AuthenticationPrincipal UserDetails userDetails) {
 		try {
-			System.out.println("BookId: " + request.getBookId());
-			System.out.println("Rating: " + request.getRating());
-			System.out.println("Content: " + request.getContent());
-
 			String email = userDetails.getUsername();
 			Long memberId = memberService.getMemberIdByEmail(email);
+
+			// 리뷰 활동 기록 저장 코드 영역
+			if (email != null) {
+				memberActivityService
+						.saveActivity(email, request.getBookId(), ActivityType.REVIEW);
+			}
 
 			ReviewDto reviewDto = ReviewDto.builder()
 							.memberId(memberId)

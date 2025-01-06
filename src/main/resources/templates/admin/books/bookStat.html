@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout2}">
+<th:block layout:fragment="css">
+  <link th:href="@{/css/admin/bookStat.css}" rel="stylesheet">
+</th:block>
+<th:block layout:fragment="script">
+  <script th:src="@{/js/admin/bookStat.js}"></script>
+</th:block>
+<div layout:fragment="content">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>도서 통계</h2>
+      <button id="refreshStats" class="btn btn-primary">
+        <i class="fas fa-sync-alt"></i> 갱신
+      </button>
+    </div>
+    <!-- 갱신 버튼 추가 -->
+    <div class="row">
+      <!-- 도서 상태 분포 -->
+      <div class="col-md-6">
+        <div class="chart-container">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+      <!-- 중분류별 도서 분포 -->
+      <div class="col-md-6">
+        <div class="chart-container">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+      <!-- 가격대별 도서 분포 -->
+      <div class="col-md-6">
+        <div class="chart-container">
+          <canvas id="priceRangeChart"></canvas>
+        </div>
+      </div>
+      <!-- 재고 적은 도서 Top 5 -->
+      <div class="col-md-6">
+        <div class="chart-container">
+          <canvas id="lowStockChart"></canvas>
+        </div>
+      </div>
+      <!-- 조회수 높은 도서 Top 3 -->
+      <div class="col-md-6">
+        <div class="chart-container">
+          <canvas id="topViewedBooksChart"></canvas>
+        </div>
+      </div>
+      <!-- 조회수 높은 중분류 Top 3 -->
+      <div class="col-md-6">
+        <div class="chart-container">
+          <canvas id="topViewedCategoriesChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

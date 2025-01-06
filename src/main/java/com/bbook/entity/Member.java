@@ -39,6 +39,9 @@ public class Member extends BaseEntity {
     @Column(name = "is_social_member")
     private boolean isSocialMember = false;
 
+    @Column(name = "point", columnDefinition = "bigint default 0")
+    private Long point = 0L;
+
     @CreatedDate // 생성시 자동 저장
     @Column(updatable = false)
     private LocalDateTime createAt; // 등록일

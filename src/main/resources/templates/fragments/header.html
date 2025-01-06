@@ -1,5 +1,27 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!-- 
+이 파일은 웹사이트의 헤더(상단 메뉴바)를 정의하는 프래그먼트입니다.
+주요 기능:
+1. 네비게이션 바 구현:
+   - 반응형 디자인 (모바일 화면에서 토글 버튼으로 변환)
+   - 최대 너비 1200px로 제한하여 가독성 확보
+   - 브랜드 로고 및 텍스트 표시
+
+2. 사용자 권한별 메뉴 표시:
+   - 인증된 사용자(isAuthenticated):
+     * 장바구니
+     * 구매이력
+     * 로그아웃
+   - 비인증 사용자(isAnonymous):
+     * 로그인
+   - 관리자 권한(hasRole('ADMIN')):
+     * 관리자 대시보드
+
+3. 도서 검색 기능:
+   - 검색창과 검색 버튼 제공
+   - GET 방식으로 /book-list/search 엔드포인트에 검색어 전송
+-->
 <div th:fragment="header">
   <nav class="navbar navbar-expand-lg">
     <div class="container" style="max-width: 1200px;">
@@ -27,7 +49,7 @@
             <a class="nav-link menu-item" href="/members/logout">로그아웃</a>
           </li>
           <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-            <a class="nav-link" href="/admin/dashboard">관리자</a>
+            <a class="nav-link menu-item" href="/admin/dashboard">관리자</a>
           </li>
         </ul>
         <form class="d-flex search-form" th:action="@{/book-list/search}" method="get">
@@ -128,6 +150,14 @@
         margin-top: 1rem;
       }
     }
+
+    .nav-link .fas {
+    margin-right: 5px;
+}
+
+.nav-link:hover {
+    color: #2196F3;
+}
   </style>
 </div>
 

@@ -19,10 +19,7 @@ body {
 }
 
 .content {
-  margin-bottom: 100px;
-  margin-top: 50px;
-  margin-left: 200px;
-  margin-right: 200px;
+  margin: 50px 120px 130px 120px;
 }
 
 a {

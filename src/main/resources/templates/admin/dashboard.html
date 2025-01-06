@@ -10,13 +10,13 @@
 </th:block>
 <div layout:fragment="content">
   <h2 class="mb-4">관리자 대시보드</h2>
-  <nav class="admin-nav">
+  <nav class="admin-nav mb-4">
     <ul class="nav">
       <li class="nav-item">
         <a class="nav-link" href="#">상품/주문 관리</a>
         <div class="sub-menu">
-          <a href="/admin/itemMng">상품 관리</a>
-          <a href="/admin/itemStat">상품 통계</a>
+          <a href="/admin/bookMng">상품 관리</a>
+          <a href="/admin/bookStat">상품 통계</a>
           <a href="/admin/orderMng">주문 관리</a>
           <a href="/admin/orderStat">주문 통계</a>
         </div>
@@ -46,70 +46,82 @@
     </ul>
   </nav>
   <div class="dashboard-content">
-    <!-- 오늘 매출액 -->
-    <div class="stats-container">
-      <div class="stat-box">
-        <div class="stat-title">
-          <i class="fas fa-won-sign"></i>금일 매출액</div>
-        <div class="stat-content">
-          <div class="stat-info">
-            <div class="stat-value">2,580,000원</div>
-            <div class="stat-compare">
-              <span class="increase">
-                <span class="compare-text">전일 대비</span>
-                320,000원
-                <i class="fas fa-arrow-up"></i>
-              </span>
+    <div class="row">
+      <!-- 오늘 매출액 -->
+      <div class="col-md-4">
+        <div class="stats-container">
+          <div class="stat-box">
+            <div class="stat-title mb-3">
+              <i class="fas fa-won-sign"></i>금일 매출액
+            </div>
+            <div class="stat-content">
+              <div class="stat-info">
+                <div class="stat-value">2,580,000원</div>
+                <div class="stat-compare">
+                  <span class="increase">
+                    <span class="compare-text">전일 대비</span>
+                    320,000원
+                    <i class="fas fa-arrow-up"></i>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
       <!-- 최저/최고 매출액 -->
-      <div class="stat-box">
-        <div class="stat-title">
-          <i class="fas fa-won-sign"></i>최근 30일 매출</div>
-        <div class="stat-content">
-          <div class="stat-info">
-            <div class="stat-range">
-              <div class="range-item">
-                <span class="range-label">최저</span>
-                <span class="range-value">1,250,000원</span>
-                <span class="range-date">2024.2.15</span>
-              </div>
-              <div class="range-item">
-                <span class="range-label">최고</span>
-                <span class="range-value">4,820,000원</span>
-                <span class="range-date">2024.2.28</span>
-              </div>
-              <div class="range-item">
-                <span class="range-label">평균</span>
-                <span class="range-value">2,850,000원</span>
-                <span class="range-date">2.15 ~ 2.28</span>
+      <div class="col-md-8">
+        <div class="stats-container">
+          <div class="stat-box">
+            <div class="stat-title">
+              <i class="fas fa-won-sign"></i>최근 30일 매출
+            </div>
+            <div class="stat-content">
+              <div class="stat-info">
+                <div class="stat-range">
+                  <div class="range-item">
+                    <span class="range-label">최저</span>
+                    <span class="range-value">1,250,000원</span>
+                    <span class="range-date">2024.2.15</span>
+                  </div>
+                  <div class="range-item">
+                    <span class="range-label">최고</span>
+                    <span class="range-value">4,820,000원</span>
+                    <span class="range-date">2024.2.28</span>
+                  </div>
+                  <div class="range-item">
+                    <span class="range-label">평균</span>
+                    <span class="range-value">2,850,000원</span>
+                    <span class="range-date">2.15 ~ 2.28</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <!-- 최근 7일/30일 일별 매출 추이(선 그래프) -->
-    <div class="chart-container">
-      <div class="chart-box">
-        <div class="chart-header">
-          <div class="stat-title">
-            <i class="fas fa-chart-line"></i>매출 추이
+      <!-- 최근 7일/30일 일별 매출 추이 -->
+      <div class="col-md-12">
+        <div class="chart-container">
+          <div class="chart-box">
+            <div class="chart-header">
+              <div class="stat-title">
+                <i class="fas fa-chart-line"></i>매출 추이
+              </div>
+              <div class="chart-period-selector">
+                <button class="period-btn active" data-period="7">7일</button>
+                <button class="period-btn" data-period="30">30일</button>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="salesChart"></canvas>
+            </div>
           </div>
-          <div class="chart-period-selector">
-            <button class="period-btn active" data-period="7">7일</button>
-            <button class="period-btn" data-period="30">30일</button>
-          </div>
-        </div>
-        <div class="chart-body">
-          <canvas id="salesChart"></canvas>
         </div>
       </div>
+      <!-- 오늘 주문건수 -->
+      <!-- 재고 부족 상품 목록(5개만) 더보기 버튼 -->
+      <!-- 답변 대기중인 문의 건수 -->
     </div>
-    <!-- 오늘 주문건수 -->
-    <!-- 재고 부족 상품 목록(5개만) 더보기 버튼 -->
-    <!-- 답변 대기중인 문의 건수 -->
   </div>
 </div>
