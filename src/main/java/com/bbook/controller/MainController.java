@@ -10,21 +10,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import com.bbook.entity.Book;
 import com.bbook.service.MainBookService;
 import com.bbook.service.MainCategoryService;
+import com.bbook.service.MemberActivityService;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class MainController {
 
 	private final MainCategoryService mainCategoryService;
 	private final MainBookService mainBookService;
+	private final MemberActivityService memberActivityService;
 
 	@GetMapping("/")
-	public String main(Model model) {
+	public String main(Model model, Principal principal) {
 		// 메인 카테고리 목록 조회
 		List<String> mainCategories = mainCategoryService.getMainCategories();
 		model.addAttribute("mainCategories", mainCategories);
@@ -37,6 +43,15 @@ public class MainController {
 		List<Book> bestBooks = mainBookService.getBestBooks();
 		model.addAttribute("bestBooks", bestBooks);
 
+		if (principal != null) {
+			String email = principal.getName();
+			model.addAttribute("personalizedBooks", memberActivityService.getHybridRecommendations(email));
+			log.info("personalizedBooks: {}", memberActivityService.getHybridRecommendations(email));
+			model.addAttribute("collaborativeBooks", memberActivityService.getCollaborativeRecommendations(email));
+			log.info("collaborativeBooks: {}", memberActivityService.getCollaborativeRecommendations(email));
+			model.addAttribute("contentBasedBooks", memberActivityService.getContentBasedRecommendations(email));
+			log.info("contentBasedBooks: {}", memberActivityService.getContentBasedRecommendations(email));
+		}
 		return "main";
 	}
 

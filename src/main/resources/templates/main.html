@@ -434,6 +434,96 @@
       <div class="swiper-pagination"></div>
     </div>
   </div>
+
+  <!-- 개인화 추천 섹션 -->
+  <section class="recommended-section" th:if="${#authorization.expression('isAuthenticated()')}">
+    <div class="category-container">
+      <h2 class="section-title">
+        <i class="fas fa-magic"></i>
+        맞춤 추천
+        <span class="new-badge">AI</span>
+      </h2>
+      <div class="swiper category-swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide" th:each="book : ${personalizedBooks}">
+            <div class="book-card">
+              <a th:href="@{/books/{id}(id=${book.bookId})}">
+                <img class="book-image" th:src="${book.imageUrl}" th:alt="${book.title}">
+                <div class="book-info">
+                  <h3 class="book-title" th:text="${book.title}">책 제목</h3>
+                  <p class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                    가격
+                  </p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 협업 필터링 추천 섹션 -->
+  <section class="recommended-section" th:if="${#authorization.expression('isAuthenticated()')}">
+    <div class="category-container">
+      <h2 class="section-title">
+        <i class="fas fa-users"></i>
+        비슷한 취향의 회원들이 선택한 책
+        <span class="best-badge">PICK</span>
+      </h2>
+      <div class="swiper category-swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide" th:each="book : ${collaborativeBooks}">
+            <div class="book-card">
+              <a th:href="@{/books/{id}(id=${book.bookId})}">
+                <img class="book-image" th:src="${book.imageUrl}" th:alt="${book.title}">
+                <div class="book-info">
+                  <h3 class="book-title" th:text="${book.title}">책 제목</h3>
+                  <p class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                    가격
+                  </p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 카테고리 기반 추천 섹션 -->
+  <section class="recommended-section" th:if="${#authorization.expression('isAuthenticated()')}">
+    <div class="category-container">
+      <h2 class="section-title">
+        <i class="fas fa-bookmark"></i>
+        관심 카테고리의 새로운 책
+        <span class="new-badge">NEW</span>
+      </h2>
+      <div class="swiper category-swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide" th:each="book : ${contentBasedBooks}">
+            <div class="book-card">
+              <a th:href="@{/books/{id}(id=${book.bookId})}">
+                <img class="book-image" th:src="${book.imageUrl}" th:alt="${book.title}">
+                <div class="book-info">
+                  <h3 class="book-title" th:text="${book.title}">책 제목</h3>
+                  <p class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                    가격
+                  </p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <th:block layout:fragment="script">
@@ -535,15 +625,16 @@
         }
       };
 
-      // 추천상품 Swiper 초기화
+      // 기존 Swiper 초기화
       const recommendedSwiper = new Swiper('.recommended-swiper', swiperConfig);
-      recommendedSwiper.autoplay.stop();
-
-      // 베스트상품 Swiper 초기화
       const bestSwiper = new Swiper('.best-swiper', swiperConfig);
-      bestSwiper.autoplay.stop();
 
-      // 추천상품 Swiper hover 이벤트
+      // 새로운 추천 섹션 Swiper 초기화
+      const personalizedSwiper = new Swiper('.category-swiper', swiperConfig);
+      const collaborativeSwiper = new Swiper('.category-swiper', swiperConfig);
+      const contentBasedSwiper = new Swiper('.category-swiper', swiperConfig);
+
+      // 기존 hover 이벤트
       const recommendedContainer = document.querySelector('.recommended-swiper');
       recommendedContainer.addEventListener('mouseenter', function () {
         recommendedSwiper.autoplay.start();
@@ -552,13 +643,23 @@
         recommendedSwiper.autoplay.stop();
       });
 
-      // 베스트상품 Swiper hover 이벤트
       const bestContainer = document.querySelector('.best-swiper');
       bestContainer.addEventListener('mouseenter', function () {
         bestSwiper.autoplay.start();
       });
       bestContainer.addEventListener('mouseleave', function () {
         bestSwiper.autoplay.stop();
+      });
+
+      // 새로운 추천 섹션 hover 이벤트
+      document.querySelectorAll('.category-swiper').forEach(function (container) {
+        const swiper = container.swiper;
+        container.addEventListener('mouseenter', function () {
+          swiper.autoplay.start();
+        });
+        container.addEventListener('mouseleave', function () {
+          swiper.autoplay.stop();
+        });
       });
     });
     /*]]>*/

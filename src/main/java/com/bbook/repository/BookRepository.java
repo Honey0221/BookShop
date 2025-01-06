@@ -13,7 +13,7 @@ import com.bbook.entity.Book;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
 	List<Book> findByAuthor(String author);
-	
+
 	@Query("SELECT DISTINCT b.mainCategory FROM Book b WHERE b.mainCategory IS NOT NULL ORDER BY b.mainCategory")
 	List<String> findDistinctMainCategories();
 
@@ -40,9 +40,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
 	List<Book> findTop10ByOrderByViewCountDesc(Pageable pageable);
 
-
 	List<Book> findTop10ByOrderByCreatedAtDesc(Pageable pageable);
-
 
 	@Query("SELECT b FROM Book b WHERE b.id > :lastId AND (b.title LIKE %:keyword% OR b.author LIKE %:keyword% OR b.publisher LIKE %:keyword%) ORDER BY b.id ASC")
 	List<Book> findNextSearchResults(
@@ -79,4 +77,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 			String midCategory,
 			String detailCategory,
 			Pageable pageable);
+
+	@Query("SELECT b FROM Book b WHERE " +
+			"b.mainCategory = :mainCategory OR " +
+			"b.midCategory = :midCategory OR " +
+			"b.detailCategory = :detailCategory")
+	List<Book> findByMainCategoryOrMidCategoryOrDetailCategory(
+			@Param("mainCategory") String mainCategory,
+			@Param("midCategory") String midCategory,
+			@Param("detailCategory") String detailCategory);
 }
