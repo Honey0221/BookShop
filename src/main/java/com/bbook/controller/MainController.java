@@ -35,13 +35,13 @@ public class MainController {
 		List<String> mainCategories = mainCategoryService.getMainCategories();
 		model.addAttribute("mainCategories", mainCategories);
 
-		// 추천상품 데이터 추가
-		List<Book> recommendedBooks = mainBookService.getRecommendedBooks();
-		model.addAttribute("recommendedBooks", recommendedBooks);
-
 		// 베스트상품 데이터
 		List<Book> bestBooks = mainBookService.getBestBooks();
 		model.addAttribute("bestBooks", bestBooks);
+
+		// 신상품 데이터 추가
+		List<Book> newBooks = mainBookService.getNewBooks();
+		model.addAttribute("newBooks", newBooks);
 
 		if (principal != null) {
 			String email = principal.getName();

@@ -54,6 +54,7 @@ public class BookController {
 		Optional<String> memberEmail = memberService.getCurrentMemberEmail();
 		if (memberEmail.isPresent()) {
 			memberActivityService.saveActivity(memberEmail.get(), book.getId(), ActivityType.VIEW);
+			bookDetailService.incrementViewCount(book.getId()); // 조회수 증가
 			// 찜하기 상태 확인
 			Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
 			boolean isWished = wishBookService.isWished(memberId, book.getId());

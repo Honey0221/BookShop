@@ -14,6 +14,7 @@ import java.util.List;
 public class MainBookService {
 
   private final BookRepository bookRepository;
+  private static final int LIST_SIZE = 15;
 
   public List<Book> getBooksByCategory(String main, String mid, String detail) {
     if (detail != null) {
@@ -31,10 +32,12 @@ public class MainBookService {
   }
 
   public List<Book> getBestBooks() {
-    return bookRepository.findTop15ByIdGreaterThanEqualOrderByIdAsc(20L);
+    return bookRepository.findTop15ByOrderByViewCountDesc(
+        PageRequest.of(0, LIST_SIZE));
   }
 
   public List<Book> getNewBooks() {
-    return bookRepository.findTop15ByIdGreaterThanEqualOrderByIdAsc(20L);
+    return bookRepository.findTop15ByOrderByCreatedAtDesc(
+        PageRequest.of(0, LIST_SIZE));
   }
 }

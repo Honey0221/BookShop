@@ -86,4 +86,12 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 			@Param("mainCategory") String mainCategory,
 			@Param("midCategory") String midCategory,
 			@Param("detailCategory") String detailCategory);
+
+	// 조회수 기반 베스트 도서 조회
+	@Query("SELECT b FROM Book b ORDER BY b.viewCount DESC")
+	List<Book> findTop15ByOrderByViewCountDesc(Pageable pageable);
+
+	// 최신 도서 조회 (등록일 기준)
+	@Query("SELECT b FROM Book b ORDER BY b.createdAt DESC")
+	List<Book> findTop15ByOrderByCreatedAtDesc(Pageable pageable);
 }

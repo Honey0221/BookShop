@@ -234,7 +234,7 @@
       }
     }
 
-    .recommended-section,
+    .new-section,
     .best-section {
       max-width: 1200px;
       margin: 50px auto;
@@ -385,31 +385,6 @@
     </ul>
   </div>
 
-  <div class="recommended-section">
-    <h2 class="section-title">
-      <i class="fas fa-star"></i>
-      추천상품
-    </h2>
-    <div class="swiper-container recommended-swiper">
-      <div class="swiper-wrapper">
-        <div class="swiper-slide" th:each="book : ${recommendedBooks}">
-          <div class="book-card" th:data-book-id="${book.id}">
-            <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
-            <div class="book-info">
-              <h3 class="book-title" th:text="${book.title}">도서 제목</h3>
-              <div class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
-                가격
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="swiper-button-next"></div>
-      <div class="swiper-button-prev"></div>
-      <div class="swiper-pagination"></div>
-    </div>
-  </div>
-
   <div class="best-section">
     <h2 class="section-title">
       <i class="fas fa-crown"></i>
@@ -435,6 +410,30 @@
     </div>
   </div>
 
+  <div class="new-section">
+    <h2 class="section-title">
+      <i class="fas fa-star"></i>
+      신상품
+    </h2>
+    <div class="swiper-container new-swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide" th:each="book : ${newBooks}">
+          <div class="book-card" th:data-book-id="${book.id}">
+            <img th:src="${book.imageUrl}" th:alt="${book.title}" class="book-image">
+            <div class="book-info">
+              <h3 class="book-title" th:text="${book.title}">도서 제목</h3>
+              <div class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                가격
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-pagination"></div>
+    </div>
+  </div>
   <!-- 개인화 추천 섹션 -->
   <section class="recommended-section" th:if="${#authorization.expression('isAuthenticated()')}">
     <div class="category-container">
@@ -626,7 +625,7 @@
       };
 
       // 기존 Swiper 초기화
-      const recommendedSwiper = new Swiper('.recommended-swiper', swiperConfig);
+      const newSwiper = new Swiper('.new-swiper', swiperConfig);
       const bestSwiper = new Swiper('.best-swiper', swiperConfig);
 
       // 새로운 추천 섹션 Swiper 초기화
@@ -635,12 +634,12 @@
       const contentBasedSwiper = new Swiper('.category-swiper', swiperConfig);
 
       // 기존 hover 이벤트
-      const recommendedContainer = document.querySelector('.recommended-swiper');
-      recommendedContainer.addEventListener('mouseenter', function () {
-        recommendedSwiper.autoplay.start();
+      const newContainer = document.querySelector('.new-swiper');
+      newContainer.addEventListener('mouseenter', function () {
+        newSwiper.autoplay.start();
       });
-      recommendedContainer.addEventListener('mouseleave', function () {
-        recommendedSwiper.autoplay.stop();
+      newContainer.addEventListener('mouseleave', function () {
+        newSwiper.autoplay.stop();
       });
 
       const bestContainer = document.querySelector('.best-swiper');
