@@ -36,6 +36,17 @@ public class MemberActivityService {
 	// 활동 기록 저장
 	public void saveActivity(String memberEmail, Long bookId, ActivityType activityType) {
 		try {
+			// 이미 활성화된 동일한 활동이 있는지 확인
+			Optional<MemberActivity> existingActivity = activityRepository
+					.findFirstByMemberEmailAndBookIdAndActivityTypeAndCanceledFalseOrderByActivityTimeDesc(
+							memberEmail, bookId, activityType);
+
+			// 이미 활성화된 동일한 활동이 있다면 저장하지 않음
+			if (existingActivity.isPresent()) {
+				log.info("Already exists active activity - memberEmail: {}, bookId: {}, type: {}",
+						memberEmail, bookId, activityType);
+				return;
+			}
 			// 책 정보 조회
 			Optional<Book> book = bookRepository.findById(bookId);
 

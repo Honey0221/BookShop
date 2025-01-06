@@ -113,4 +113,9 @@ public interface MemberActivityRepository extends JpaRepository<MemberActivity, 
 			String memberEmail,
 			Long bookId,
 			ActivityType activityType);
+
+	Optional<MemberActivity> findFirstByMemberEmailAndBookIdAndActivityTypeAndCanceledFalseOrderByActivityTimeDesc(
+			String memberEmail,
+			Long bookId,
+			ActivityType activityType);
 }
