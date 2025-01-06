@@ -20,11 +20,11 @@ function updateReviewCount() {
 }
 
 function showAlert(title, icon = '') {
-    return Swal.fire({
-        title: title,
-        icon: icon,
-        confirmButtonText: '확인'
-    });
+  return Swal.fire({
+    title: title,
+    icon: icon,
+    confirmButtonText: '확인'
+  });
 }
 
 $(document).ready(function() {
@@ -384,9 +384,16 @@ function deleteReview(reviewId) {
     cancelButtonText: '취소'
   }).then((result) => {
     if (result.isConfirmed) {
+      let reviewFormData = {
+        bookId: $("#bookId").val(),
+        rating: $("#rating").val(),
+        content: $("#content").val()
+      }
       $.ajax({
         url: `/reviews/${reviewId}`,
         type: "Delete",
+        contentType: "application/json",
+        data: JSON.stringify(reviewFormData),
         success: function () {
           loadReviews();
           updateAvgRating($("#bookId").val());
@@ -412,71 +419,71 @@ function deleteReview(reviewId) {
 
 
 function order() {
-    const bookId = document.getElementById('bookId').value;
-    const quantity = document.getElementById('quantity').value;
-    const price = parseInt($("#totalPrice").text().replace(/[^0-9]/g, ""));
+  const bookId = document.getElementById('bookId').value;
+  const quantity = document.getElementById('quantity').value;
+  const price = parseInt($("#totalPrice").text().replace(/[^0-9]/g, ""));
 
-    const paramData = {
-        bookId: Number(bookId),
-        count: parseInt(quantity),
-        totalPrice: price
-    }
+  const paramData = {
+    bookId: Number(bookId),
+    count: parseInt(quantity),
+    totalPrice: price
+  }
 
-    $.ajax({
-        url: "/order/payment",
-        type: "POST",
-        contentType: "application/json",
-        data: JSON.stringify(paramData),
-        success: function(response) {
-            location.href = '/order/payment';
-        },
-        error: function(jqXHR) {
-            if(jqXHR.status == '401') {
-                if(confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-                    location.href = '/members/login';
-                }
-            } else {
-                alert(jqXHR.responseText);
-            }
+  $.ajax({
+    url: "/order/payment",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify(paramData),
+    success: function(response) {
+      location.href = '/order/payment';
+    },
+    error: function(jqXHR) {
+      if(jqXHR.status == '401') {
+        if(confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+          location.href = '/members/login';
         }
-    });
+      } else {
+        alert(jqXHR.responseText);
+      }
+    }
+  });
 }
 
 function addCart() {
-    // bookId 값을 hidden input에서 가져오기
-    const bookId = document.getElementById('bookId').value;
-    console.log("Raw bookId value:", bookId);
-    
-    const quantity = document.getElementById('quantity').value;
-    console.log("Raw quantity value:", quantity);
-    
+  // bookId 값을 hidden input에서 가져오기
+  const bookId = document.getElementById('bookId').value;
+  console.log("Raw bookId value:", bookId);
 
-    const url = "/cart";
-    const paramData = {
-        bookId: Number(bookId),
-        count: parseInt(quantity)
-    };
+  const quantity = document.getElementById('quantity').value;
+  console.log("Raw quantity value:", quantity);
 
-    console.log("전송할 데이터:", paramData);
 
-    $.ajax({
-        url: url,
-        type: "POST",
-        contentType: "application/json",
-        data: JSON.stringify(paramData),
+  const url = "/cart";
+  const paramData = {
+    bookId: Number(bookId),
+    count: parseInt(quantity)
+  };
 
-        success: function(result, status) {
-            alert("상품을 장바구니에 담았습니다.");
-        },
-        error: function(jqXHR, status, error) {
-            console.log("에러 발생:", error);
-            if(jqXHR.status == '401') {
-                if(confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-                    location.href = '/members/login';
-                }
-            } else {
-                alert(jqXHR.responseText);
-            }
+  console.log("전송할 데이터:", paramData);
+
+  $.ajax({
+    url: url,
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify(paramData),
+
+    success: function(result, status) {
+      alert("상품을 장바구니에 담았습니다.");
+    },
+    error: function(jqXHR, status, error) {
+      console.log("에러 발생:", error);
+      if(jqXHR.status == '401') {
+        if(confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+          location.href = '/members/login';
         }
-    });
+      } else {
+        alert(jqXHR.responseText);
+      }
+    }
+  });
 }

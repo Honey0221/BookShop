@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.bbook.constant.ActivityType;
+import com.bbook.service.MemberActivityService;
 import com.bbook.service.MemberService;
 import com.bbook.service.WishBookService;
 
@@ -23,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class WishBookController {
 	private final MemberService memberService;
 	private final WishBookService wishBookService;
+	private final MemberActivityService memberActivityService;
 
 	@PostMapping("/{bookId}")
 	@ResponseBody
@@ -32,7 +35,11 @@ public class WishBookController {
 		String email = userDetails.getUsername();
 		Long memberId = memberService.getMemberIdByEmail(email);
 		boolean isWished = wishBookService.toggleWish(memberId, bookId);
-
+		if (isWished) {
+			memberActivityService.saveActivity(email, bookId, ActivityType.HEART);
+		} else {
+			memberActivityService.cancelActivity(email, bookId, ActivityType.HEART);
+		}
 		Map<String, Object> response = new HashMap<>();
 		response.put("isWished", isWished);
 

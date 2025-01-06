@@ -17,11 +17,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.bbook.constant.ActivityType;
 import com.bbook.dto.CartDetailDto;
 import com.bbook.dto.CartItemDto;
 import com.bbook.dto.CartOrderDto;
 import com.bbook.dto.OrderDto;
 import com.bbook.service.CartService;
+import com.bbook.service.MemberActivityService;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CartController {
 	private final CartService cartService;
+	private final MemberActivityService memberActivityService;
 
 	/**
 	 * 장바구니에 상품을 추가하는 API 엔드포인트
@@ -61,6 +64,7 @@ public class CartController {
 		try {
 			// 장바구니에 상품 추가 후 생성된 장바구니 아이템 ID 반환
 			cartItemId = cartService.addCart(cartItemDto, email);
+			memberActivityService.saveActivity(email, cartItemDto.getBookId(), ActivityType.CART);
 		} catch (Exception e) {
 			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
@@ -111,7 +115,8 @@ public class CartController {
 		if (!cartService.validateCartItem(cartItemId, principal.getName())) {
 			return new ResponseEntity<String>("수정 권한이 없습니다.", HttpStatus.FORBIDDEN);
 		}
-		cartService.deleteCartItem(cartItemId);
+		Long bookId = cartService.deleteCartItem(cartItemId);
+		memberActivityService.cancelActivity(principal.getName(), bookId, ActivityType.CART);
 		return new ResponseEntity<Long>(cartItemId, HttpStatus.OK);
 	}
 
@@ -128,7 +133,8 @@ public class CartController {
 
 		try {
 			for (Long cartItemId : cartItemIds) {
-				cartService.deleteCartItem(cartItemId);
+				Long bookId = cartService.deleteCartItem(cartItemId);
+				memberActivityService.cancelActivity(principal.getName(), bookId, ActivityType.CART);
 			}
 			return new ResponseEntity<List<Long>>(cartItemIds, HttpStatus.OK);
 		} catch (Exception e) {

@@ -53,11 +53,11 @@ public class ReviewController {
 			}
 
 			ReviewDto reviewDto = ReviewDto.builder()
-							.memberId(memberId)
-							.bookId(request.getBookId())
-							.rating(request.getRating())
-							.content(request.getContent())
-							.build();
+					.memberId(memberId)
+					.bookId(request.getBookId())
+					.rating(request.getRating())
+					.content(request.getContent())
+					.build();
 
 			reviewService.saveReview(reviewDto);
 			return ResponseEntity.ok(Map.of("success", true));
@@ -75,13 +75,11 @@ public class ReviewController {
 			@RequestParam(defaultValue = "0") int page,
 			@AuthenticationPrincipal UserDetails userDetails) {
 		String email = userDetails != null ? userDetails.getUsername() : null;
-		Long currentMemberId = email != null ?
-				memberService.getMemberIdByEmail(email) : null;
+		Long currentMemberId = email != null ? memberService.getMemberIdByEmail(email) : null;
 
 		PageRequest pageRequest = PageRequest.of(
 				page, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
-		Page<ReviewDto> reviews =
-				reviewService.getBookReviews(bookId, currentMemberId, pageRequest);
+		Page<ReviewDto> reviews = reviewService.getBookReviews(bookId, currentMemberId, pageRequest);
 
 		return ResponseEntity.ok(reviews);
 	}
@@ -114,8 +112,13 @@ public class ReviewController {
 	}
 
 	@DeleteMapping("/{reviewId}")
-	public ResponseEntity<Void> deleteReview(@PathVariable("reviewId") Long reviewId) {
+	@ResponseBody
+	public ResponseEntity<Void> deleteReview(
+			@PathVariable("reviewId") Long reviewId,
+			@RequestBody ReviewRequestDto request,
+			@AuthenticationPrincipal UserDetails userDetails) {
 		reviewService.deleteReview(reviewId);
+		memberActivityService.cancelActivity(userDetails.getUsername(), request.getBookId(), ActivityType.REVIEW);
 		return ResponseEntity.ok().build();
 	}
 

@@ -39,6 +39,8 @@ public class SecurityConfig {
                                 .requestMatchers("/books/**").permitAll()
                                 .requestMatchers("/book-list/**").permitAll()
                                 .requestMatchers("/search").permitAll()
+                                .requestMatchers("/wish/**").permitAll()
+                                .requestMatchers("/cart/**").permitAll()
                                 .requestMatchers("/reviews", "/reviews/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
 

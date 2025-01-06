@@ -144,6 +144,7 @@ function deleteCartItem(btn) {
     $.ajax({
         url: '/cart/' + cartItemId,
         type: 'DELETE',
+        data: JSON.stringify(cartItemId),
         beforeSend: function(xhr) {
             xhr.setRequestHeader(header, token);
         },

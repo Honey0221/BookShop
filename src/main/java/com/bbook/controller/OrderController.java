@@ -3,19 +3,24 @@ package com.bbook.controller;
 import com.bbook.dto.OrderDto;
 import com.bbook.dto.OrderHistDto;
 import com.bbook.entity.Book;
+import com.bbook.entity.CartItem;
 import com.bbook.entity.Order;
 import com.bbook.exception.IamportResponseException;
 import com.bbook.repository.BookRepository;
+import com.bbook.repository.CartItemRepository;
 import com.bbook.service.OrderService;
 import com.bbook.service.CartService;
+import com.bbook.service.MemberActivityService;
 import com.bbook.client.IamportClient;
 import com.bbook.client.IamportResponse;
+import com.bbook.constant.ActivityType;
 import com.bbook.dto.CancelData;
 import com.bbook.dto.CartOrderDto;
 import com.bbook.dto.Payment;
 import com.bbook.entity.Member;
 import com.bbook.repository.MemberRepository;
 
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +58,8 @@ public class OrderController {
 	private final CartService cartService;
 	private final BookRepository bookRepository;
 	private final MemberRepository memberRepository;
+	private final MemberActivityService memberActivityService;
+	private final CartItemRepository cartItemRepository;
 
 	@GetMapping(value = { "/orders", "/orders/{page}" })
 	public String orderHist(@PathVariable("page") Optional<Integer> page,
@@ -279,6 +286,7 @@ public class OrderController {
 					memberRepository.save(member);
 					log.info("포인트 적립 완료 - 적립 포인트: {}", earnedPoints);
 
+					memberActivityService.saveActivity(orderDto.getEmail(), orderDto.getBookId(), ActivityType.PURCHASE);
 					// 세션에서 포인트 정보 제거
 					session.removeAttribute("usedPoints");
 
@@ -307,6 +315,13 @@ public class OrderController {
 								request.getImpUid(), request.getMerchantUid());
 						log.info("장바구니 주문 생성 완료 - orderId: {}", orderId);
 
+						for (CartOrderDto dto : cartOrderDtoList) {
+							CartItem cartItem = cartItemRepository.findById(dto.getCartItemId())
+									.orElseThrow(EntityExistsException::new);
+							memberActivityService.saveActivity(orderEmail, cartItem.getBook().getId(), ActivityType.PURCHASE);
+						}
+
+						cartService.deleteCartItems(cartOrderDtoList);
 						// 포인트 적립 (결제 금액의 5%)
 						Order order = orderService.findById(orderId);
 						Member member = memberRepository.findByEmail(orderEmail)

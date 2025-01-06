@@ -52,6 +52,12 @@ public class MemberActivity {
 	@Column(name = "activity_time", nullable = false)
 	private LocalDateTime activityTime;
 
+	@Column(name = "is_canceled")
+	private boolean canceled = false;
+
+	@Column(name = "cancel_time")
+	private LocalDateTime cancelTime;
+
 	@Builder
 	public MemberActivity(String memberEmail, Long bookId, ActivityType activityType,
 			String mainCategory, String midCategory, String detailCategory) {
@@ -62,5 +68,21 @@ public class MemberActivity {
 		this.midCategory = midCategory;
 		this.detailCategory = detailCategory;
 		this.activityTime = LocalDateTime.now();
+	}
+
+	public void cancel() {
+		if (this.canceled) {
+			throw new RuntimeException("이미 취소된 활동입니다.");
+		}
+		this.canceled = true;
+		this.cancelTime = LocalDateTime.now();
+	}
+
+	public boolean isCancellable() {
+		return !this.canceled &&
+				(this.activityType == ActivityType.HEART ||
+						this.activityType == ActivityType.CART ||
+						this.activityType == ActivityType.PURCHASE ||
+						this.activityType == ActivityType.REVIEW);
 	}
 }

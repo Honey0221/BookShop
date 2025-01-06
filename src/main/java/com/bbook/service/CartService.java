@@ -130,13 +130,25 @@ public class CartService {
 	 * @param cartItemId 삭제할 장바구니 상품 ID
 	 * @throws EntityExistsException 장바구니 상품을 찾을 수 없는 경우
 	 */
+
 	@Transactional
-	public void deleteCartItem(Long cartItemId) {
+	public Long deleteCartItem(Long cartItemId) {
 		CartItem cartItem = cartItemRepository.findById(cartItemId)
 				.orElseThrow(EntityExistsException::new);
+		Long bookId = cartItem.getBook().getId();
 		cartItemRepository.delete(cartItem);
+		return bookId;
 	}
 
+	public void deleteCartItems(List<CartOrderDto> cartOrderDtoList) {
+		for (CartOrderDto cartOrderDto : cartOrderDtoList) {
+			CartItem cartItem = cartItemRepository.findById(cartOrderDto.getCartItemId())
+					.orElseThrow(EntityExistsException::new);
+			cartItemRepository.delete(cartItem);
+		}
+	}
+
+	@Transactional
 	public Long orderCartItem(List<CartOrderDto> cartOrderDtoList, String email, String impUid, String merchantUid) {
 		List<OrderDto> orderDtoList = new ArrayList<>();
 
@@ -155,12 +167,6 @@ public class CartService {
 
 		Long orderId = orderService.orders(orderDtoList, email);
 
-		// Cart애서 있던 Item 주문이 되니까 CartItem 모두 삭제
-		for (CartOrderDto cartOrderDto : cartOrderDtoList) {
-			CartItem cartItem = cartItemRepository.findById(cartOrderDto.getCartItemId())
-					.orElseThrow(EntityExistsException::new);
-			cartItemRepository.delete(cartItem);
-		}
 		return orderId;
 	}
 
