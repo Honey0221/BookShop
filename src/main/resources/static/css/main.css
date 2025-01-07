@@ -421,3 +421,168 @@
     display: none;
   }
 }
+
+/* 챗봇 아이콘 스타일 */
+.chat-bot-icon {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: #2196F3;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.chat-bot-icon:hover {
+  transform: scale(1.1);
+  background-color: #1976D2;
+}
+
+.chat-bot-icon i {
+  color: white;
+  font-size: 24px;
+}
+
+/* 챗봇 모달 스타일 */
+.chat-modal {
+  display: none;
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  width: 525px;
+  height: 750px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+}
+
+.chat-header {
+  padding: 15px;
+  background: #2196F3;
+  color: white;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-close {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.chat-messages {
+  height: 630px;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.chat-input-container {
+  padding: 15px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  outline: none;
+}
+
+.chat-send {
+  padding: 8px 15px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.chat-send:hover {
+  background: #1976D2;
+}
+
+.message {
+  margin-bottom: 10px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.user-message {
+  margin-left: auto;
+  background: #E3F2FD;
+  padding: 10px;
+  border-radius: 10px 10px 0 10px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.bot-message {
+  background: #F5F5F5;
+  padding: 10px;
+  border-radius: 10px 10px 10px 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.book-recommendation {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.book-recommendation .book-thumb {
+  width: 50px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.book-recommendation .book-info {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 60px);
+}
+
+.book-recommendation .book-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.book-recommendation .book-price {
+  font-size: 13px;
+  color: #e44d26;
+}
+
+.recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}

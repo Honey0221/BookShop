@@ -2,6 +2,7 @@ package com.bbook.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -94,4 +95,17 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 	// 최신 도서 조회 (등록일 기준)
 	@Query("SELECT b FROM Book b ORDER BY b.createdAt DESC")
 	List<Book> findTop15ByOrderByCreatedAtDesc(Pageable pageable);
+
+	// 카테고리별 인기 도서 조회
+	@Query("SELECT b FROM Book b WHERE " +
+			"b.mainCategory = :category OR " +
+			"b.midCategory = :category OR " +
+			"b.detailCategory = :category " +
+			"ORDER BY b.viewCount DESC")
+	List<Book> findTopBooksByCategory(@Param("category") String category, Pageable pageable);
+
+	default List<Book> findTopBooksByCategory(String category, int limit) {
+		return findTopBooksByCategory(category, PageRequest.of(0, limit));
+	}
+
 }

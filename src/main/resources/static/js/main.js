@@ -138,4 +138,98 @@ document.addEventListener('DOMContentLoaded', function () {
   contentBasedContainer.addEventListener('mouseleave', function () {
     contentBasedSwiper.autoplay.stop();
   });
+
+  // 챗봇 관련 요소 선택
+  const chatIcon = document.querySelector('.chat-bot-icon');
+  const chatModal = document.querySelector('.chat-modal');
+  const chatClose = document.querySelector('.chat-close');
+  const chatInput = document.querySelector('.chat-input');
+  const chatSend = document.querySelector('.chat-send');
+  const chatMessages = document.querySelector('.chat-messages');
+
+  // 챗봇 모달 토글
+  chatIcon.addEventListener('click', () => {
+    chatModal.style.display = 'block';
+    if (chatMessages.children.length === 0) {
+      addBotMessage('안녕하세요! 도서 추천 챗봇입니다. 어떤 장르의 책을 찾으시나요? 소설, 자기계발, 과학, 기술 등 관심 있는 분야를 알려주세요.');
+    }
+  });
+
+  chatClose.addEventListener('click', () => {
+    chatModal.style.display = 'none';
+  });
+
+  // 메시지 전송 처리
+  function sendMessage() {
+    const message = chatInput.value.trim();
+    if (message) {
+      addUserMessage(message);
+      chatInput.value = '';
+
+      // 서버로 메시지 전송
+      fetch('/api/chat/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          userId: null  // 필요한 경우 사용자 ID 추가
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          // 챗봇 응답 메시지 표시
+          addBotMessage(data.message);
+
+          // 책 추천 목록이 있는 경우 표시
+          if (data.recommendations && data.recommendations.length > 0) {
+            const recommendationsHtml = data.recommendations.map(book => `
+                    <div class="book-recommendation">
+                        <img src="${book.imageUrl}" alt="${book.title}" class="book-thumb">
+                        <div class="book-info">
+                            <div class="book-title">${book.title}</div>
+                            <div class="book-price">${book.price.toLocaleString()}원</div>
+                        </div>
+                    </div>
+                `).join('');
+
+            const recommendationsContainer = document.createElement('div');
+            recommendationsContainer.className = 'message bot-message recommendations';
+            recommendationsContainer.innerHTML = recommendationsHtml;
+            chatMessages.appendChild(recommendationsContainer);
+          }
+
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          addBotMessage('죄송합니다. 일시적인 오류가 발생했습니다.');
+        });
+    }
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+
+  // 메시지 추가 함수들
+  function addUserMessage(text) {
+    const message = document.createElement('div');
+    message.className = 'message user-message';
+    message.textContent = text;
+    chatMessages.appendChild(message);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addBotMessage(text) {
+    const message = document.createElement('div');
+    message.className = 'message bot-message';
+    message.textContent = text;
+    chatMessages.appendChild(message);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 });
