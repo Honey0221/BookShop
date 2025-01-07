@@ -85,4 +85,8 @@ public class MemberActivity {
 						this.activityType == ActivityType.PURCHASE ||
 						this.activityType == ActivityType.REVIEW);
 	}
+
+	public void updateActivityTime(LocalDateTime newTime) {
+		this.activityTime = newTime;
+	}
 }

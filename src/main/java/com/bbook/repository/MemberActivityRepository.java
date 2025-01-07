@@ -27,6 +27,17 @@ public interface MemberActivityRepository extends JpaRepository<MemberActivity, 
 			Long bookId,
 			ActivityType activityType);
 
+	// 최근 본 도서 조회
+	@Query("SELECT ma FROM MemberActivity ma " +
+			"WHERE ma.memberEmail = :email " +
+			"AND ma.activityType = :activityType " +
+			"AND ma.canceled = false " +
+			"ORDER BY ma.activityTime DESC")
+	List<MemberActivity> findRecentActivities(
+			@Param("email") String email,
+			@Param("activityType") ActivityType activityType,
+			Pageable pageable);
+
 	// 1. 컨텐츠 기반 필터링을 위한 쿼리
 	@Query("SELECT ma.mainCategory, ma.midCategory, ma.detailCategory, COUNT(ma) " +
 			"FROM MemberActivity ma " +

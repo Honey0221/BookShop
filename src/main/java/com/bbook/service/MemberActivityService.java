@@ -35,6 +35,7 @@ public class MemberActivityService {
 	private static final int RECOMMENDATION_SIZE = 10;
 	private static final int MIN_COMMON_BOOKS = 1;
 	private static final int MIN_SIMILAR_USERS = 1;
+	private static final int RECENT_VIEW_SIZE = 10;
 
 	// 활동 기록 저장
 	public void saveActivity(String memberEmail, Long bookId, ActivityType activityType) {
@@ -46,7 +47,10 @@ public class MemberActivityService {
 
 			// 이미 활성화된 동일한 활동이 있다면 저장하지 않음
 			if (existingActivity.isPresent()) {
-				log.info("Already exists active activity - memberEmail: {}, bookId: {}, type: {}",
+				MemberActivity activity = existingActivity.get(); // 기존 엔티티 가져오기
+				activity.updateActivityTime(LocalDateTime.now()); // 시간만 업데이트
+				activityRepository.save(activity); // 같은 엔티티를 다시 저장
+				log.info("Activity time updated - memberEmail: {}, bookId: {}, type: {}",
 						memberEmail, bookId, activityType);
 				return;
 			}
@@ -90,6 +94,19 @@ public class MemberActivityService {
 		activity.cancel();
 		log.info("Activity canceled - email: {}, bookId: {}, type: {}",
 				memberEmail, bookId, activityType);
+	}
+
+	// 최근 본 도서 조회
+	public List<Book> getRecentViewedBooks(String email) {
+		List<MemberActivity> recentActivities = activityRepository.findRecentActivities(
+				email,
+				ActivityType.VIEW,
+				PageRequest.of(0, RECENT_VIEW_SIZE));
+
+		return recentActivities.stream()
+				.map(activity -> bookRepository.findById(activity.getBookId())
+						.orElseThrow(() -> new EntityNotFoundException("Book not found: " + activity.getBookId())))
+				.collect(Collectors.toList());
 	}
 
 	// 1. 컨텐츠 기반 추천

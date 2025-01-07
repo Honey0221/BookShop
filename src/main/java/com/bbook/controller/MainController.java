@@ -46,11 +46,9 @@ public class MainController {
 		if (principal != null) {
 			String email = principal.getName();
 			model.addAttribute("personalizedBooks", memberActivityService.getHybridRecommendations(email));
-			log.info("personalizedBooks: {}", memberActivityService.getHybridRecommendations(email));
 			model.addAttribute("collaborativeBooks", memberActivityService.getCollaborativeRecommendations(email));
-			log.info("collaborativeBooks: {}", memberActivityService.getCollaborativeRecommendations(email));
 			model.addAttribute("contentBasedBooks", memberActivityService.getContentBasedRecommendations(email));
-			log.info("contentBasedBooks: {}", memberActivityService.getContentBasedRecommendations(email));
+			model.addAttribute("recentViewedBooks", memberActivityService.getRecentViewedBooks(email));
 		}
 		return "main";
 	}
