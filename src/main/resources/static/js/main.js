@@ -7,6 +7,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const midCategoriesContainer = mainCategoryElement.nextElementSibling;
       const midCategoriesList = midCategoriesContainer.querySelector('.mid-categories-list');
 
+      // 메인 카테고리 클릭 이벤트 추가
+      mainCategoryElement.addEventListener('click', function () {
+        window.location.href = `/book-list/category?main=${encodeURIComponent(mainCategory)}`;
+      });
+
       fetch(`/api/categories/${encodeURIComponent(mainCategory)}/mid`)
         .then(response => {
           if (!response.ok) {
