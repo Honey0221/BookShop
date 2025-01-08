@@ -20,63 +20,78 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-        private final CustomUserDetailsService customUserDetailsService;
-        private final CustomOauth2UserService customOauth2UserService;
-        private final CustomAuthenticationFailureHandler failureHandler;
-        private final CustomAuthenticationSuccessHandler successHandler;
+	private final CustomUserDetailsService customUserDetailsService;
+	private final CustomOauth2UserService customOauth2UserService;
+	private final CustomAuthenticationFailureHandler failureHandler;
+	private final CustomAuthenticationSuccessHandler successHandler;
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                http.authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
-                                .requestMatchers("/", "/members/**", "/item/**", "/images/**").permitAll()
-                                .requestMatchers("/emailCheck").permitAll()
-                                .requestMatchers("/api/**").permitAll()
-                                .requestMatchers("/books/**").permitAll()
-                                .requestMatchers("/book-list/**").permitAll()
-                                .requestMatchers("/search").permitAll()
-                                .requestMatchers("/wish/**").permitAll()
-                                .requestMatchers("/cart/**").permitAll()
-                                .requestMatchers("/reviews", "/reviews/**").permitAll()
-                                .requestMatchers("/admin/**").hasRole("ADMIN")
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/css/**", "/js/**", "/img/**", "/favicon.ico",
+						"/error")
+				.permitAll()
+				.requestMatchers("/", "/members/**", "/item/**", "/images/**")
+				.permitAll()
+				.requestMatchers("/emailCheck")
+				.permitAll()
+				.requestMatchers("/api/**")
+				.permitAll()
+				.requestMatchers("/books/**")
+				.permitAll()
+				.requestMatchers("/book-list/**")
+				.permitAll()
+				.requestMatchers("/search")
+				.permitAll()
+				.requestMatchers("/wish/**")
+				.permitAll()
+				.requestMatchers("/cart/**")
+				.permitAll()
+				.requestMatchers("/reviews", "/reviews/**")
+				.permitAll()
+				.requestMatchers("/bookshop/review/**")
+				.permitAll()
+				.requestMatchers("/admin/**")
+				.hasRole("ADMIN")
 
-                                .anyRequest().authenticated()).formLogin(formLogin -> formLogin
-                                                .loginPage("/members/login")
-                                                .defaultSuccessUrl("/")
-                                                .usernameParameter("email")
-                                                .failureUrl("/members/login/error"))
-                                .logout(logout -> logout
-                                                .logoutRequestMatcher(new AntPathRequestMatcher("/members/logout"))
-                                                .logoutSuccessUrl("/"))
-                                .oauth2Login(oauth2 -> oauth2
-                                                .defaultSuccessUrl("/")
-                                                .successHandler(successHandler)
-                                                .failureHandler(failureHandler)
-                                                .userInfoEndpoint(userInfo -> userInfo
-                                                                .userService(customOauth2UserService)))
-                                .csrf(csrf -> csrf
-                                                .ignoringRequestMatchers("/item/**")
-                                                .ignoringRequestMatchers("/items/**")
-                                                .ignoringRequestMatchers("/reviews/**")
-                                                .ignoringRequestMatchers("/api/**")
-                                                .ignoringRequestMatchers("/cart/**")
-                                                .ignoringRequestMatchers("/wish/**")
-                                                .ignoringRequestMatchers("/order/payment/**"));
+				.anyRequest()
+				.authenticated()).formLogin(formLogin -> formLogin
+						.loginPage("/members/login")
+						.defaultSuccessUrl("/")
+						.usernameParameter("email")
+						.failureUrl("/members/login/error"))
+				.logout(logout -> logout
+						.logoutRequestMatcher(new AntPathRequestMatcher("/members/logout"))
+						.logoutSuccessUrl("/"))
+				.oauth2Login(oauth2 -> oauth2
+						.defaultSuccessUrl("/")
+						.successHandler(successHandler)
+						.failureHandler(failureHandler)
+						.userInfoEndpoint(userInfo -> userInfo
+								.userService(customOauth2UserService)))
+				.csrf(csrf -> csrf
+						.ignoringRequestMatchers("/item/**")
+						.ignoringRequestMatchers("/items/**")
+						.ignoringRequestMatchers("/reviews/**")
+						.ignoringRequestMatchers("/api/**")
+						.ignoringRequestMatchers("/cart/**")
+						.ignoringRequestMatchers("/wish/**")
+						.ignoringRequestMatchers("/order/payment/**"));
 
-                http.exceptionHandling(exception -> exception
-                                .authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
+		http.exceptionHandling(exception -> exception
+				.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
 
-                return http.build();
-        }
+		return http.build();
+	}
 
-        @Bean
-        public static PasswordEncoder passwordEncoder() {
-                return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        }
+	@Bean
+	public static PasswordEncoder passwordEncoder() {
+		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+	}
 
-        @Autowired
-        public void configure(AuthenticationManagerBuilder auth) throws Exception {
-                auth.userDetailsService(customUserDetailsService)
-                                .passwordEncoder(passwordEncoder());
-        }
+	@Autowired
+	public void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.userDetailsService(customUserDetailsService)
+				.passwordEncoder(passwordEncoder());
+	}
 }

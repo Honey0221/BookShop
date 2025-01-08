@@ -525,4 +525,23 @@ public class OrderController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 		}
 	}
+
+	// 구매 여부 검사
+	@GetMapping("/orders/check/{bookId}")
+	public ResponseEntity<Map<String, Boolean>> checkPurchased(
+			@PathVariable Long bookId, Principal principal) {
+		if (principal == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		String email = principal.getName();
+		Long memberId = memberRepository.findByEmail(email).get().getId();
+
+		boolean purchased = orderService.hasUserPurchasedBook(memberId, bookId);
+
+		Map<String, Boolean> response = new HashMap<>();
+		response.put("purchased", purchased);
+
+		return ResponseEntity.ok(response);
+	}
 }

@@ -161,3 +161,66 @@
 .review-login-message a:hover {
     text-decoration: underline;
 }
+
+.review-images img {
+    transition: transform 0.2s;
+}
+
+.review-image-modal {
+    z-index: 1060 !important;
+}
+
+.review-item .badge {
+  font-size: 0.8rem;
+  padding: 0.35em 0.8em;
+}
+
+.review-item .badge[data-tag="THANKS"] { background-color: #dc3545 !important; }
+.review-item .badge[data-tag="BEST"] { background-color: #ffc107 !important; }
+.review-item .badge[data-tag="EMPATHY"] { background-color: #0dcaf0 !important; }
+.review-item .badge[data-tag="FUN"] { background-color: #6f42c1 !important; }
+.review-item .badge[data-tag="HEALING"] { background-color: #20c997 !important; }
+
+@keyframes likeEffect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.btn-sm i.fas.fa-thumbs-up {
+    color: #007bff;
+    animation: likeEffect 0.3s ease;
+    margin-right: 4px;
+}
+
+.progress.vertical {
+    position: relative;
+    width: 30px;
+    height: 150px;
+    display: flex;
+    align-items: flex-end;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress.vertical .progress-bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    transition: height 0.6s ease;
+    min-height: 0;
+}
+
+.tag-distribution {
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.tag-bar-item {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}

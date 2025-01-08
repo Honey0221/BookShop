@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.bbook.constant.ActivityType;
+import com.bbook.dto.ReviewStatsDto;
 import com.bbook.entity.Book;
 import com.bbook.service.BookDetailService;
 import com.bbook.service.ReviewService;
@@ -35,32 +36,43 @@ public class BookController {
 
 	@GetMapping
 	public String getBook(@RequestParam(name = "bookId") Long id, Model model) {
-		Book book = bookDetailService.getBookById(id);
-		model.addAttribute("book", book);
+		try {
+			Book book = bookDetailService.getBookById(id);
+			model.addAttribute("book", book);
 
-		Double avgRating = reviewService.getAverageRatingByBookId(book.getId());
-		model.addAttribute("avgRating", avgRating);
+			Double avgRating = reviewService.getAverageRatingByBookId(book.getId());
+			model.addAttribute("avgRating", avgRating);
 
-		Set<Book> authorBooks = new HashSet<>(bookDetailService
-				.getBooksByAuthor(book.getAuthor()).stream()
-				.filter(b -> !b.getId().equals(book.getId())).toList());
+			Set<Book> authorBooks = new HashSet<>(bookDetailService
+					.getBooksByAuthor(book.getAuthor()).stream()
+					.filter(b -> !b.getId().equals(book.getId())).toList());
 
-		List<Book> randomBooks = new ArrayList<>(authorBooks);
-		Collections.shuffle(randomBooks);
-		randomBooks = randomBooks.stream().limit(4).toList();
+			List<Book> randomBooks = new ArrayList<>(authorBooks);
+			Collections.shuffle(randomBooks);
+			randomBooks = randomBooks.stream().limit(4).toList();
 
-		model.addAttribute("authorBooks", randomBooks);
+			model.addAttribute("authorBooks", randomBooks);
 
-		Optional<String> memberEmail = memberService.getCurrentMemberEmail();
-		if (memberEmail.isPresent()) {
-			memberActivityService.saveActivity(memberEmail.get(), book.getId(), ActivityType.VIEW);
-			bookDetailService.incrementViewCount(book.getId()); // 조회수 증가
-			// 찜하기 상태 확인
-			Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
-			boolean isWished = wishBookService.isWished(memberId, book.getId());
-			model.addAttribute("isWished", isWished);
+			Optional<String> memberEmail = memberService.getCurrentMemberEmail();
+			if (memberEmail.isPresent()) {
+				memberActivityService.saveActivity(memberEmail.get(), book.getId(),
+						ActivityType.VIEW);
+				bookDetailService.incrementViewCount(book.getId()); // 조회수 증가		
+				Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
+				boolean isWished = wishBookService.isWished(memberId, book.getId());
+				model.addAttribute("isWished", isWished);
+			}
+
+			ReviewStatsDto reviewStats = reviewService.getReviewStats(id);
+			model.addAttribute("ratingStats", reviewStats.getRatingStats());
+			model.addAttribute("avgRating", reviewStats.getAvgRating());
+			model.addAttribute("tagStats", reviewStats.getTagStats());
+			model.addAttribute("mostCommonTag", reviewStats.getMostCommonTag());
+
+			return "books/bookDtl";
+		} catch (Exception e) {
+			System.out.println("오류 발생" + e.getMessage());
+			return null;
 		}
-
-		return "books/bookDtl";
 	}
 }

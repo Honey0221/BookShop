@@ -1,23 +1,17 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/layout}">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/layout}">
 
 <head>
-
-
   <th:block layout:fragment="css">
     <link th:href="@{/css/bookDtl.css}" rel="stylesheet">
   </th:block>
 
-  <script th:inline="javascript">
-    /*<![CDATA[*/
-    const bookId = /*[[${book.id}]]*/ null;
-    console.log("bookId:", bookId); // 디버깅용
-    /*]]>*/
-  </script>
-
   <th:block layout:fragment="script">
     <script th:src="@{/js/bookDtl.js}"></script>
+    <script th:src="@{/js/reviewAction.js}"></script>
   </th:block>
 </head>
 
@@ -27,7 +21,8 @@
       <!-- 책 이미지 -->
       <div class="col-md-5">
         <div class="book-img">
-          <img th:src="${book.imageUrl}" class="img-fluid" th:alt="${book.title}">
+          <img th:src="${book.imageUrl}" class="img-fluid"
+               th:alt="${book.title}">
         </div>
       </div>
 
@@ -40,15 +35,16 @@
               <span class="rating-stars text-warning">
                 <i class="fas fa-star"></i>
               </span>
-              <span class="rating-value" th:text="|${#numbers.formatDecimal(avgRating, 1, 1)}|">
+              <span class="rating-value"
+                    th:text="|${#numbers.formatDecimal(avgRating, 1, 1)}|">
               </span>
             </div>
             <button type="button" class="btn btn-link p-0 ms-2" id="loginBtn"
-              sec:authorize="!isAuthenticated()">
+                    sec:authorize="!isAuthenticated()">
               <i class="far fa-heart text-danger fs-5"></i>
             </button>
             <button type="button" class="btn btn-link p-0 ms-2" id="wishBtn"
-              sec:authorize="isAuthenticated()">
+                    sec:authorize="isAuthenticated()">
               <i class="far fa-heart text-danger fs-5"
                  th:classappend="${isWished ? 'fas' : 'far'}"></i>
             </button>
@@ -63,27 +59,32 @@
           </div>
           <div class="book-price mb-4">
             <span>가격:</span>
-            <span th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
+            <span
+              th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
             </span>
           </div>
 
           <div class="quantity-group mb-4">
             <label for="quantity">수량:</label>
-            <input type="number" id="quantity" name="quantity" class="form-control d-inline-block w-auto" value="1"
-              min="1">
+            <input type="number" id="quantity" name="quantity"
+                   class="form-control d-inline-block w-auto" value="1"
+                   min="1">
           </div>
 
           <div class="total-price mb-4">
             <span>총 결제 가격:</span>
-            <span id="totalPrice" th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
+            <span id="totalPrice"
+                  th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
             </span>
           </div>
 
           <div class="button-group">
-            <button type="button" onclick="addCart()" class="btn btn-primary" id="cartBtn">
+            <button type="button" onclick="addCart()" class="btn btn-primary"
+                    id="cartBtn">
               <i class="fas fa-shopping-cart"></i> 장바구니
             </button>
-            <button type="button" onclick="order()" class="btn btn-success" id="orderBtn">
+            <button type="button" onclick="order()" class="btn btn-success"
+                    id="orderBtn">
               <i class="fas fa-credit-card"></i> 바로구매
             </button>
             <button type="button" class="btn btn-warning" id="shareKakaoBtn">
@@ -99,25 +100,108 @@
       <div class="col-12">
         <ul class="nav nav-tabs" id="bookTab" role="tablist">
           <li class="nav-item">
-            <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#description" role="tab">상세
+            <a class="nav-link active" id="description-tab" data-bs-toggle="tab"
+               href="#description" role="tab">상세
               설명</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" id="review-tab" data-bs-toggle="tab" href="#review" role="tab">리뷰</a>
+            <a class="nav-link" id="review-tab" data-bs-toggle="tab"
+               href="#review" role="tab">리뷰</a>
           </li>
         </ul>
         <div class="tab-content mt-3" id="bookTabContent">
-          <div class="tab-pane fade show active" id="description" role="tabpanel">
+          <div class="tab-pane fade show active" id="description"
+               role="tabpanel">
             <p th:text="${book.description}"></p>
           </div>
           <div class="tab-pane fade" id="review" role="tabpanel">
-            <!-- 리뷰 작성 버튼 -->
-            <div sec:authorize="isAuthenticated()" class="d-flex justify-content-end mb-3">
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+            <!-- 리뷰 통계 영역 -->
+            <div class="review-statistics mb-4"
+                 sec:authorize="isAuthenticated()">
+              <div class="row">
+                <!-- 평점 통계 -->
+                <div class="col-md-6">
+                  <div class="rating-stats p-3 border rounded">
+                    <h5 class="mb-3">구매자 평점</h5>
+                    <div class="d-flex align-items-center mb-2">
+                      <div class="average-rating-large me-3">
+                        <div class="text-warning text-center fs-4">
+                          <i class="fas fa-star"></i>
+                        </div>
+                        <span class="display-4"
+                              th:text="${#numbers.formatDecimal(avgRating, 1, 1)}">
+                          4.5</span>
+                      </div>
+                      <div class="rating-bars flex-grow-1">
+                        <div class="rating-bar-item"
+                             th:each="i : ${#numbers.sequence(5, 1, -1)}">
+                          <div class="d-flex align-items-center">
+                            <small class="text-muted me-2" th:text="${i + '점'}">5점</small>
+                            <div class="progress flex-grow-1"
+                                 style="height: 8px;">
+                              <div class="progress-bar bg-warning"
+                                   role="progressbar"
+                                   th:style="'width: ' + ${ratingStats.get(i)} + '%'"
+                                   th:attr="aria-valuenow=${ratingStats.get(i)}"
+                                   aria-valuemin="0" aria-valuemax="100">
+                              </div>
+                            </div>
+                          </div>
+                          <small class="text-muted ms-2"
+                                 th:text="${#numbers.formatDecimal(ratingStats.get(i), 1, 0) + '%'}">
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 태그 통계 -->
+                <div class="col-md-6">
+                  <div class="tag-stats p-3 border rounded">
+                    <h5 class="mb-3">이 책의 특징</h5>
+                    <div class="most-common-tag mb-3">
+                      <p class="mb-1">가장 많이 선택된 태그</p>
+                      <h4 class="text-primary" th:text="${mostCommonTag}">
+                        최고예요</h4>
+                    </div>
+                    <div class="tag-distribution d-flex justify-content-between"
+                         style="height: 200px;">
+                      <div class="tag-bar-item" style="width: 18%;"
+                           th:each="tagType : ${T(com.bbook.constant.TagType).values()}">
+                        <div class="d-flex flex-column align-items-center h-100">
+                          <div class="progress vertical">
+                            <div class="progress-bar bg-primary" role="progressbar"
+                                 th:style="'height: ' + ${tagStats.containsKey(tagType.name()) ? tagStats.get(tagType.name()) : 0} + '%'"
+                                 th:attr="aria-valuenow=${tagStats.containsKey(tagType.name()) ? tagStats.get(tagType.name()) : 0}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                          </div>
+                          <small class="text-muted mt-2" th:text="${tagType.displayValue}">태그명</small>
+                          <small class="text-muted"
+                                 th:text="${tagStats.containsKey(tagType.name()) ? #numbers.formatDecimal(tagStats.get(tagType.name()), 1, 0) : '0'} + '%'">
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 리뷰 버튼들 -->
+            <div class="d-flex justify-content-end align-items-center mb-3 gap-3"
+              sec:authorize="isAuthenticated()">
+              <select id="reviewSort" class="form-select" style="width: auto;">
+                <option value="likes">좋아요순</option>
+                <option value="date">최신순</option>
+              </select>
+              <button type="button" class="btn btn-primary"
+                      data-bs-toggle="modal" data-bs-target="#reviewModal"
+                      id="writeReviewBtn">
                 리뷰 작성
               </button>
             </div>
-            <div sec:authorize="!isAuthenticated()" class="review-login-message">
+            <div sec:authorize="!isAuthenticated()"
+                 class="review-login-message">
               <p>리뷰를 작성하려면 <a href="/members/login">로그인</a>이 필요합니다.</p>
             </div>
             <!-- 리뷰 목록 -->
@@ -127,12 +211,14 @@
               </div>
             </div>
             <!-- 리뷰 모달 -->
-            <div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel">
+            <div class="modal fade" id="reviewModal" tabindex="-1" role="dialog"
+                 aria-labelledby="reviewModalLabel">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header">
                     <h5 class="modal-title" id="reviewModalLabel">리뷰 작성</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
                     <form id="reviewForm">
@@ -148,11 +234,60 @@
                         </select>
                       </div>
                       <div class="mb-3">
+                        <label class="form-label">이 책은 어떠셨나요?</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                          <input type="checkbox" class="btn-check"
+                                 name="tagType"
+                                 id="tag-thanks" value="THANKS">
+                          <label for="tag-thanks"
+                                 class="btn btn-outline-primary">
+                            고마워요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="tagType"
+                                 id="tag-best" value="BEST">
+                          <label for="tag-best" class="btn btn-outline-primary">
+                            최고예요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="tagType"
+                                 id="tag-empathy" value="EMPATHY">
+                          <label for="tag-empathy"
+                                 class="btn btn-outline-primary">
+                            공감돼요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="tagType"
+                                 id="tag-fun" value="FUN">
+                          <label for="tag-fun" class="btn btn-outline-primary">
+                            재밌어요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="tagType"
+                                 id="tag-healing" value="HEALING">
+                          <label for="tag-healing"
+                                 class="btn btn-outline-primary">
+                            힐링돼요</label>
+                        </div>
+                      </div>
+                      <div class="mb-3">
                         <label for="content" class="form-label">리뷰 내용</label>
-                        <textarea id="content" rows="3" class="form-control" required></textarea>
+                        <textarea id="content" rows="3" class="form-control"
+                                  required></textarea>
+                      </div>
+                      <div class="mb-3">
+                        <label for="reviewImages" class="form-label">첨부 (최대
+                          3장)</label>
+                        <input type="file" class="form-control"
+                               id="reviewImages"
+                               accept="image/*" multiple>
+                        <div id="imagePreview" class="mt-2">
+                          <!-- 미리보기 이미지 영역 -->
+                        </div>
                       </div>
                       <div class="modal-footer px-0 pb-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소
+                        <button type="button" class="btn btn-secondary"
+                                data-bs-dismiss="modal">취소
                         </button>
                         <button type="submit" class="btn btn-primary">등록
                         </button>
@@ -162,12 +297,14 @@
                 </div>
               </div>
             </div>
-            <div class="modal fade" id="editReviewModal" tabindex="-1" role="dialog">
+            <div class="modal fade" id="editReviewModal" tabindex="-1"
+                 role="dialog">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header">
                     <h5 class="modal-title">리뷰 수정</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
                     <form id="editReviewForm">
@@ -183,12 +320,63 @@
                         </select>
                       </div>
                       <div class="mb-3">
+                        <label class="form-label">이 책은 어떠셨나요?</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                          <input type="checkbox" class="btn-check"
+                                 name="editTagType"
+                                 id="edit-tag-thanks" value="THANKS">
+                          <label for="edit-tag-thanks"
+                                 class="btn btn-outline-primary">
+                            고마워요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="editTagType"
+                                 id="edit-tag-best" value="BEST">
+                          <label for="edit-tag-best"
+                                 class="btn btn-outline-primary">
+                            최고예요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="editTagType"
+                                 id="edit-tag-empathy" value="EMPATHY">
+                          <label for="edit-tag-empathy"
+                                 class="btn btn-outline-primary">
+                            공감돼요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="editTagType"
+                                 id="edit-tag-fun" value="FUN">
+                          <label for="edit-tag-fun"
+                                 class="btn btn-outline-primary">
+                            재밌어요</label>
+
+                          <input type="checkbox" class="btn-check"
+                                 name="editTagType"
+                                 id="edit-tag-healing" value="HEALING">
+                          <label for="edit-tag-healing"
+                                 class="btn btn-outline-primary">
+                            힐링돼요</label>
+                        </div>
+                      </div>
+                      <div class="mb-3">
                         <label for="editContent" class="form-label">리뷰
                           내용</label>
-                        <textarea class="form-control" id="editContent" rows="3" required></textarea>
+                        <textarea class="form-control" id="editContent" rows="3"
+                                  required></textarea>
+                      </div>
+                      <div class="mb-3">
+                        <label for="editReviewImages" class="form-label">첨부 (최대
+                          3장)</label>
+                        <input type="file" class="form-control"
+                               id="editReviewImages"
+                               accept="image/*" multiple>
+                        <div id="editImagePreview" class="mt-2">
+                          <!-- 미리보기 이미지 영역 -->
+                        </div>
                       </div>
                       <div class="modal-footer px-0 pb-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소
+                        <button type="button" class="btn btn-secondary"
+                                data-bs-dismiss="modal">취소
                         </button>
                         <button type="submit" class="btn btn-primary">수정
                         </button>
@@ -204,16 +392,20 @@
     </div>
 
     <div class="row mt-5" th:if="${not #lists.isEmpty(authorBooks)}">
-      <h3 th:text="${book.author} + ' 작가의 다른 책'">같은 작가의 다른 책</h3>
+      <h3 class="mb-3">작가의 다른 책들</h3>
       <div class="author-books">
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        <div
+          class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           <div class="col" th:each="authorBook : ${authorBooks}">
             <div class="card h-100">
-              <a th:href="@{/item(bookId=${authorBook.id})}" class="text-decoration-none">
-                <img th:src="${authorBook.imageUrl}" class="card-img-top" th:alt="${authorBook.title}">
+              <a th:href="@{/item(bookId=${authorBook.id})}"
+                 class="text-decoration-none">
+                <img th:src="${authorBook.imageUrl}" class="card-img-top"
+                     th:alt="${authorBook.title}">
                 <div class="card-body">
                   <h5 class="card-title" th:text="${authorBook.title}"></h5>
-                  <p class="card-text price" th:text="${#numbers.formatInteger(authorBook.price, 0, 'COMMA') + '원'}">
+                  <p class="card-text price"
+                     th:text="${#numbers.formatInteger(authorBook.price, 0, 'COMMA') + '원'}">
                   </p>
                 </div>
               </a>

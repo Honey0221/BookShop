@@ -21,15 +21,18 @@ public class WishBookService {
 	private final BookRepository bookRepository;
 
 	// 찜하기/취소하기
+	@Transactional
 	public boolean toggleWish(Long memberId, Long bookId) {
 		// 이미 찜한 상품인지 확인
-		boolean exists = wishBookRepository.existsByMemberIdAndBookId(memberId, bookId);
-
-		if (exists) {
+		System.out.println("4444444444");
+		Optional<WishBook> exists = wishBookRepository.findByMemberIdAndBookId(memberId, bookId);
+		System.out.println("33333333333");
+		if (exists.isPresent()) {
 			// 찜 취소
-			wishBookRepository.deleteByMemberIdAndBookId(memberId, bookId);
+			wishBookRepository.delete(exists.get());
 			return false;
 		} else {
+			// 찜 추가
 			WishBook wishBook = WishBook.builder()
 					.memberId(memberId)
 					.bookId(bookId)

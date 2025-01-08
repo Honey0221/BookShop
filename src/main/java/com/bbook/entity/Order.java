@@ -30,7 +30,7 @@ public class Order extends BaseEntity {
 	// 주문이 생성된 날짜 시간
 	private LocalDateTime orderDate;
 
-	// 주문 상태(ORDER, CANCEL)를 문자열로 저장
+	// 주문 상태(결제완료 PAID, 환불완료 CANCEL)를 문자열로 저장
 	@Enumerated(EnumType.STRING)
 	private OrderStatus orderStatus;
 

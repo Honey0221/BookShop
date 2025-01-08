@@ -3,6 +3,7 @@ package com.bbook.repository;
 import java.util.List;
 import java.util.Optional;
 
+import com.bbook.constant.OrderStatus;
 import com.bbook.entity.Order;
 
 import org.springframework.data.domain.Pageable;
@@ -19,4 +20,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	Long countOrder(@Param("email") String email);
 
 	Optional<Order> findByMerchantUid(String merchantUid);
+
+	@Query("select count(o) > 0 from Order o " +
+	"join o.orderItems oi where o.member.id = :memberId " +
+	"and oi.book.id = :bookId and o.orderStatus = :status")
+	boolean existsByMemberIdAndBookIdAndStatus(
+			@Param("memberId") Long memberId, @Param("bookId") Long bookId,
+			@Param("status") OrderStatus status);
 }

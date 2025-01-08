@@ -1,9 +1,16 @@
 package com.bbook.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.bbook.constant.TagType;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,5 +43,31 @@ public class Reviews {
 	@Column(columnDefinition = "TEXT")
 	private String content;
 
+	@Column(name = "image_url")
+	@ElementCollection
+	private List<String> images = new ArrayList<>();
+
+	@Column
+	@Enumerated(EnumType.STRING)
+	private TagType tagType;
+
+	@Column
+	private int likeCount = 0;
+
 	private LocalDateTime createdAt;
+
+	public void addImage(String imageUrl) {
+		if (this.images == null) {
+			this.images = new ArrayList<>();
+		}
+		this.images.add(imageUrl);
+	}
+
+	public void increaseLikeCount() {
+		this.likeCount++;
+	}
+
+	public void decreaseLikeCount() {
+		this.likeCount--;
+	}
 }

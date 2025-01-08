@@ -367,4 +367,9 @@ public class OrderService {
 
 		return orderRepository.save(order).getId();
 	}
+
+	public boolean hasUserPurchasedBook(Long memberId, Long bookId) {
+		return orderRepository
+				.existsByMemberIdAndBookIdAndStatus(memberId, bookId, OrderStatus.PAID);
+	}
 }
