@@ -174,11 +174,11 @@ public class MemberActivityService {
 
 		Map<Long, Double> hybridScores = new HashMap<>();
 
-		// 컨텐츠 기반 (60% 가중치)
-		contentBased.forEach(rec -> hybridScores.merge(rec.getBookId(), rec.getScore() * 0.6, Double::sum));
+		// 컨텐츠 기반 (40% 가중치)
+		contentBased.forEach(rec -> hybridScores.merge(rec.getBookId(), rec.getScore() * 0.4, Double::sum));
 
-		// 협업 필터링 (40% 가중치)
-		collaborative.forEach(rec -> hybridScores.merge(rec.getBookId(), rec.getScore() * 0.4, Double::sum));
+		// 협업 필터링 (60% 가중치)
+		collaborative.forEach(rec -> hybridScores.merge(rec.getBookId(), rec.getScore() * 0.6, Double::sum));
 
 		return convertToRecommendations(hybridScores);
 	}
@@ -240,7 +240,10 @@ public class MemberActivityService {
 					Double score = ((Number) rec[2]).doubleValue();
 
 					// 정규화된 점수 계산 (사용자 수와 활동 점수 반영)
-					double normalizedScore = score * Math.log10(userCount + 1);
+					// 사용자수 100000명 정도 수식
+					// double normalizedScore = score * Math.log10(userCount + 1);
+					// 사용자수 1~2명 정도 수식
+					double normalizedScore = (score * 5) * (Math.log10(userCount + 5));
 
 					// 책 정보 조회
 					Book book = bookRepository.findById(bookId)
