@@ -163,6 +163,70 @@
         height: 200px;
       }
     }
+
+    .scroll-to-top {
+      position: fixed;
+      right: 30px;
+      bottom: 30px;
+      width: 45px;
+      height: 45px;
+      background-color: rgba(255, 255, 255, 0.9);
+      color: #333;
+      border-radius: 50%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(5px);
+    }
+
+    .scroll-to-top i {
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    .scroll-to-top:hover {
+      background-color: rgba(255, 255, 255, 1);
+      transform: translateY(-5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .scroll-to-top:hover i {
+      transform: translateY(-2px);
+    }
+
+    .scroll-to-top.visible {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 다크모드 대응 */
+    @media (prefers-color-scheme: dark) {
+      .scroll-to-top {
+        background-color: rgba(50, 50, 50, 0.9);
+        color: #fff;
+      }
+
+      .scroll-to-top:hover {
+        background-color: rgba(60, 60, 60, 1);
+      }
+    }
   </style>
 </th:block>
 
@@ -210,6 +274,10 @@
     </div>
     <!-- 무한 스크롤 observer 타겟 -->
     <div id="observer-target"></div>
+
+    <div class="scroll-to-top">
+      <i class="fas fa-arrow-up"></i>
+    </div>
   </div>
 </div>
 
@@ -329,6 +397,27 @@
           window.location.href = currentUrl.toString();
         });
       }
+
+      // 스크롤 버튼 관련 코드
+      const scrollButton = document.querySelector('.scroll-to-top');
+
+      // 스크롤 이벤트 리스너
+      window.addEventListener('scroll', () => {
+        // 200px 이상 스크롤되면 버튼 표시
+        if (window.scrollY > 200) {
+          scrollButton.classList.add('visible');
+        } else {
+          scrollButton.classList.remove('visible');
+        }
+      });
+
+      // 버튼 클릭 이벤트
+      scrollButton.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'  // 부드러운 스크롤
+        });
+      });
     });
     /*]]>*/
   </script>
