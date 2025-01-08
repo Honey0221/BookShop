@@ -323,6 +323,19 @@ public class OrderService {
 		Order order = orderRepository.findById(orderId)
 				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
 
+		// 포인트 환불 처리
+		Member member = order.getMember();
+		log.info("사용한 포인트: {}, 적립된 포인트: {}", order.getUsedPoints(), order.getEarnedPoints());
+		if (order.getUsedPoints() > 0) {
+			// 사용한 포인트 환불
+			member.setPoint(member.getPoint() + order.getUsedPoints());
+		}
+		log.info("사용한 포인트 환불 처리 후 포인트: {}", member.getPoint());
+		if (order.getEarnedPoints() > 0) {
+			// 적립된 포인트 차감
+			member.setPoint(member.getPoint() - order.getEarnedPoints());
+		}
+		log.info("포인트 환불 처리 후 포인트: {}", member.getPoint());
 		// 주문 취소 처리
 		order.cancelOrder();
 

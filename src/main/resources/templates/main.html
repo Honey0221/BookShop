@@ -8,6 +8,20 @@
 </th:block>
 
 <div layout:fragment="content">
+  <!-- 고정 사이드바 추가 -->
+  <div class="fixed-sidebar" th:if="${#authorization.expression('isAuthenticated()')}">
+    <a href="/members/my-coupons" class="sidebar-item">
+      <i class="fas fa-ticket-alt"></i>
+      <span>내 쿠폰</span>
+      <span class="coupon-count" th:if="${not #lists.isEmpty(availableCoupons)}"
+        th:text="${#lists.size(availableCoupons)}">0</span>
+    </a>
+    <a href="/members/coupon-zone" class="sidebar-item">
+      <i class="fas fa-gift"></i>
+      <span>쿠폰존</span>
+    </a>
+  </div>
+
   <div class="category-container">
     <ul class="main-categories">
       <li class="fixed-menu-item">

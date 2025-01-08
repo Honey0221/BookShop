@@ -10,12 +10,15 @@ function requestPay() {
     const header = $("meta[name='_csrf_header']").attr("content");
     const merchantUid = `ORDER-${new Date().getTime()}`;
     
+    // 최종 결제 금액 계산
+    let finalAmount = orderDto.totalPrice;
+    
     const paymentData = {
         pg: "kakaopay.TC0ONETIME",
         pay_method: "card",
         merchant_uid: merchantUid,
         name: orderDto.orderName,
-        amount: orderDto.totalPrice,
+        amount: finalAmount, // 최종 결제 금액 사용
         buyer_email: orderDto.email,
         buyer_name: orderDto.name,
         buyer_tel: orderDto.phone,
@@ -67,7 +70,7 @@ function verifyPayment(rsp, token, header, merchantUid) {
         data: JSON.stringify({
             impUid: rsp.imp_uid,
             merchantUid: merchantUid,
-            amount: orderDto.totalPrice,
+            amount: orderDto.totalPrice, // 최종 결제 금액 사용
             status: rsp.status
         }),
         beforeSend: function(xhr) {
@@ -75,7 +78,6 @@ function verifyPayment(rsp, token, header, merchantUid) {
         },
         success: function(response) {
             if (response.success && response.orderId) {
-                // 주문 ID가 있으면 바로 성공 페이지로 이동
                 location.href = "/order/success/" + response.orderId;
             } else {
                 alert("결제 검증에 실패했습니다: " + response.message);
@@ -160,8 +162,12 @@ function calculateTotalWithShipping() {
         document.getElementById('deliveryFee').textContent = 
             shippingFee.toLocaleString() + '원';
         
-        // 최종 금액 표시 (순수 상품 금액 + 배송비)
-        const finalTotal = originalPrice + shippingFee;
+        // 사용된 포인트와 쿠폰 할인액 가져오기
+        const usedPoints = parseInt(document.getElementById('usePoint').textContent.replace(/[^0-9]/g, '')) || 0;
+        const usedCoupon = parseInt(document.getElementById('couponSelect').value) || 0;
+        
+        // 최종 금액 표시 (순수 상품 금액 + 배송비 - 포인트 - 쿠폰)
+        const finalTotal = originalPrice + shippingFee - usedPoints - usedCoupon;
         document.getElementById('finalTotalPrice').textContent = 
             finalTotal.toLocaleString() + '원';
             
@@ -189,16 +195,13 @@ window.onclick = function(event) {
 // Point system functions
 function applyPoint() {
     const pointInput = document.getElementById('usePoint');
-    const usedPointSpan = document.getElementById('usedPoint');
-    const finalTotalPriceSpan = document.getElementById('finalTotalPrice');
-    const productPriceText = document.getElementById('productPrice').textContent;
-    const deliveryFeeText = document.getElementById('deliveryFee').textContent;
+    const pointDiscount = document.getElementById('pointDiscount');
+    // const productPrice = parseInt($("#productPrice").text().replace(/[^0-9]/g, '')) || 0;
+    // const deliveryFee = parseInt($("#deliveryFee").text().replace(/[^0-9]/g, '')) || 0;
     
     // 입력된 포인트
     let points = parseInt(pointInput.value) || 0;
-    const maxPoints = parseInt(pointInput.getAttribute('max')) || 0;
-    const productPrice = parseInt(productPriceText.replace(/[^0-9]/g, ''));
-    const deliveryFee = parseInt(deliveryFeeText.replace(/[^0-9]/g, ''));
+    // const maxPoints = parseInt(pointInput.getAttribute('max')) || 0;
 
     // CSRF 토큰 가져오기
     const token = $("meta[name='_csrf']").attr("content");
@@ -218,37 +221,87 @@ function applyPoint() {
                 // 포인트 적용 성공
                 points = response.appliedPoints;
                 pointInput.value = points;
-                
-                // UI 업데이트
-                usedPointSpan.textContent = points.toLocaleString();
-                
-                // 최종 금액 계산 및 표시
-                const finalTotal = productPrice + deliveryFee - points;
-                finalTotalPriceSpan.textContent = finalTotal.toLocaleString() + '원';
-                
-                // 결제 금액 업데이트
-                orderDto.totalPrice = finalTotal;
-                
+                pointDiscount.textContent = points.toLocaleString() + '원';
+                updateTotalPrice();
                 alert(response.message);
             } else {
                 alert(response.message);
                 pointInput.value = 0;
-                usedPointSpan.textContent = '0';
-                
-                // 최종 금액 원상복구
-                const finalTotal = productPrice + deliveryFee;
-                finalTotalPriceSpan.textContent = finalTotal.toLocaleString() + '원';
+                pointDiscount.textContent = '0원';
+                updateTotalPrice();
             }
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
             alert(response?.message || '포인트 적용 중 오류가 발생했습니다.');
             pointInput.value = 0;
-            usedPointSpan.textContent = '0';
-            
-            // 최종 금액 원상복구
-            const finalTotal = productPrice + deliveryFee;
-            finalTotalPriceSpan.textContent = finalTotal.toLocaleString() + '원';
+            pointDiscount.textContent = '0원';
+            updateTotalPrice();
         }
     });
+}
+
+// Coupon system functions
+function applyCoupon() {
+    const productPrice = parseInt($("#productPrice").text().replace(/[^0-9]/g, "")) || 0;
+    const selectedCoupon = $("#couponSelect").val();
+    
+    if (!selectedCoupon) {
+        alert("쿠폰을 선택해주세요.");
+        return;
+    }
+    
+    if (productPrice < 15000) {
+        alert("15,000원 이상 구매 시에만 쿠폰을 사용할 수 있습니다.");
+        return;
+    }
+
+    const token = $("meta[name='_csrf']").attr("content");
+    const header = $("meta[name='_csrf_header']").attr("content");
+
+    $.ajax({
+        url: '/order/apply-coupon',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            orderAmount: productPrice,
+            couponAmount: parseInt(selectedCoupon)
+        }),
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader(header, token);
+        },
+        success: function(response) {
+            if (response.success) {
+                const discountAmount = response.discountAmount;
+                $("#couponDiscount").text(discountAmount.toLocaleString() + "원");
+                updateTotalPrice();
+                alert("쿠폰이 적용되었습니다.");
+                $("#couponSelect").prop("disabled", true);
+                $("#applyCouponBtn").prop("disabled", true);
+            } else {
+                alert(response.message || "쿠폰 적용에 실패했습니다.");
+            }
+        },
+        error: function(xhr) {
+            const errorMessage = xhr.responseJSON ? xhr.responseJSON.message : "쿠폰 적용에 실패했습니다.";
+            alert(errorMessage);
+            $("#couponSelect").val("");
+        }
+    });
+}
+
+function updateTotalPrice() {
+    const productPrice = parseInt($("#productPrice").text().replace(/[^0-9]/g, "")) || 0;
+    const pointDiscount = parseInt($("#pointDiscount").text().replace(/[^0-9]/g, "")) || 0;
+    const couponDiscount = parseInt($("#couponDiscount").text().replace(/[^0-9]/g, "")) || 0;
+    const deliveryFee = productPrice < 15000 ? 3000 : 0;
+    
+    const totalPrice = productPrice + deliveryFee - pointDiscount - couponDiscount;
+    $("#finalTotalPrice").text(totalPrice.toLocaleString() + "원");
+    $("#deliveryFee").text(deliveryFee.toLocaleString() + "원");
+    
+    // orderDto 업데이트
+    if (orderDto) {
+        orderDto.totalPrice = totalPrice;
+    }
 } 

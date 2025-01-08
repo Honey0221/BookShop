@@ -212,9 +212,21 @@
             <span class="detail-label">배송비</span>
             <span class="detail-value" th:text="${order.originalPrice < 15000 ? '3,000원' : '무료'}">0원</span>
         </div>
+        <div class="order-detail" th:if="${order.usedPoints > 0}">
+            <span class="detail-label">포인트 사용</span>
+            <span class="detail-value" th:text="${'-' + #numbers.formatInteger(order.usedPoints, 0, 'COMMA') + '원'}">0원</span>
+        </div>
+        <div class="order-detail" th:if="${order.isCouponUsed}">
+            <span class="detail-label">쿠폰 할인</span>
+            <span class="detail-value" th:text="${'-' + #numbers.formatInteger(order.discountAmount, 0, 'COMMA') + '원'}">0원</span>
+        </div>
         <div class="order-detail total-price">
             <span class="detail-label">최종 결제 금액</span>
             <span class="detail-value price-value" th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA') + '원'}">0원</span>
+        </div>
+        <div class="order-detail" th:if="${order.earnedPoints > 0}">
+            <span class="detail-label">적립 예정 포인트</span>
+            <span class="detail-value earned-points" th:text="${#numbers.formatInteger(order.earnedPoints, 0, 'COMMA') + 'P'}">0P</span>
         </div>
         <div class="order-detail">
             <span class="detail-label">주문 상태</span>

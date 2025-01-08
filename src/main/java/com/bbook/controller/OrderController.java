@@ -5,6 +5,7 @@ import com.bbook.dto.OrderHistDto;
 import com.bbook.entity.Book;
 import com.bbook.entity.CartItem;
 import com.bbook.entity.Order;
+import com.bbook.entity.Coupon;
 import com.bbook.exception.IamportResponseException;
 import com.bbook.repository.BookRepository;
 import com.bbook.repository.CartItemRepository;
@@ -19,6 +20,8 @@ import com.bbook.dto.CartOrderDto;
 import com.bbook.dto.Payment;
 import com.bbook.entity.Member;
 import com.bbook.repository.MemberRepository;
+import com.bbook.service.CouponService;
+import com.bbook.config.SecurityUtil;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -60,7 +63,9 @@ public class OrderController {
 	private final MemberRepository memberRepository;
 	private final MemberActivityService memberActivityService;
 	private final CartItemRepository cartItemRepository;
-
+	private final CouponService couponService;
+	private final SecurityUtil securityUtil;
+	
 	@GetMapping(value = { "/orders", "/orders/{page}" })
 	public String orderHist(@PathVariable("page") Optional<Integer> page,
 			Principal principal, Model model) {
@@ -80,30 +85,73 @@ public class OrderController {
 		return "order/orderHist";
 	}
 
+	/**
+	 * 주문 취소를 처리하는 API 엔드포인트
+	 * 
+	 * @param orderId 취소할 주문의 ID
+	 * @return 취소 처리 결과를 담은 ResponseEntity
+	 * 
+	 *         처리 과정:
+	 *         1. 주문 정보 조회
+	 *         2. 사용/적립된 포인트 정보 확인
+	 *         3. 아임포트 API를 통한 결제 취소 요청
+	 *         4. DB의 주문 상태 업데이트
+	 *         5. 포인트 복원/차감 처리
+	 *         6. 결과 메시지 생성 및 반환
+	 */
 	@PostMapping("/order/{orderId}/cancel")
 	@ResponseBody
 	public ResponseEntity<Map<String, Object>> cancelOrder(@PathVariable Long orderId) {
 		Map<String, Object> response = new HashMap<>();
 
 		try {
+			// 1. 주문 정보 조회
 			Order order = orderService.findById(orderId);
-			long totalAmount = order.getOrderItems().stream()
-					.mapToLong(item -> item.getOrderPrice() * item.getCount())
-					.sum();
+
+			// 2. 포인트 정보 확인
+			int usedPoints = order.getUsedPoints(); // 주문 시 사용한 포인트
+			int earnedPoints = order.getEarnedPoints(); // 주문으로 적립된 포인트
+
+			log.info("getEarnedPoints: {}, getUsedPoints: {}", earnedPoints, usedPoints);
 
 			try {
+				// 3. 아임포트 결제 취소 요청
 				CancelData cancelData = new CancelData(order.getImpUid(), true);
 				IamportResponse<Payment> cancelResponse = iamportClient.cancelPayment(cancelData);
 
 				if (cancelResponse.getCode() == 0) {
-					orderService.cancelOrder(orderId); // DB 상태 업데이트
+					// 4. DB 주문 상태 업데이트
+					orderService.cancelOrder(orderId);
+
+					// 5. 쿠폰 복원
+					Member member = order.getMember();
+					if (order.getIsCouponUsed()) { // 실제 쿠폰을 사용한 경우에만 복원
+						couponService.restoreCoupon(member);
+					}
+
+					// 6. 응답 메시지 생성
 					response.put("success", true);
-					response.put("message", "주문이 성공적으로 취소되었습니다.");
+					String message = "주문이 성공적으로 취소되었습니다.";
+					log.info("getEarnedPoints: {}, getUsedPoints: {}", earnedPoints, usedPoints);
+
+					// 포인트 관련 메시지 추가
+					if (usedPoints > 0 || earnedPoints > 0) {
+						message += String.format("\n사용하신 %dP가 환불되었으며, 적립된 %dP가 차감되었습니다.",
+								usedPoints, earnedPoints);
+					}
+
+					// 쿠폰 복원 메시지는 실제 쿠폰을 사용했을 때만 추가
+					if (order.getIsCouponUsed()) {
+						message += "\n사용하신 쿠폰이 복원되었습니다.";
+					}
+
+					response.put("message", message);
 					return ResponseEntity.ok(response);
 				} else {
 					throw new IamportResponseException(cancelResponse.getMessage());
 				}
 			} catch (IamportResponseException e) {
+				// 아임포트 결제 취소 실패 처리
 				log.error("Payment cancellation failed - code: {}, message: {}",
 						e.getCode(), e.getMessage());
 				response.put("success", false);
@@ -111,6 +159,7 @@ public class OrderController {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 			}
 		} catch (Exception e) {
+			// 기타 예외 처리
 			log.error("Order cancellation failed", e);
 			response.put("success", false);
 			response.put("message", "주문 취소 중 오류가 발생했습니다: " + e.getMessage());
@@ -126,10 +175,15 @@ public class OrderController {
 					.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
 			model.addAttribute("memberPoint", member.getPoint());
 
+			// 사용 가능한 쿠폰 목록 조회
+			List<Coupon> availableCoupons = couponService.getAvailableCoupons(member);
+			model.addAttribute("availableCoupons", availableCoupons);
+
 			// 직접 주문인 경우
 			OrderDto orderDto = (OrderDto) session.getAttribute("orderDto");
 			if (orderDto != null) {
 				model.addAttribute("orderDto", orderDto);
+				model.addAttribute("totalPrice", orderDto.getTotalPrice());
 				return "order/payment";
 			}
 
@@ -139,6 +193,7 @@ public class OrderController {
 			if (cartOrderDtoList != null) {
 				orderDto = cartService.createTempOrderInfo(cartOrderDtoList, principal.getName());
 				model.addAttribute("orderDto", orderDto);
+				model.addAttribute("totalPrice", orderDto.getTotalPrice());
 				return "order/payment";
 			}
 
@@ -181,13 +236,7 @@ public class OrderController {
 				orderDto.setImageUrl(book.getImageUrl());
 				orderDto.setTotalPrice((long) (book.getPrice() * orderDto.getCount()));
 				orderDto.setMerchantUid("ORDER-" + System.currentTimeMillis());
-
-				// 배송비 계산 및 적용
 				orderDto.setOriginalPrice(orderDto.getTotalPrice());
-				if (orderDto.getTotalPrice() < 15000) {
-					orderDto.setTotalPrice(orderDto.getTotalPrice() + 3000);
-					orderDto.setShippingFee(3000L);
-				}
 
 				// 주문 정보를 세션에 저장 (실제 주문 생성은 결제 완료 후에 수행)
 				session.setAttribute("orderDto", orderDto);
@@ -204,6 +253,11 @@ public class OrderController {
 						})
 						.collect(Collectors.toList());
 
+				// 장바구니 주문 정보로 OrderDto 생성
+				OrderDto orderDto = cartService.createTempOrderInfo(cartOrderDtoList, email);
+
+				// 주문 정보를 세션에 저장
+				session.setAttribute("orderDto", orderDto);
 				session.setAttribute("cartOrderDtoList", cartOrderDtoList);
 				session.setAttribute("orderEmail", email);
 			} else {
@@ -276,12 +330,23 @@ public class OrderController {
 
 					Order order = orderService.findById(orderId);
 					order.setImpUid(request.getImpUid());
+					// 포인트 정보 저장
+					order.setUsedPoints(usedPoints);
+					long earnedPoints = Math.round(orderDto.getTotalPrice() * 0.05);
+					order.setEarnedPoints((int) earnedPoints);
+
+					// 쿠폰 할인 금액 저장
+					Integer discountAmount = (Integer) session.getAttribute("couponDiscountAmount");
+					if (discountAmount != null && discountAmount > 0) {
+						order.setDiscountAmount(discountAmount);
+						order.setIsCouponUsed(true); // 쿠폰 사용 여부 설정
+					}
+
 					orderService.saveOrder(order);
 
 					// 포인트 적립 (결제 금액의 5%)
 					Member member = memberRepository.findByEmail(orderDto.getEmail())
 							.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
-					long earnedPoints = Math.round(orderDto.getTotalPrice() * 0.05);
 					member.setPoint(member.getPoint() + earnedPoints);
 					memberRepository.save(member);
 					log.info("포인트 적립 완료 - 적립 포인트: {}", earnedPoints);
@@ -321,18 +386,32 @@ public class OrderController {
 							memberActivityService.saveActivity(orderEmail, cartItem.getBook().getId(), ActivityType.PURCHASE);
 						}
 
-						cartService.deleteCartItems(cartOrderDtoList);
-						// 포인트 적립 (결제 금액의 5%)
+						// 주문 정보 업데이트
 						Order order = orderService.findById(orderId);
+						order.setUsedPoints(usedPoints);
+						long earnedPoints = Math.round(order.getTotalPrice() * 0.05);
+						order.setEarnedPoints((int) earnedPoints);
+
+						// 쿠폰 할인 금액 저장
+						Integer discountAmount = (Integer) session.getAttribute("couponDiscountAmount");
+						if (discountAmount != null && discountAmount > 0) {
+							order.setDiscountAmount(discountAmount);
+							order.setIsCouponUsed(true);
+						}
+
+						orderService.saveOrder(order);
+
+						// 포인트 적립
 						Member member = memberRepository.findByEmail(orderEmail)
 								.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
-						long earnedPoints = Math.round(order.getTotalPrice() * 0.05);
-						member.setPoint(member.getPoint() + earnedPoints);
+						member.setPoint(member.getPoint() + (int) earnedPoints);
 						memberRepository.save(member);
-						log.info("포인트 적립 완료 - 적립 포인트: {}", earnedPoints);
 
-						// 세션에서 포인트 정보 제거
+						// 세션에서 주문 관련 정보 제거
+						session.removeAttribute("cartOrderDtoList");
+						session.removeAttribute("orderEmail");
 						session.removeAttribute("usedPoints");
+						session.removeAttribute("couponDiscountAmount");
 
 						response.put("success", true);
 						response.put("orderId", orderId);
@@ -367,7 +446,7 @@ public class OrderController {
 	}
 
 	@GetMapping("/order/success/{orderId}")
-	public String orderSuccess(@PathVariable Long orderId, Model model) {
+	public String orderSuccess(@PathVariable Long orderId, Model model, HttpSession session) {
 		try {
 			Order order = orderService.findById(orderId);
 			OrderDto orderDto = OrderDto.of(order);
@@ -376,72 +455,22 @@ public class OrderController {
 			orderDto.setOriginalPrice(order.getOriginalPrice());
 			orderDto.setTotalPrice(order.getTotalPrice());
 
+			// 세션의 쿠폰 할인 정보 초기화
+			session.removeAttribute("couponDiscountAmount");
+
+			// 새로운 주문을 위해 DTO의 쿠폰 관련 데이터 초기화
+			if (orderDto.getDiscountAmount() == 1000) {
+				orderDto.setDiscountAmount(1000);
+				orderDto.setIsCouponUsed(true);
+			} else {
+				orderDto.setDiscountAmount(0);
+				orderDto.setIsCouponUsed(false);
+			}
+
 			model.addAttribute("order", orderDto);
 			return "order/success";
 		} catch (EntityNotFoundException e) {
 			return "redirect:/";
-		}
-	}
-
-	@GetMapping("/order/complete/{orderId}")
-	public String orderComplete(@PathVariable Long orderId,
-			@RequestParam(required = false) String imp_uid,
-			@RequestParam(required = false) String merchant_uid,
-			@RequestParam(required = false) String paid_amount,
-			Model model) {
-		try {
-			// 모바일 결제 검증
-			if (imp_uid != null && merchant_uid != null && paid_amount != null) {
-				orderService.verifyPayment(imp_uid, merchant_uid, Long.valueOf(paid_amount));
-			}
-
-			// 주문 정보 조회
-			OrderDto orderDto = orderService.getOrderDetails(orderId);
-			model.addAttribute("order", orderDto);
-			return "order/success";
-		} catch (Exception e) {
-			return "redirect:/";
-		}
-	}
-
-	@PostMapping("/order/complete")
-	@ResponseBody
-	public ResponseEntity<Long> completeOrder(@RequestBody Map<String, String> payload,
-			HttpSession session,
-			Principal principal) {
-		try {
-			log.info("주문 완료 처리 시작 - 사용자: {}", principal.getName());
-
-			@SuppressWarnings("unchecked")
-			List<CartOrderDto> cartOrderDtoList = (List<CartOrderDto>) session.getAttribute("cartOrderDtoList");
-			if (cartOrderDtoList == null) {
-				log.error("장바구니 주문 정보 없음");
-				throw new IllegalStateException("주문 정보를 찾을 수 없습니다.");
-			}
-			log.info("장바구니 상품 수: {}", cartOrderDtoList.size());
-
-			// imp_uid와 merchant_uid 확인
-			String impUid = payload.get("impUid");
-			String merchantUid = payload.get("merchantUid");
-			if (impUid == null || merchantUid == null) {
-				log.error("결제 정보 누락 - impUid: {}, merchantUid: {}", impUid, merchantUid);
-				throw new IllegalArgumentException("결제 정보가 누락되었습니다.");
-			}
-			log.info("결제 정보 확인 - impUid: {}, merchantUid: {}", impUid, merchantUid);
-
-			// 실제 주문 생성
-			Long orderId = cartService.orderCartItem(cartOrderDtoList, principal.getName(), impUid, merchantUid);
-			log.info("주문 생성 완료 - 주문번호: {}", orderId);
-
-			// 세션에서 주문 정보 제거
-			session.removeAttribute("cartOrderDtoList");
-			session.removeAttribute("orderEmail");
-			log.info("세션에서 주문 정보 제거 완료");
-
-			return new ResponseEntity<>(orderId, HttpStatus.OK);
-		} catch (Exception e) {
-			log.error("주문 생성 중 오류 발생: {}", e.getMessage());
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -543,5 +572,73 @@ public class OrderController {
 		response.put("purchased", purchased);
 
 		return ResponseEntity.ok(response);
+	}
+	/**
+	 * 쿠폰 적용을 처리하는 API 엔드포인트
+	 * 
+	 * 클라이언트로부터 쿠폰 적용 요청을 받아 처리합니다:
+	 * 1. 현재 로그인한 사용자 정보 확인
+	 * 2. 주문 금액이 쿠폰 사용 가능한 최소 금액(15,000원)을 충족하는지 검증
+	 * 3. 쿠폰 서비스를 통해해 할인 금액 계산 및 적용
+	 * 4. 적용 결과를 JSON 응답으로 반환
+	 *
+	 * @param request 쿠폰 적용에 필요한 주문 금액 정보를 담은 Map
+	 * @return 쿠폰 적용 결과를 담은 ResponseEntity
+	 *         - 성공: {success: true, discountAmount: 할인금액, message: "쿠폰이 적용되었습니다."}
+	 *         - 실패: {success: false, message: 실패사유}
+	 */
+	@PostMapping("/order/apply-coupon")
+	@ResponseBody
+	public ResponseEntity<?> applyCoupon(@RequestBody Map<String, Integer> request, HttpSession session) {
+		try {
+			// 현재 로그인한 사용자의 이메일 가져오기
+			String email = securityUtil.getCurrentUsername()
+					.orElseThrow(() -> new IllegalArgumentException("로그인이 필요한 서비스입니다."));
+
+			// 이메일로 회원 정보 조회
+			Member member = memberRepository.findByEmail(email)
+					.orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
+			// 주문 금액과 쿠폰 금액 검증
+			Integer orderAmount = request.get("orderAmount");
+			Integer couponAmount = request.get("couponAmount");
+
+			if (orderAmount == null) {
+				return ResponseEntity.badRequest().body(Map.of(
+						"success", false,
+						"message", "주문 금액이 필요합니다."));
+			}
+
+			// 최소 주문 금액 검증 (15,000원)
+			if (orderAmount < 15000) {
+				return ResponseEntity.badRequest().body(Map.of(
+						"success", false,
+						"message", "15,000원 이상 구매 시에만 쿠폰을 사용할 수 있습니다."));
+			}
+
+			// 쿠폰 서비스를 통해 할인 금액 계산
+			Integer discountAmount = couponService.applyCoupon(member, orderAmount);
+
+			// 할인 금액이 있고, 선택한 쿠폰의 할인 금액과 일치하는 경우에만 성공 응답
+			if (discountAmount > 0 && discountAmount.equals(couponAmount)) {
+				// 세션에 쿠폰 할인 금액 저장
+				session.setAttribute("couponDiscountAmount", discountAmount);
+
+				return ResponseEntity.ok(Map.of(
+						"success", true,
+						"discountAmount", discountAmount,
+						"message", "쿠폰이 적용되었습니다."));
+			} else {
+				// 사용 가능한 쿠폰이 없거나 할인 금액이 일치하지 않는 경우
+				return ResponseEntity.badRequest().body(Map.of(
+						"success", false,
+						"message", "유효하지 않은 쿠폰입니다."));
+			}
+		} catch (Exception e) {
+			// 예외 발생 시 에러 메시지 반환
+			return ResponseEntity.badRequest().body(Map.of(
+					"success", false,
+					"message", e.getMessage()));
+		}
 	}
 }

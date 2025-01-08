@@ -167,6 +167,12 @@ public class CartService {
 
 		Long orderId = orderService.orders(orderDtoList, email);
 
+		// Cart애서 있던 Item 주문이 되니까 CartItem 모두 삭제
+		for (CartOrderDto cartOrderDto : cartOrderDtoList) {
+			CartItem cartItem = cartItemRepository.findById(cartOrderDto.getCartItemId())
+					.orElseThrow(EntityExistsException::new);
+			cartItemRepository.delete(cartItem);
+		}
 		return orderId;
 	}
 
@@ -185,19 +191,24 @@ public class CartService {
 		// 주문 정보 생성
 		OrderDto orderDto = new OrderDto();
 		Long originalPrice = calculateTotalPrice(cartItems); // 순수 상품 금액
+		Long totalPrice = originalPrice; // 최종 결제 금액 (배송비는 프론트에서 계산)
 
 		// 주문 정보 설정
 		orderDto.setOrderName(createOrderName(cartItems));
 		orderDto.setOriginalPrice(originalPrice); // 순수 상품 금액 설정
-		orderDto.setTotalPrice(originalPrice); // 순수 상품 금액으로 설정 (배송비는 프론트에서 계산)
+		orderDto.setTotalPrice(totalPrice); // 최종 결제 금액 설정
 		orderDto.setCount(calculateTotalCount(cartItems));
 		orderDto.setEmail(email);
 		orderDto.setName(member.getNickname());
+		orderDto.setIsCouponUsed(false); // 초기값 설정
+		orderDto.setUsedPoints(0); // 초기값 설정
+		orderDto.setDiscountAmount(0); // 초기값 설정
 
 		// 첫 번째 상품의 대표 이미지 URL 설정
 		if (!cartItems.isEmpty()) {
 			Book book = cartItems.get(0).getBook();
 			orderDto.setImageUrl(book.getImageUrl());
+			orderDto.setBookId(book.getId());
 		}
 
 		return orderDto;

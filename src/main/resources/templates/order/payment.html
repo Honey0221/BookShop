@@ -57,12 +57,34 @@
                 <span th:text="${#numbers.formatInteger(memberPoint, 0, 'COMMA') + 'P'}">0P</span>
             </div>
             <div class="point-input-container">
-                <input type="number" id="usePoint" name="usePoint" placeholder="사용할 포인트를 입력하세요"
+                <input type="number" id="usePoint" name="pointDiscount" placeholder="사용할 포인트를 입력하세요"
                        th:max="${memberPoint}" min="0" step="100">
                 <button type="button" class="point-apply-btn" onclick="applyPoint()">포인트 적용</button>
             </div>
             <p class="point-notice">* 포인트는 100P 단위로 사용 가능합니다.</p>
         </div>
+    </div>
+
+    <div class="coupon-info">
+        <h4>쿠폰 사용</h4>
+        <div class="available-coupons">
+            <div class="available-coupons">
+            <select id="couponSelect" class="form-select">
+                <option value="">쿠폰을 선택하세요</option>
+                <option th:each="coupon : ${availableCoupons}" 
+                        th:value="${coupon.discountAmount}"
+                        th:text="${coupon.discountAmount + '원 할인 쿠폰'}">1,000원 할인 쿠폰</option>
+            </select>
+            <button type="button" id="applyCouponBtn" class="btn btn-primary" onclick="applyCoupon()">쿠폰 적용</button>
+        </div>
+        <p class="coupon-notice">* 15,000원 이상 구매 시 사용 가능</p>
+        <p class="coupon-count" th:if="${not #lists.isEmpty(availableCoupons)}" 
+           th:text="'사용 가능한 쿠폰: ' + ${#lists.size(availableCoupons)} + '장'">
+           사용 가능한 쿠폰: 0장
+        </p>
+        <p class="no-coupon" th:if="${#lists.isEmpty(availableCoupons)}">
+            사용 가능한 쿠폰이 없습니다.
+        </p>
     </div>
 
     <div class="payment-methods">
@@ -83,31 +105,33 @@
         </div>
     </div>
 
-    <div class="order-summary">
-        <h3>결제 상세</h3>
-        <dl class="summary-list">
-            <div class="summary-item">
-                <dt>상품금액</dt>
-                <dd><span id="productPrice" th:text="${#numbers.formatInteger(orderDto.totalPrice, 0, 'COMMA') + '원'}">0원</span></dd>
+    <div class="payment-summary">
+        <h4>결제 금액</h4>
+        <div class="price-details">
+            <div class="price-row">
+                <span>상품 금액</span>
+                <span id="productPrice" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA') + '원'}"></span>
             </div>
-            <div class="summary-item">
-                <dt>포인트 사용</dt>
-                <dd>-<span id="usedPoint">0</span>원</dd>
+            <div class="price-row">
+                <span>배송비</span>
+                <span id="deliveryFee" onclick="showShippingInfo()" style="cursor: pointer;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>0원</span>
+                </span>
             </div>
-            <div class="summary-item">
-                <dt>
-                    배송비
-                    <button type="button" class="btn-shipping-info" onclick="showShippingInfo()">
-                        <i class="fas fa-circle-info"></i>
-                    </button>
-                </dt>
-                <dd><span id="deliveryFee">0원</span></dd>
+            <div class="price-row">
+                <span>포인트 사용</span>
+                <span id="pointDiscount">0원</span>
             </div>
-            <div class="summary-item total">
-                <dt>최종 결제 금액</dt>
-                <dd><span id="finalTotalPrice" class="price-spot">0원</span></dd>
+            <div class="price-row">
+                <span>쿠폰 할인</span>
+                <span id="couponDiscount">0원</span>
             </div>
-        </dl>
+            <div class="price-row total">
+                <span>최종 결제 금액</span>
+                <span id="finalTotalPrice" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA') + '원'}"></span>
+            </div>
+        </div>
     </div>
 
     <div class="modal" id="shippingInfoModal">

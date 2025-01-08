@@ -11,7 +11,7 @@ import lombok.Setter;
 public class CartItem extends BaseEntity {
 
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	@Column(name = "cart_item_id")
 	private Long id;
 	@ManyToOne(fetch = FetchType.LAZY)

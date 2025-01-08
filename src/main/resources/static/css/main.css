@@ -339,7 +339,18 @@
 .swiper-pagination-bullet {
   background: #333;
 }
-
+/* 고정 사이드바 스타일 */
+.fixed-sidebar {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  width: 80px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
 /* 최근 본 상품 사이드바 스타일 */
 .recent-products-sidebar {
   position: fixed;
@@ -585,4 +596,71 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+}
+.sidebar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: #333;
+  position: relative;
+  border-bottom: 1px solid #eee;
+}
+
+.sidebar-item:last-child {
+  border-bottom: none;
+}
+
+.sidebar-item i {
+  font-size: 24px;
+  margin-bottom: 5px;
+  color: #1f8ce6;
+}
+
+.sidebar-item span {
+  font-size: 12px;
+  text-align: center;
+  color: #666;
+}
+
+.sidebar-item:hover {
+  background-color: #f8f9fa;
+}
+
+.sidebar-item .coupon-count {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ff5722;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .fixed-sidebar {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    border-radius: 0;
+    border-top: 1px solid #eee;
+  }
+
+  .sidebar-item {
+    flex: 1;
+    border-bottom: none;
+    border-right: 1px solid #eee;
+    padding: 10px;
+  }
+
+  .sidebar-item:last-child {
+    border-right: none;
+  }
 }

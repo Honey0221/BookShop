@@ -55,6 +55,11 @@ public class Order extends BaseEntity {
 	private Long shippingFee; // 배송비
 	private Long totalPrice; // 최종 금액 (상품 + 배송비)
 
+	private Integer usedPoints = 0;
+	private Integer earnedPoints = 0;
+	private Integer discountAmount = 0; // 쿠폰 할인 금액
+	private Boolean isCouponUsed = false; // 쿠폰 사용 여부
+
 	// private LocalDateTime regTime;
 	//
 	// private LocalDateTime updateTime;
@@ -97,7 +102,8 @@ public class Order extends BaseEntity {
 
 		this.originalPrice = itemsTotal;
 		this.shippingFee = itemsTotal < 15000 ? 3000L : 0L;
-		this.totalPrice = itemsTotal + this.shippingFee;
+		this.totalPrice = itemsTotal + this.shippingFee - (usedPoints != null ? usedPoints : 0)
+				- (discountAmount != null ? discountAmount : 0);
 
 		return this.totalPrice;
 	}
@@ -131,6 +137,22 @@ public class Order extends BaseEntity {
 
 	public void setImpUid(String impUid) {
 		this.impUid = impUid;
+	}
+
+	public Integer getUsedPoints() {
+		return usedPoints;
+	}
+
+	public Integer getEarnedPoints() {
+		return earnedPoints;
+	}
+
+	public void setUsedPoints(Integer usedPoints) {
+		this.usedPoints = usedPoints;
+	}
+
+	public void setEarnedPoints(Integer earnedPoints) {
+		this.earnedPoints = earnedPoints;
 	}
 
 }

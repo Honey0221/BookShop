@@ -200,21 +200,32 @@ public class IamportClient {
      * @throws IOException              HTTP 통신 오류 발생시
      */
     public IamportResponse<Payment> cancelPayment(CancelData cancelData) throws IamportResponseException, IOException {
+        // 아임포트 API 인증 토큰 발급 받기
         String token = this.getToken();
 
+        // HTTP 요청 헤더 설정
+        // - Bearer 토큰 인증 방식 사용
+        // - JSON 형식의 요청 본문 사용
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        // HTTP 요청 엔티티 생성
+        // - 취소 요청 데이터(CancelData)와 헤더 포함
         HttpEntity<CancelData> entity = new HttpEntity<>(cancelData, headers);
 
+        // 아임포트 결제 취소 API 호출
+        // - POST 방식으로 요청
+        // - 응답은 IamportResponse<Payment> 타입으로 파싱
         ResponseEntity<IamportResponse<Payment>> responseEntity = restTemplate.exchange(
-                "https://api.iamport.kr/payments/cancel",
+                "https://api.iamport.kr/payments/cancel", // 결제 취소 API 엔드포인트
                 HttpMethod.POST,
                 entity,
                 new ParameterizedTypeReference<IamportResponse<Payment>>() {
                 });
 
+        // API 응답 본문 반환
+        // - 결제 취소 결과 정보 포함
         return responseEntity.getBody();
     }
 

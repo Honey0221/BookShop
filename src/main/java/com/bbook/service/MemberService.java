@@ -23,7 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SecurityUtil securityUtil;  // 현재 로그인한 사용자 정보 조회 유틸
+    private final SecurityUtil securityUtil; // 현재 로그인한 사용자 정보 조회 유틸
+    private final CouponService couponService;
 
     // 현재 로그인한 사용자의 ID 조회
     @Transactional
@@ -33,13 +34,17 @@ public class MemberService {
 
     // 일반 회원가입
     @Transactional
-    public Long signUp(MemberSignUpDto signUpDto) {
-        validateDuplicateEmail(signUpDto.getEmail());
-        validateDuplicateNickname(signUpDto.getNickname());
+    public Member signUp(MemberSignUpDto memberSignUpDto) {
+        validateDuplicateEmail(memberSignUpDto.getEmail());
+        validateDuplicateNickname(memberSignUpDto.getNickname());
 
-        Member member = Member.createMember(signUpDto, passwordEncoder);
-        memberRepository.save(member);
-        return member.getId();
+        Member member = Member.createMember(memberSignUpDto, passwordEncoder);
+        member = memberRepository.save(member);
+
+        // 회원가입 시 쿠폰 발급
+        couponService.createBasicCoupons(member);
+
+        return member;
     }
 
     // 소셜 로그인 처리
@@ -59,7 +64,12 @@ public class MemberService {
                         // 신규 회원인 경우 소셜 회원으로 가입
                         Member newMember = Member.createSocialMember(email);
                         log.info("새로운 소셜 회원 가입: {}", email);
-                        return memberRepository.save(newMember);
+                        Member savedMember = memberRepository.save(newMember);
+
+                        // 소셜 로그인으로 가입한 신규 회원에게도 쿠폰 발급
+                        couponService.createBasicCoupons(savedMember);
+
+                        return savedMember;
                     });
         } catch (IllegalStateException e) {
             // 일반 회원으로 가입된 경우의 예외를 그대로 전파
