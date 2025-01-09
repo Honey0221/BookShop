@@ -65,7 +65,7 @@ public class OrderController {
 	private final CartItemRepository cartItemRepository;
 	private final CouponService couponService;
 	private final SecurityUtil securityUtil;
-	
+
 	@GetMapping(value = { "/orders", "/orders/{page}" })
 	public String orderHist(@PathVariable("page") Optional<Integer> page,
 			Principal principal, Model model) {
@@ -335,11 +335,16 @@ public class OrderController {
 					long earnedPoints = Math.round(orderDto.getTotalPrice() * 0.05);
 					order.setEarnedPoints((int) earnedPoints);
 
-					// 쿠폰 할인 금액 저장
+					// 쿠폰 할인 금액 저장 및 쿠폰 소멸 처리
 					Integer discountAmount = (Integer) session.getAttribute("couponDiscountAmount");
 					if (discountAmount != null && discountAmount > 0) {
 						order.setDiscountAmount(discountAmount);
 						order.setIsCouponUsed(true); // 쿠폰 사용 여부 설정
+
+						// 결제 완료 시점에 쿠폰 소멸 처리
+						Member member = memberRepository.findByEmail(orderDto.getEmail())
+								.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
+						couponService.consumeCoupon(member); // 실제 쿠폰 소멸 처리
 					}
 
 					orderService.saveOrder(order);
@@ -351,7 +356,8 @@ public class OrderController {
 					memberRepository.save(member);
 					log.info("포인트 적립 완료 - 적립 포인트: {}", earnedPoints);
 
-					memberActivityService.saveActivity(orderDto.getEmail(), orderDto.getBookId(), ActivityType.PURCHASE);
+					memberActivityService.saveActivity(orderDto.getEmail(), orderDto.getBookId(),
+							ActivityType.PURCHASE);
 					// 세션에서 포인트 정보 제거
 					session.removeAttribute("usedPoints");
 
@@ -383,7 +389,8 @@ public class OrderController {
 						for (CartOrderDto dto : cartOrderDtoList) {
 							CartItem cartItem = cartItemRepository.findById(dto.getCartItemId())
 									.orElseThrow(EntityExistsException::new);
-							memberActivityService.saveActivity(orderEmail, cartItem.getBook().getId(), ActivityType.PURCHASE);
+							memberActivityService.saveActivity(orderEmail, cartItem.getBook().getId(),
+									ActivityType.PURCHASE);
 						}
 
 						// 주문 정보 업데이트
@@ -573,6 +580,7 @@ public class OrderController {
 
 		return ResponseEntity.ok(response);
 	}
+
 	/**
 	 * 쿠폰 적용을 처리하는 API 엔드포인트
 	 * 
@@ -616,8 +624,8 @@ public class OrderController {
 						"message", "15,000원 이상 구매 시에만 쿠폰을 사용할 수 있습니다."));
 			}
 
-			// 쿠폰 서비스를 통해 할인 금액 계산
-			Integer discountAmount = couponService.applyCoupon(member, orderAmount);
+			// 쿠폰 서비스를 통해 할인 금액 검증만 수행 (쿠폰 소멸은 하지 않음)
+			Integer discountAmount = couponService.validateCoupon(member, orderAmount);
 
 			// 할인 금액이 있고, 선택한 쿠폰의 할인 금액과 일치하는 경우에만 성공 응답
 			if (discountAmount > 0 && discountAmount.equals(couponAmount)) {

@@ -29,14 +29,10 @@ public class CouponService {
      */
     @Transactional
     public void createBasicCoupons(Member member) {
-        // 현재 보유한 미사용 쿠폰 수 조회
-        long unusedCouponCount = couponRepository.countByMemberAndIsUsedFalse(member);
-        // 추가로 발급할 쿠폰 수 계산 (최대 10개)
-        int remainingCoupons = 10 - (int) unusedCouponCount;
-
-        // 부족한 만큼 기본 쿠폰 생성 및 저장
-        for (int i = 0; i < remainingCoupons; i++) {
-            couponRepository.save(Coupon.createBasicCoupon(member));
+        // 신규 회원에게 기본 쿠폰 10개 발급
+        for (int i = 0; i < 10; i++) {
+            Coupon coupon = Coupon.createBasicCoupon(member);
+            couponRepository.save(coupon);
         }
     }
 
@@ -100,26 +96,56 @@ public class CouponService {
 
     /**
      * 쿠폰을 다운로드합니다.
+     * 동일한 템플릿의 쿠폰은 중복 발급이 불가능합니다.
      *
      * @param member 쿠폰을 다운로드할 회원
      */
     @Transactional
     public void downloadCoupon(Member member) {
-        // 현재 보유한 미사용 쿠폰 수 조회
-        long unusedCouponCount = couponRepository.countByMemberAndIsUsedFalse(member);
-
-        // 최대 보유 가능한 쿠폰 수 체크 (10개)
-        if (unusedCouponCount >= 10) {
-            throw new IllegalStateException("이미 최대 개수의 쿠폰을 보유하고 있습니다.");
+        // 이미 쿠폰존에서 쿠폰을 발급받았는지 확인
+        if (couponRepository.existsByMemberAndCouponType(member, Coupon.CouponType.COUPON_ZONE)) {
+            throw new IllegalStateException("이미 발급받은 쿠폰입니다.");
         }
 
-        Coupon coupon = Coupon.createBasicCoupon(member);
+        Coupon coupon = Coupon.createCouponZoneCoupon(member);
         couponRepository.save(coupon);
     }
 
     public boolean hasDownloadedCoupon(Member member) {
-        // 현재 날짜 기준으로 사용 가능한 쿠폰이 있는지 확인
-        LocalDateTime now = LocalDateTime.now();
-        return couponRepository.existsByMemberAndIsUsedFalseAndExpirationDateAfter(member, now);
+        // 쿠폰존에서 발급받은 쿠폰이 있는지 확인
+        return couponRepository.existsByMemberAndCouponType(member, Coupon.CouponType.COUPON_ZONE);
+    }
+
+    /**
+     * 쿠폰 유효성 검증만 수행하는 메서드
+     * 
+     * @param member      회원
+     * @param orderAmount 주문 금액
+     * @return 할인 금액 (쿠폰이 유효하지 않은 경우 0)
+     */
+    public Integer validateCoupon(Member member, Integer orderAmount) {
+        if (orderAmount < 15000) {
+            return 0;
+        }
+
+        List<Coupon> coupons = couponRepository.findByMemberAndIsUsedFalse(member);
+        if (!coupons.isEmpty()) {
+            return 1000; // 쿠폰 할인 금액
+        }
+        return 0;
+    }
+
+    /**
+     * 쿠폰을 실제로 소멸시키는 메서드
+     * 
+     * @param member 회원
+     */
+    public void consumeCoupon(Member member) {
+        List<Coupon> coupons = couponRepository.findByMemberAndIsUsedFalse(member);
+        if (!coupons.isEmpty()) {
+            Coupon coupon = coupons.get(0);
+            coupon.setIsUsed(true);
+            couponRepository.save(coupon);
+        }
     }
 }

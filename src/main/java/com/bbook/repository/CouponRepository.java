@@ -24,4 +24,12 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     Optional<Coupon> findFirstByMemberAndIsUsedTrue(Member member);
 
     boolean existsByMemberAndIsUsedFalseAndExpirationDateAfter(Member member, LocalDateTime date);
+
+    Optional<Coupon> findByMemberAndId(Member member, Long couponId);
+
+    // 회원이 특정 템플릿의 쿠폰을 이미 발급받았는지 확인합니다
+    boolean existsByMemberAndTemplateId(Member member, Long templateId);
+
+    // 회원이 특정 템플릿의 쿠폰을 가지고 있는지 확인합니다
+    boolean existsByMemberAndCouponType(Member member, Coupon.CouponType couponType);
 }

@@ -57,7 +57,7 @@ public class BookController {
 			if (memberEmail.isPresent()) {
 				memberActivityService.saveActivity(memberEmail.get(), book.getId(),
 						ActivityType.VIEW);
-				bookDetailService.incrementViewCount(book.getId()); //
+				bookDetailService.incrementViewCount(book.getId()); // 조회수 증가		
 				Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
 				boolean isWished = wishBookService.isWished(memberId, book.getId());
 				model.addAttribute("isWished", isWished);
@@ -71,7 +71,7 @@ public class BookController {
 
 			return "books/bookDtl";
 		} catch (Exception e) {
-			System.out.println("���� �߻�" + e.getMessage());
+			System.out.println("오류 발생" + e.getMessage());
 			return null;
 		}
 	}

@@ -16,7 +16,7 @@ public class Coupon {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
     @Column(name = "discount_value", nullable = false)
@@ -36,6 +36,15 @@ public class Coupon {
     @Column(name = "expiration_date", nullable = false)
     private LocalDateTime expirationDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "coupon_type", nullable = false)
+    private CouponType couponType;
+
+    public enum CouponType {
+        SIGNUP, //
+        COUPON_ZONE //
+    }
+
     public boolean isDownloaded() {
         return member != null;
     }
@@ -48,6 +57,18 @@ public class Coupon {
         coupon.setMinimumOrderAmount(15000);
         coupon.setExpirationDate(LocalDateTime.now().plusDays(30));
         coupon.setAmount(1000);
+        coupon.setTemplateId(1L);
+        coupon.setCouponType(CouponType.SIGNUP);
         return coupon;
+    }
+
+    public static Coupon createCouponZoneCoupon(Member member) {
+        Coupon coupon = createBasicCoupon(member);
+        coupon.setCouponType(CouponType.COUPON_ZONE);
+        return coupon;
+    }
+
+    public void setUsed(boolean used) {
+        this.isUsed = used;
     }
 }
