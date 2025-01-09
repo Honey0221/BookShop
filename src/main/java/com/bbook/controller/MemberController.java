@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Map;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
 
 @RequestMapping("/members")
 @Controller
@@ -53,20 +54,30 @@ public class MemberController {
     }
 
     @PostMapping("/signup")
-    public String signUp(@Valid @ModelAttribute MemberSignUpDto signUpDto,
+    @ResponseBody
+    public ResponseEntity<?> signUp(@Valid @ModelAttribute MemberSignUpDto signUpDto,
             BindingResult bindingResult) {
+        Map<String, Object> response = new HashMap<>();
+
         if (bindingResult.hasErrors()) {
-            return "member/signupForm";
+            // 유효성 검사 에러 처리
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+            response.put("status", "error");
+            response.put("errors", errors);
+            return ResponseEntity.badRequest().body(response);
         }
 
         try {
             memberService.signUp(signUpDto);
+            response.put("status", "success");
+            response.put("redirectUrl", "/members/login");
+            return ResponseEntity.ok(response);
         } catch (IllegalStateException e) {
-            bindingResult.reject("signupFailed", e.getMessage());
-            return "member/signupForm";
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-
-        return "redirect:/members/login";
     }
 
     @GetMapping("/social/nickname")

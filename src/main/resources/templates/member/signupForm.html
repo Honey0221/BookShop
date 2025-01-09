@@ -140,6 +140,58 @@
           return;
         }
       });
+
+      $('#signupForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        $.ajax({
+          url: '/members/signup',
+          type: 'POST',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+            if (response.status === 'success') {
+              // 성공 메시지 표시
+              Swal.fire({
+                icon: 'success',
+                title: '회원가입 성공!',
+                text: '로그인 페이지로 이동합니다.',
+                showConfirmButton: false,
+                timer: 1500
+              }).then(() => {
+                window.location.href = response.redirectUrl;
+              });
+            }
+          },
+          error: function (xhr) {
+            const response = xhr.responseJSON;
+            if (response.errors) {
+              // 필드별 에러 메시지 표시
+              Object.keys(response.errors).forEach(field => {
+                const errorMsg = response.errors[field];
+                $(`#${field}`).addClass('is-invalid');
+                $(`#${field}-error`).text(errorMsg);
+              });
+            } else if (response.message) {
+              // 일반 에러 메시지 표시 (예: 중복 이메일)
+              Swal.fire({
+                icon: 'error',
+                title: '회원가입 실패',
+                text: response.message
+              });
+            }
+          }
+        });
+      });
+
+      // 입력 필드에 입력할 때 에러 표시 제거
+      $('input').on('input', function () {
+        $(this).removeClass('is-invalid');
+        $(`#${this.id}-error`).text('');
+      });
     });
   </script>
 </th:block>
@@ -152,7 +204,7 @@
           <div class="card-body">
             <h2 class="card-title text-center mb-4">회원가입</h2>
 
-            <form action="/members/signup" role="form" method="post" th:object="${memberSignUpDto}">
+            <form id="signupForm" th:action="@{/members/signup}" method="post" th:object="${memberSignUpDto}">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
               <!-- 이메일 입력 -->
