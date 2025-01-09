@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RequestMapping("/members")
 @Controller
@@ -42,8 +43,21 @@ public class MemberController {
     }
 
     @GetMapping("/login/error")
-    public String loginError(Model model) {
-        model.addAttribute("loginErrorMsg", "아이디 또는 비밀번호를 확인해주세요.");
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> loginError() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "error");
+        response.put("message", "아이디 또는 비밀번호를 확인해주세요.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @GetMapping("/login-error")
+    public String loginError(Model model, HttpServletRequest request) {
+        String errorMessage = (String) request.getAttribute("errorMessage");
+        if (errorMessage == null) {
+            errorMessage = "아이디 또는 비밀번호를 확인해주세요.";
+        }
+        model.addAttribute("loginErrorMsg", errorMessage);
         return "member/login";
     }
 
