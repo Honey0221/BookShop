@@ -26,7 +26,8 @@ public class BookListDto {
   private BookStatus bookStatus; // 도서 상태
   private LocalDateTime createdAt;// 등록 시간
   private String description; // 도서 설명
-  private Long viewCount; // 조회수 필드 추가
+  private Long viewCount; // 조회수
+  private String trailerUrl; // 북 트레일러 URL
 
   @Builder
   public BookListDto(Long id, String title, String author, String publisher,

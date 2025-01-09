@@ -23,4 +23,5 @@ public class BookFormDto {
 	private String detailCategory;
 	private String imageUrl;
 	private String description;
+	private String trailerUrl;
 }

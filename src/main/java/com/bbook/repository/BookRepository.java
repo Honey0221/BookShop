@@ -1,6 +1,7 @@
 package com.bbook.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import com.bbook.entity.Book;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
 	List<Book> findByAuthor(String author);
+	List<Book> findByMidCategory(String midCategory);
 
 	@Query("SELECT DISTINCT b.mainCategory FROM Book b WHERE b.mainCategory IS NOT NULL ORDER BY b.mainCategory")
 	List<String> findDistinctMainCategories();

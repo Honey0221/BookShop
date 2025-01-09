@@ -78,6 +78,9 @@ public class Book {
   @Column(name = "view_count", columnDefinition = "bigint default 0")
   private Long viewCount;
 
+	@Column(columnDefinition = "TEXT")
+	private String trailerUrl;
+
   public void updateBook(BookFormDto bookFormDto) {
     this.title = bookFormDto.getTitle();
     this.author = bookFormDto.getAuthor();

@@ -117,12 +117,25 @@
           </li>
         </ul>
         <div class="tab-content mt-3" id="bookTabContent">
+          <!-- 책 상세 설명 탭 영역 -->
           <div class="tab-pane fade show active" id="description"
                role="tabpanel">
             <p th:text="${book.description}"></p>
+            <!-- 북 트레일러 섹션 -->
+            <div class="book-trailer mt-5">
+              <h3 class="mb-4">북 트레일러</h3>
+              <div class="video-container">
+                <iframe th:src="${book.trailerUrl}" frameborder="0"
+                        allow="accelerometer; autoplay;
+                        clipboard-write; encrypted-media;
+                        gyroscope; picture-in-picture"
+                        allowfullscreen>
+                </iframe>
+              </div>
+            </div>
           </div>
           <div class="tab-pane fade" id="review" role="tabpanel">
-            <!-- 리뷰 통계 영역 -->
+            <!-- 리뷰 통계 탭 영역 -->
             <div class="review-statistics mb-4"
                  sec:authorize="isAuthenticated()">
               <div class="row">
@@ -130,7 +143,7 @@
                 <div class="col-md-6">
                   <div class="rating-stats p-3 border rounded">
                     <h5 class="mb-3">구매자 평점</h5>
-                    <div class="d-flex align-items-center mb-2">
+                    <div class="d-flex align-items-center mt-5 mb-3">
                       <div class="average-rating-large me-3">
                         <div class="text-warning text-center fs-4">
                           <i class="fas fa-star"></i>
@@ -169,8 +182,8 @@
                         <p class="mb-2">가장 많이 선택된 태그</p>
                         <span class="most-common-tag-value">없음</span>
                       </div>
-                      <div class="tag-distribution d-flex justify-content-between" style="height: 200px;">
-                        <div class="tag-bar-item" style="width: 18%;"
+                      <div class="tag-distribution d-flex justify-content-between">
+                        <div class="tag-bar-item"
                               th:each="tagType : ${T(com.bbook.constant.TagType).values()}">
                           <div class="d-flex flex-column align-items-center h-100">
                             <div class="progress vertical">
@@ -401,8 +414,7 @@
     <div class="row mt-5" th:if="${not #lists.isEmpty(authorBooks)}">
       <h3 class="mb-3">작가의 다른 책들</h3>
       <div class="author-books">
-        <div
-          class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           <div class="col" th:each="authorBook : ${authorBooks}">
             <div class="card h-100">
               <a th:href="@{/item(bookId=${authorBook.id})}"
@@ -413,6 +425,28 @@
                   <h5 class="card-title" th:text="${authorBook.title}"></h5>
                   <p class="card-text price"
                      th:text="${#numbers.formatInteger(authorBook.price, 0, 'COMMA') + '원'}">
+                  </p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-5" th:if="${not #lists.isEmpty(categoryBooks)}">
+      <h3 class="mb-3">같은 카테고리 책들</h3>
+      <div class="category-books">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+          <div class="col" th:each="categoryBook : ${categoryBooks}">
+            <div class="card h-100">
+              <a th:href="@{/item(bookId=${categoryBook.id})}"
+                 class="text-decoration-none">
+                <img th:src="${categoryBook.imageUrl}" class="card-img-top"
+                     th:alt="${categoryBook.title}">
+                <div class="card-body">
+                  <h5 class="card-title" th:text="${categoryBook.title}"></h5>
+                  <p class="card-text price"
+                     th:text="${#numbers.formatInteger(categoryBook.price, 0, 'COMMA') + '원'}">
                   </p>
                 </div>
               </a>

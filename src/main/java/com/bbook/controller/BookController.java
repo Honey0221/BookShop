@@ -4,14 +4,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.bbook.constant.ActivityType;
 import com.bbook.dto.ReviewStatsDto;
@@ -40,6 +43,10 @@ public class BookController {
 			Book book = bookDetailService.getBookById(id);
 			model.addAttribute("book", book);
 
+			if (book.getTrailerUrl() == null) { // 비동기 처리
+				bookDetailService.getBookTrailerUrl(id);
+			}
+
 			Double avgRating = reviewService.getAverageRatingByBookId(book.getId());
 			model.addAttribute("avgRating", avgRating);
 
@@ -53,11 +60,21 @@ public class BookController {
 
 			model.addAttribute("authorBooks", randomBooks);
 
+			Set<Book> categoryBooks = new HashSet<>(bookDetailService
+					.getBooksByMidCategory(book.getMidCategory()).stream()
+					.filter(b -> !b.getId().equals(book.getId())).toList());
+
+			List<Book> randomCategoryBooks = new ArrayList<>(categoryBooks);
+			Collections.shuffle(randomCategoryBooks);
+			randomCategoryBooks = randomCategoryBooks.stream().limit(4).toList();
+
+			model.addAttribute("categoryBooks", randomCategoryBooks);
+
 			Optional<String> memberEmail = memberService.getCurrentMemberEmail();
 			if (memberEmail.isPresent()) {
 				memberActivityService.saveActivity(memberEmail.get(), book.getId(),
 						ActivityType.VIEW);
-				bookDetailService.incrementViewCount(book.getId()); // 조회수 증가		
+				bookDetailService.incrementViewCount(book.getId()); //
 				Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
 				boolean isWished = wishBookService.isWished(memberId, book.getId());
 				model.addAttribute("isWished", isWished);
@@ -71,8 +88,16 @@ public class BookController {
 
 			return "books/bookDtl";
 		} catch (Exception e) {
-			System.out.println("오류 발생" + e.getMessage());
+			System.out.println(e.getMessage());
 			return null;
 		}
+	}
+
+	@GetMapping("/{bookId}/trailer")
+	@ResponseBody
+	public Map<String, String> getBookTrailer(@PathVariable Long bookId) {
+		Book book = bookDetailService.getBookById(bookId);
+		return Map.of("trailerUrl",
+				book.getTrailerUrl() != null ? book.getTrailerUrl() : "");
 	}
 }

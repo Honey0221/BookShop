@@ -300,38 +300,22 @@ $(document).ready(function() {
     // 스크롤바 강제 표시
     document.documentElement.style.overflowY = 'scroll';
   }
+
+  $('.book-trailer').hide();
+
+  if (!window.trailerChecked) {
+    window.trailerChecked = true;
+    checkBookTrailer();
+  }
 });
 
 // 리뷰 목록 조회
 function loadReviews(page = 0, sortType = 'likes') {
-  // 시간 표시 형식 변환 함수
-  function formatTimeAgo(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInSeconds < 60) {
-      return "방금 전";
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes}분 전`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours}시간 전`;
-    } else if (diffInHours < 7) {
-      return `${diffInDays}일 전`;
-    } else {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-  }
-
   currentPage = page; // 현재 페이지 업데이트
   currentSort = sortType; // 현재 정렬 업데이트
   const bookId = $("#bookId").val();
+
+  // 리뷰 관련 html
   $.ajax({
     url: `/reviews/${bookId}?page=${page}&sort=${sortType}`,
     type: "Get",
@@ -344,140 +328,194 @@ function loadReviews(page = 0, sortType = 'likes') {
       updateReviewStats();
 
       response.content.forEach(function(review) {
-        const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
-        const timeAgo = formatTimeAgo(review.createdAt);
-
-        // 좋아요 버튼
-        const likeBtn = `
-          <button id="like-${review.id}" class="btn btn-sm ${review.isLiked ? 'liked' : ''}"
-                  onclick="toggleLike(${review.id})">
-            <i class="fas fa-thumbs-up"></i>
-            <span class="like-count" id="like-count-${review.id}">${review.likeCount || 0}</span>
-          </button>
-        `;
-
-        // 신고 버튼
-        const reportBtn = `
-          <button id="report-${review.id}" class="btn btn-sm report-review"
-                  data-review-id="${review.id}" style="color: #dc3545;"
-                  onclick="reportReview(${review.id})">
-            <i class="fas fa-flag"></i>
-          </button>
-        `;
-
-        // 수정, 삭제 버튼(자기만 보이게)
-        let editDeleteBtn = '';
-        if (review.isOwner === true) {
-          editDeleteBtn = `
-          <div class="btn-group">
-            <button class="btn btn-sm btn-primary edit-review me-1"
-                          data-review-id="${review.id}"
-                          data-rating="${review.rating}"
-                          data-content="${review.content}"
-                          data-tag-type="${review.tagType || ''}">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn btn-sm btn-danger delete-review"
-                          data-review-id="${review.id}">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>`;
-        }
-
-        // 이미지 부분
-        let imagesHtml = '';
-        if (review.images && review.images.length > 0) {
-          imagesHtml = `
-            <div class="review-images mt-2 d-flex gap-2 flex-wrap">
-              ${review.images.map(img => `
-                <img src="/bookshop/review/${img}" class="img-thumbnail review-image"
-                style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
-                onclick="showImageModal(this.src)">
-              `).join('')}
-            </div>
-          `;
-        }
-
-        // 태그 뱃지
-        const tagBadge = review.tagType ?
-         `<span class="badge rounded-pill bg-secondary ms-2"
-         data-tag="${review.tagType}">${getTagLabel(review.tagType)}</span>` : '';
-
-        // 리뷰 목록 html
-        const reviewHtml = `
-          <div class="review-item border-bottom py-3">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="d-flex align-items-center gap-2">
-                <div class="rating text-warning">${stars}</div>
-                <div class="reviewer">구매자 : ${review.memberName}</div>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                ${tagBadge}
-                <small class="text-muted">${timeAgo}</small>
-                ${editDeleteBtn}
-              </div>
-            </div>
-            ${imagesHtml}
-            <div class="review-content mt-2">${review.content}</div>
-            <div class="d-flex justify-content-end align-items-end mt-2">
-              <div class="d-flex gap-2">
-                ${likeBtn}
-                ${reportBtn}
-              </div>
-            </div>
-          </div>
-        `;
+        const reviewHtml = createReviewHtml(review);
         $("#reviewContainer").append(reviewHtml);
       });
 
-      // 페이지 html
-      let paginationHtml = '<div class="d-flex justify-content-center mt-4"><ul class="pagination">';
-
-      if (!response.first) {
-        paginationHtml += `<li class="page-item">
-                              <a class="page-link" href="#" data-page="${response.number - 1}">이전</a>
-                           </li>`;
-      }
-
-      for (let i = 0; i < response.totalPages; i++) {
-        paginationHtml += `<li class="page-item ${response.number === i ? 'active' : ''}">
-                              <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
-                           </li>`;
-      }
-
-      if (!response.last) {
-        paginationHtml += `<li class="page-item">
-                              <a class="page-link" href="#" data-page="${response.number + 1}">다음</a>
-                           </li>`;
-      }
-
-      paginationHtml += '</ul></div>';
-      $("#reviewContainer").append(paginationHtml);
-
-      // 페이지 이동할 때 실행
-      $(".pagination .page-link").on("click", function(e) {
-        e.preventDefault();
-        page = $(this).data("page");
-        sort = $("#reviewSort").val();
-        loadReviews(page, sort);
-      })
-
-      // 수정 버튼 이벤트
-      $(".edit-review").on("click", function() {
-        const reviewId = $(this).data("review-id");
-        editReview(reviewId);
-      })
-
-      // 삭제 버튼 이벤트
-      $(".delete-review").on("click", function() {
-        const reviewId = $(this).data("review-id");
-        deleteReview(reviewId);
-      });
+      appendPagination(response);
+      setupReviewEventListeners();
     },
     error: function () {
       showAlert('리뷰 목록을 불러오는데 실패했습니다.', 'error');
     }
   });
+}
+
+// 리뷰 HTML 생성
+function createReviewHtml(review) {
+  const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+  const timeAgo = formatTimeAgo(review.createdAt);
+  const likeBtn = createLikeButton(review);
+  const reportBtn = createReportButton(review);
+  const editDeleteBtn = createEditDeleteButton(review);
+  const imagesHtml = createImagesHtml(review);
+  const tagBadge = createTagBadge(review);
+
+  return `
+    <div class="review-item border-bottom py-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rating text-warning">${stars}</div>
+          <div class="reviewer">구매자 : ${review.memberName}</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          ${tagBadge}
+          <small class="text-muted">${timeAgo}</small>
+          ${editDeleteBtn}
+        </div>
+      </div>
+      ${imagesHtml}
+      <div class="review-content mt-2">${review.content}</div>
+      <div class="d-flex justify-content-end align-items-end mt-2">
+        <div class="d-flex gap-2">
+          ${likeBtn}
+          ${reportBtn}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 페이지네이션 추가
+function appendPagination(response) {
+  let paginationHtml = '<div class="d-flex justify-content-center mt-4"><ul class="pagination">';
+
+  if (!response.first) {
+    paginationHtml += `<li class="page-item">
+      <a class="page-link" href="#" data-page="${response.number - 1}">이전</a>
+    </li>`;
+  }
+
+  for (let i = 0; i < response.totalPages; i++) {
+    paginationHtml += `<li class="page-item ${response.number === i ? 'active' : ''}">
+      <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+    </li>`;
+  }
+
+  if (!response.last) {
+    paginationHtml += `<li class="page-item">
+      <a class="page-link" href="#" data-page="${response.number + 1}">다음</a>
+    </li>`;
+  }
+
+  paginationHtml += '</ul></div>';
+  $("#reviewContainer").append(paginationHtml);
+}
+
+// 리뷰 이벤트 리스너
+function setupReviewEventListeners() {
+  $(".pagination .page-link").on("click", function(e) {
+    e.preventDefault();
+    const page = $(this).data("page");
+    const sort = $("#reviewSort").val();
+    loadReviews(page, sort);
+  });
+
+  // 수정 버튼 이벤트
+  $(".edit-review").on("click", function() {
+    const reviewId = $(this).data("review-id");
+    editReview(reviewId);
+  });
+
+  // 삭제 버튼 이벤트
+  $(".delete-review").on("click", function() {
+    const reviewId = $(this).data("review-id");
+    deleteReview(reviewId);
+  });
+}
+
+// 좋아요 버튼
+function createLikeButton(review) {
+  return `
+    <button id="like-${review.id}" class="btn btn-sm ${review.isLiked ? 'liked' : ''}"
+            onclick="toggleLike(${review.id})">
+      <i class="fas fa-thumbs-up"></i>
+      <span class="like-count" id="like-count-${review.id}">${review.likeCount || 0}</span>
+    </button>
+  `;
+}
+
+// 신고 버튼
+function createReportButton(review) {
+  return `
+    <button id="report-${review.id}" class="btn btn-sm report-review"
+            data-review-id="${review.id}" style="color: #dc3545;"
+            onclick="reportReview(${review.id})">
+      <i class="fas fa-flag"></i>
+    </button>
+  `;
+}
+
+// 수정, 삭제 버튼
+function createEditDeleteButton(review) {
+  if (!review.isOwner) return '';
+
+  return `
+    <div class="btn-group">
+      <button class="btn btn-sm btn-primary edit-review me-1"
+                    data-review-id="${review.id}"
+                    data-rating="${review.rating}"
+                    data-content="${review.content}"
+                    data-tag-type="${review.tagType || ''}">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button class="btn btn-sm btn-danger delete-review"
+                    data-review-id="${review.id}">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  `;
+}
+
+// 이미지 HTML
+function createImagesHtml(review) {
+  if (!review.images || review.images.length === 0) return '';
+
+  return `
+    <div class="review-images mt-2 d-flex gap-2 flex-wrap">
+      ${review.images.map(img => `
+        <img src="/bookshop/review/${img}" class="img-thumbnail review-image"
+        style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
+        onclick="showImageModal(this.src)">
+      `).join('')}
+    </div>
+  `;
+}
+
+// 태그 뱃지
+function createTagBadge(review) {
+  if (!review.tagType) return '';
+
+  return `
+    <span class="badge rounded-pill bg-secondary ms-2" data-tag="${review.tagType}">
+      ${getTagLabel(review.tagType)}
+    </span>
+  `;
+}
+
+// 시간 표시 형식 변환 함수
+function formatTimeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInSeconds < 60) {
+    return "방금 전";
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}분 전`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}시간 전`;
+  } else if (diffInHours < 7) {
+    return `${diffInDays}일 전`;
+  } else {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 }
 
 // 태그 라벨 함수
@@ -492,7 +530,7 @@ function getTagLabel(tagType) {
   return labels[tagType] || tagType;
 }
 
-// 리뷰 목록에 있는 이미지 누를 때 나오는 모발창
+// 리뷰 목록에 있는 이미지 누를 때 나오는 모달창
 function showImageModal(src) {
   Swal.fire({
     imageUrl: src,
@@ -710,7 +748,7 @@ function updateReviewStats() {
   });
 }
 
-// 알림창 함수
+// SweetAlert 알림창 함수
 function showAlert(title, icon = '') {
   return Swal.fire({
     title: title,
@@ -719,6 +757,7 @@ function showAlert(title, icon = '') {
   });
 }
 
+// 주문하기
 function order() {
   const bookId = document.getElementById('bookId').value;
   const quantity = document.getElementById('quantity').value;
@@ -750,6 +789,7 @@ function order() {
   });
 }
 
+// 장바구니 추가
 function addCart() {
   // bookId 값을 hidden input에서 가져오기
   const bookId = document.getElementById('bookId').value;
@@ -757,7 +797,6 @@ function addCart() {
 
   const quantity = document.getElementById('quantity').value;
   console.log("Raw quantity value:", quantity);
-
 
   const url = "/cart";
   const paramData = {
@@ -786,5 +825,43 @@ function addCart() {
         alert(jqXHR.responseText);
       }
     }
+  });
+}
+
+// 북 트레일러 검사
+function checkBookTrailer() {
+  const bookId = $("#bookId").val();
+  const maxRetries = 7; // 최대 7번 시도
+  let retryCount = 0;
+
+  return new Promise((resolve, reject) => {
+    function checkTrailer() {
+      $.get(`/item/${bookId}/trailer`, function(response) {
+        if (response.trailerUrl) {
+          console.log("북 트레일러 확인");
+          const $iframe = $('.book-trailer iframe')
+          $iframe.attr('src', '').attr('src', response.trailerUrl);
+          $('.book-trailer').show();
+          resolve(response.trailerUrl);
+        } else if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`북 트레일러 확인 중... (${retryCount}/${maxRetries})`);
+          setTimeout(checkTrailer, 3000);
+        } else {
+          console.log("북 트레일러 없음");
+          $('.book-trailer').hide();
+          resolve(null);
+        }
+      }).fail(function(error) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`북 트레일러 확인 실패 (${retryCount}/${maxRetries})`);
+          setTimeout(checkTrailer, 3000);
+        } else {
+          reject(error);
+        }
+      });
+    }
+    checkTrailer();
   });
 }
