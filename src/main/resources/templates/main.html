@@ -58,7 +58,7 @@
     </ul>
   </div>
 
-  <div class="category-container">
+  <div class="category-container" th:if="${#authorization.expression('!isAuthenticated()')}">
     <h2 class="section-title">
       <i class="fas fa-crown"></i>
       베스트상품
@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <div class="category-container">
+  <div class="category-container" th:if="${#authorization.expression('!isAuthenticated()')}">
     <h2 class="section-title">
       <i class="fas fa-star"></i>
       신상품
