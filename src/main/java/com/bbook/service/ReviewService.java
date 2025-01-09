@@ -143,12 +143,6 @@ public class ReviewService {
 			throw new RuntimeException("리뷰 수정 권한이 없습니다.");
 		}
 
-		review.setRating(updateDto.getRating());
-		review.setContent(updateDto.getContent());
-		if (updateDto.getTagType() != null) {
-			review.setTagType(updateDto.getTagType());
-		}
-
 		if (review.getImages() != null && !review.getImages().isEmpty()) {
 			for (String imageUrl : review.getImages()) {
 				try {
@@ -174,6 +168,9 @@ public class ReviewService {
 			}
 		}
 
+		review.updateReview(
+				updateDto.getRating(), updateDto.getContent(), updateDto.getTagType());
+
 		reviewRepository.save(review);
 	}
 
@@ -185,7 +182,8 @@ public class ReviewService {
 		Reviews review = reviewRepository.findById(reviewId)
 				.orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
 		// 이미 좋아요 했는지 체크
-		Optional<ReviewLike> existingLike = likeRepository.findByReviewIdAndMemberId(reviewId, memberId);
+		Optional<ReviewLike> existingLike =
+				likeRepository.findByReviewIdAndMemberId(reviewId, memberId);
 
 		boolean isLiked;
 		if (existingLike.isPresent()) {
@@ -235,36 +233,25 @@ public class ReviewService {
 				.average().orElse(0.0);
 
 		// 태그 통계 계산
-		Map<String, Double> tagStats = new HashMap<>();
-		String mostCommonTag = "";
-
-		// 유효한 태그가 있는 리뷰만 필터링
-		List<Reviews> reviewsWithTags = reviews.stream()
+		Map<String, Long> tagCounts = reviews.stream()
 				.filter(r -> r.getTagType() != null)
-				.collect(Collectors.toList());
+				.collect(Collectors.groupingBy(
+						r -> r.getTagType().toString(), Collectors.counting()));
 
-		if (!reviewsWithTags.isEmpty()) {
-			// 태그별 카운트 계산
-			Map<String, Long> tagCounts = reviewsWithTags.stream()
-					.collect(Collectors.groupingBy(
-							r -> r.getTagType().toString(),
-							Collectors.counting()));
+		long totalTags = tagCounts.values().stream().mapToLong(Long::longValue).sum();
+		Map<String, Double> tagStats = new HashMap<>();
 
-			// 총 태그 수 계산
-			long totalTags = reviewsWithTags.size();
+		// 태그별 비율 계산
+		tagCounts.forEach((tag, count) -> {
+			double percentage = totalTags > 0 ? (count * 100.0) / totalTags : 0;
+			tagStats.put(tag, percentage);
+		});
 
-			// 태그별 비율 계산
-			tagCounts.forEach((tag, count) -> {
-				double percentage = (count * 100.0) / totalTags;
-				tagStats.put(tag, percentage);
-			});
-
-			// 가장 많이 사용된 태그 찾기
-			if (!tagCounts.isEmpty()) {
-				mostCommonTag = Collections.max(tagCounts.entrySet(), Map.Entry.comparingByValue())
-						.getKey();
-			}
-		}
+		// 가장 많이 사용된 태그 찾기
+		String mostCommonTag = tagCounts.isEmpty() ? "" :
+				TagType.valueOf(Collections
+						.max(tagCounts.entrySet(), Map.Entry.comparingByValue())
+						.getKey()).getDisplayValue();
 
 		stats.setRatingStats(ratingStats);
 		stats.setAvgRating(avgRating);
@@ -290,5 +277,11 @@ public class ReviewService {
 		report.setStatus(ReportStatus.PENDING);
 
 		reportRepository.save(report);
+	}
+
+	public Long getBookIdByReviewId(Long reviewId) {
+		return reviewRepository.findById(reviewId)
+				.map(Reviews::getBookId)
+				.orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
 	}
 }

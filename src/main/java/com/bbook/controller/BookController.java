@@ -57,7 +57,7 @@ public class BookController {
 			if (memberEmail.isPresent()) {
 				memberActivityService.saveActivity(memberEmail.get(), book.getId(),
 						ActivityType.VIEW);
-				bookDetailService.incrementViewCount(book.getId()); // Á¶È¸¼ö Áõ°¡		
+				bookDetailService.incrementViewCount(book.getId()); //
 				Long memberId = memberService.getMemberIdByEmail(memberEmail.get());
 				boolean isWished = wishBookService.isWished(memberId, book.getId());
 				model.addAttribute("isWished", isWished);
@@ -71,7 +71,7 @@ public class BookController {
 
 			return "books/bookDtl";
 		} catch (Exception e) {
-			System.out.println("¿À·ù ¹ß»ý" + e.getMessage());
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½" + e.getMessage());
 			return null;
 		}
 	}

@@ -56,6 +56,12 @@ public class Reviews {
 
 	private LocalDateTime createdAt;
 
+	public void updateReview(int rating, String content, TagType tagType) {
+		this.rating = rating;
+		this.content = content;
+		this.tagType = tagType;
+	}
+
 	public void addImage(String imageUrl) {
 		if (this.images == null) {
 			this.images = new ArrayList<>();

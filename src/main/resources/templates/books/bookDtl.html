@@ -9,6 +9,13 @@
     <link th:href="@{/css/bookDtl.css}" rel="stylesheet">
   </th:block>
 
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const bookId = /*[[${book.id}]]*/ null;
+    console.log("bookId:", bookId); // 디버깅용
+    /*]]>*/
+  </script>
+
   <th:block layout:fragment="script">
     <script th:src="@{/js/bookDtl.js}"></script>
     <script th:src="@{/js/reviewAction.js}"></script>
@@ -102,7 +109,7 @@
           <li class="nav-item">
             <a class="nav-link active" id="description-tab" data-bs-toggle="tab"
                href="#description" role="tab">상세
-              설명</a>
+            설명</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" id="review-tab" data-bs-toggle="tab"
@@ -128,28 +135,26 @@
                         <div class="text-warning text-center fs-4">
                           <i class="fas fa-star"></i>
                         </div>
-                        <span class="display-4"
-                              th:text="${#numbers.formatDecimal(avgRating, 1, 1)}">
-                          4.5</span>
+                        <span class="display-4">0.0</span>
                       </div>
-                      <div class="rating-bars flex-grow-1">
-                        <div class="rating-bar-item"
-                             th:each="i : ${#numbers.sequence(5, 1, -1)}">
+                      <div class="rating-bars">
+                        <!-- 평점 바 (5점부터 1점까지) -->
+                        <div th:each="i : ${#numbers.sequence(5, 1, -1)}" class="rating-bar-item">
                           <div class="d-flex align-items-center">
                             <small class="text-muted me-2" th:text="${i + '점'}">5점</small>
-                            <div class="progress flex-grow-1"
-                                 style="height: 8px;">
-                              <div class="progress-bar bg-warning"
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                              <div class="progress-bar bg-warning rating-bar"
+                                   th:data-rating="${i}"
                                    role="progressbar"
-                                   th:style="'width: ' + ${ratingStats.get(i)} + '%'"
-                                   th:attr="aria-valuenow=${ratingStats.get(i)}"
-                                   aria-valuemin="0" aria-valuemax="100">
+                                   style="width: 0%"
+                                   aria-valuenow="0"
+                                   aria-valuemin="0"
+                                   aria-valuemax="100">
                               </div>
                             </div>
+                            <small class="text-muted ms-2 rating-percentage"
+                                   th:data-rating="${i}">0%</small>
                           </div>
-                          <small class="text-muted ms-2"
-                                 th:text="${#numbers.formatDecimal(ratingStats.get(i), 1, 0) + '%'}">
-                          </small>
                         </div>
                       </div>
                     </div>
@@ -159,27 +164,29 @@
                 <div class="col-md-6">
                   <div class="tag-stats p-3 border rounded">
                     <h5 class="mb-3">이 책의 특징</h5>
-                    <div class="most-common-tag mb-3">
-                      <p class="mb-1">가장 많이 선택된 태그</p>
-                      <h4 class="text-primary" th:text="${mostCommonTag}">
-                        최고예요</h4>
-                    </div>
-                    <div class="tag-distribution d-flex justify-content-between"
-                         style="height: 200px;">
-                      <div class="tag-bar-item" style="width: 18%;"
-                           th:each="tagType : ${T(com.bbook.constant.TagType).values()}">
-                        <div class="d-flex flex-column align-items-center h-100">
-                          <div class="progress vertical">
-                            <div class="progress-bar bg-primary" role="progressbar"
-                                 th:style="'height: ' + ${tagStats.containsKey(tagType.name()) ? tagStats.get(tagType.name()) : 0} + '%'"
-                                 th:attr="aria-valuenow=${tagStats.containsKey(tagType.name()) ? tagStats.get(tagType.name()) : 0}"
-                                 aria-valuemin="0" aria-valuemax="100">
+                    <div class="tag-bars">
+                      <div class="most-common-tag mb-3">
+                        <p class="mb-2">가장 많이 선택된 태그</p>
+                        <span class="most-common-tag-value">없음</span>
+                      </div>
+                      <div class="tag-distribution d-flex justify-content-between" style="height: 200px;">
+                        <div class="tag-bar-item" style="width: 18%;"
+                              th:each="tagType : ${T(com.bbook.constant.TagType).values()}">
+                          <div class="d-flex flex-column align-items-center h-100">
+                            <div class="progress vertical">
+                              <div class="progress-bar bg-primary"
+                                    th:data-tag="${tagType.name()}"
+                                    role="progressbar"
+                                    style="height: 0%"
+                                    aria-valuenow="0"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100">
+                              </div>
                             </div>
+                            <small class="text-muted mt-2" th:text="${tagType.displayValue}">태그명</small>
+                            <small class="text-muted tag-percentage"
+                                    th:data-tag="${tagType.name()}">0%</small>
                           </div>
-                          <small class="text-muted mt-2" th:text="${tagType.displayValue}">태그명</small>
-                          <small class="text-muted"
-                                 th:text="${tagStats.containsKey(tagType.name()) ? #numbers.formatDecimal(tagStats.get(tagType.name()), 1, 0) : '0'} + '%'">
-                          </small>
                         </div>
                       </div>
                     </div>

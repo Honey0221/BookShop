@@ -1,5 +1,6 @@
 package com.bbook.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -44,7 +45,7 @@ public class ReviewController {
 
 	@PostMapping
 	@ResponseBody
-	public ResponseEntity<Map<String, Boolean>> createReview(
+	public ResponseEntity<Map<String, Object>> createReview(
 			@ModelAttribute ReviewRequestDto request,
 			@AuthenticationPrincipal UserDetails userDetails) {
 		try {
@@ -80,17 +81,27 @@ public class ReviewController {
 				memberActivityService
 						.saveActivity(email, request.getBookId(), ActivityType.REVIEW);
 			}
-			return ResponseEntity.ok(Map.of("success", true));
+
+			// 통계 데이터 업데이트
+			ReviewStatsDto updatedStats = reviewService.getReviewStats(request.getBookId());
+			Double updatedAvgRating = reviewService.getAverageRatingByBookId(request.getBookId());
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("success", true);
+			response.put("stats", updatedStats);
+			response.put("avgRating", updatedAvgRating);
+
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			e.printStackTrace();
 			System.out.println("에러 발생 : " + e.getMessage());
-			return ResponseEntity.badRequest().body(Map.of("success", false));
+			return ResponseEntity.badRequest().body(Map.of("success", false,
+					"error", e.getMessage()));
 		}
 	}
 
 	@GetMapping("/{bookId}")
 	@ResponseBody
-	public ResponseEntity<Page<ReviewDto>> getReviews(
+	public ResponseEntity<Map<String, Object>> getReviews(
 			@PathVariable("bookId") Long bookId,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "likes") String sort,
@@ -104,18 +115,42 @@ public class ReviewController {
 		Page<ReviewDto> reviews =
 				reviewService.getBookReviews(bookId, currentMemberId, pageRequest, sort);
 
-		return ResponseEntity.ok(reviews);
+		// 통계 데이터 조회
+		ReviewStatsDto stats = reviewService.getReviewStats(bookId);
+		Double avgRating = reviewService.getAverageRatingByBookId(bookId);
+
+		// 응답 데이터 구성
+		Map<String, Object> response = new HashMap<>();
+		response.put("content", reviews.getContent());
+		response.put("totalPages", reviews.getTotalPages());
+		response.put("totalElements", reviews.getTotalElements());
+		response.put("size", reviews.getSize());
+		response.put("number", reviews.getNumber());
+		response.put("first", reviews.isFirst());
+		response.put("last", reviews.isLast());
+		response.put("empty", reviews.isEmpty());
+		response.put("stats", stats);
+		response.put("avgRating", avgRating);
+
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/average/{bookId}")
 	@ResponseBody
-	public Double getAvgRating(@PathVariable("bookId") Long bookId) {
-		return reviewService.getAverageRatingByBookId(bookId);
+	public ResponseEntity<Double> getAverageRating(@PathVariable("bookId") Long bookId) {
+		try {
+			Double avgRating = reviewService.getAverageRatingByBookId(bookId);
+			System.out.println("Average rating: " + avgRating); // 디버깅용
+			return ResponseEntity.ok(avgRating);
+		} catch (Exception e) {
+			System.out.println("Error getting average: " + e.getMessage()); // 디버깅용
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	@PatchMapping("/{reviewId}")
 	@ResponseBody
-	public ResponseEntity<Map<String, Boolean>> updateReview(
+	public ResponseEntity<Map<String, Object>> updateReview(
 			@PathVariable("reviewId") Long reviewId,
 			@ModelAttribute ReviewUpdateDto updateDto,
 			@AuthenticationPrincipal UserDetails userDetails) {
@@ -129,9 +164,20 @@ public class ReviewController {
 			Long memberId = memberService.getMemberIdByEmail(email);
 
 			reviewService.updateReview(reviewId, memberId, updateDto);
-			return ResponseEntity.ok(Map.of("success", true));
+
+			Long bookId = reviewService.getBookIdByReviewId(reviewId);
+			ReviewStatsDto updatedStats = reviewService.getReviewStats(bookId);
+			Double updatedAvgRating = reviewService.getAverageRatingByBookId(bookId);
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("success", true);
+			response.put("stats", updatedStats);
+			response.put("avgRating", updatedAvgRating);
+
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			return ResponseEntity.badRequest().body(Map.of("success", false));
+			return ResponseEntity.badRequest().body(Map.of(
+					"success", false, "error", e.getMessage()));
 		}
 	}
 
@@ -169,12 +215,14 @@ public class ReviewController {
 
 	@GetMapping("/stats/{bookId}")
 	@ResponseBody
-	public ResponseEntity<ReviewStatsDto> updateReviewStats(
+	public ResponseEntity<ReviewStatsDto> getReviewStats(
 			@PathVariable("bookId") Long bookId) {
 		try {
 			ReviewStatsDto stats = reviewService.getReviewStats(bookId);
+			System.out.println("Stats response: " + stats); // 디버깅용
 			return ResponseEntity.ok(stats);
 		} catch (Exception e) {
+			System.out.println("Error getting stats: " + e.getMessage()); // 디버깅용
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
