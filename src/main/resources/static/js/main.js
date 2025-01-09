@@ -72,6 +72,22 @@ document.addEventListener('DOMContentLoaded', function () {
     return new Swiper(selector, { ...commonSwiperConfig, ...config });
   }
 
+  // 책 카드 클릭 이벤트 처리
+  function initializeBookCardClickEvents() {
+    const bookCards = document.querySelectorAll('.book-card');
+    bookCards.forEach(card => {
+      card.addEventListener('click', function () {
+        const bookId = this.getAttribute('data-book-id');
+        if (bookId) {
+          window.location.href = `/item?bookId=${bookId}`;
+        }
+      });
+
+      // 커서 스타일 추가
+      card.style.cursor = 'pointer';
+    });
+  }
+
   // 각 스와이퍼 초기화
   const swipers = {
     best: initializeSwiper('.best-swiper'),
@@ -80,6 +96,16 @@ document.addEventListener('DOMContentLoaded', function () {
     collaborative: initializeSwiper('.collaborative-swiper'),
     contentBased: initializeSwiper('.content-based-swiper')
   };
+
+  // 각 스와이퍼가 초기화된 후 클릭 이벤트 등록
+  Object.values(swipers).forEach(swiper => {
+    swiper.on('init', function () {
+      initializeBookCardClickEvents();
+    });
+  });
+
+  // 초기 클릭 이벤트 등록
+  initializeBookCardClickEvents();
 
   // 스와이퍼 마우스 이벤트 처리
   Object.entries(swipers).forEach(([key, swiper]) => {
@@ -136,18 +162,29 @@ document.addEventListener('DOMContentLoaded', function () {
           // 책 추천 목록이 있는 경우 표시
           if (data.recommendations && data.recommendations.length > 0) {
             const recommendationsHtml = data.recommendations.map(book => `
-                    <div class="book-recommendation">
-                        <img src="${book.imageUrl}" alt="${book.title}" class="book-thumb">
-                        <div class="book-info">
-                            <div class="book-title">${book.title}</div>
-                            <div class="book-price">${book.price.toLocaleString()}원</div>
-                        </div>
-                    </div>
-                `).join('');
+              <div class="book-recommendation" data-book-id="${book.bookId}">
+                <img src="${book.imageUrl}" alt="${book.title}" class="book-thumb">
+                <div class="book-info">
+                  <div class="book-title">${book.title}</div>
+                  <div class="book-price">${book.price.toLocaleString()}원</div>
+                </div>
+              </div>
+            `).join('');
 
             const recommendationsContainer = document.createElement('div');
             recommendationsContainer.className = 'message bot-message recommendations';
             recommendationsContainer.innerHTML = recommendationsHtml;
+
+            // 추천 카드 클릭 이벤트 추가
+            recommendationsContainer.querySelectorAll('.book-recommendation').forEach(card => {
+              card.addEventListener('click', function () {
+                const bookId = this.getAttribute('data-book-id');
+                if (bookId) {
+                  window.location.href = `/item?bookId=${bookId}`;
+                }
+              });
+            });
+
             chatMessages.appendChild(recommendationsContainer);
           }
 
