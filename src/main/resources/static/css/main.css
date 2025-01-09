@@ -82,6 +82,15 @@
   z-index: 1;
 }
 
+.main-navigation .main-categories {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+}
+
 .main-categories {
   list-style: none;
   padding: 0;
@@ -91,7 +100,7 @@
   gap: 12px;
   align-items: center;
   position: relative;
-  z-index: 100;
+  z-index: 3001;
 }
 
 .fixed-menu-item a,
@@ -357,7 +366,7 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 100;
   transition: all 0.3s ease;
 }
 
@@ -373,7 +382,7 @@
   border-radius: 8px;
   padding: 15px 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 100;
 }
 
 .recent-products-title {
@@ -765,7 +774,7 @@
 /* 카테고리 네비게이션 컨테이너 */
 .category-container:first-child {
   position: relative;
-  z-index: 100;
+  z-index: 2000;
 }
 
 /* 다른 category-container들의 z-index 조정 */
@@ -777,7 +786,7 @@
 /* 메인 카테고리 리스트 */
 .main-categories {
   position: relative;
-  z-index: 100;
+  z-index: inherit;
 }
 
 /* 중간 카테고리 드롭다운 */
@@ -791,5 +800,51 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 12px;
   display: none;
-  z-index: 101;
+  z-index: 3001;
+}
+
+/* 스와이퍼 관련 요소들 */
+.swiper,
+.swiper-container,
+.swiper-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.swiper-button-next,
+.swiper-button-prev,
+.swiper-pagination {
+  z-index: 2 !important;
+}
+
+/* 첫 번째 카테고리 컨테이너 (메인 네비게이션용) */
+.category-container:first-of-type {
+  position: relative;
+  z-index: 3000;
+}
+
+/* 스와이퍼를 포함한 다른 카테고리 컨테이너들 */
+.category-container:not(:first-of-type) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 메인 카테고리 리스트 */
+.main-categories {
+  position: relative;
+  z-index: inherit;
+}
+
+/* 중간 카테고리 드롭다운 */
+.mid-categories {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  display: none;
+  z-index: 3001;
 }
