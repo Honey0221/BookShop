@@ -78,7 +78,8 @@
   max-width: 1200px;
   margin: 50px auto;
   padding: 0;
-  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .main-categories {
@@ -89,6 +90,8 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+  position: relative;
+  z-index: 100;
 }
 
 .fixed-menu-item a,
@@ -113,7 +116,6 @@
   background-color: #f8f9fa;
   border-color: #2196F3;
   color: #2196F3;
-  transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
 }
 
@@ -144,17 +146,15 @@
 
 .mid-categories {
   position: absolute;
-  top: calc(100% + 8px);
-  left: 70%;
-  transform: translateX(-50%);
-  min-width: 300px;
+  top: 100%;
+  left: 0;
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 12px;
   display: none;
-  z-index: 1000;
+  z-index: 101;
 }
 
 .mid-categories::before {
@@ -175,10 +175,12 @@
   margin: 0;
   list-style: none;
   width: 100%;
+  z-index: 9999;
 }
 
 .mid-category-item {
   width: 100%;
+  z-index: 9999;
 }
 
 .mid-category-item a {
@@ -191,6 +193,7 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   width: 100%;
+  z-index: 9999;
 }
 
 .mid-category-item a:hover {
@@ -212,7 +215,7 @@
   background: transparent;
 }
 
-.category-item:hover .mid-categories {
+.main-category-header:hover .mid-categories {
   display: block;
 }
 
@@ -256,6 +259,7 @@
   overflow: visible;
   position: relative;
   padding-bottom: 50px;
+  z-index: 1;
 }
 
 .swiper {
@@ -323,7 +327,7 @@
   left: 0;
   width: 100%;
   text-align: center;
-  z-index: 10;
+  z-index: 5;
 }
 
 .swiper-pagination-bullet {
@@ -694,4 +698,98 @@
 .swiper-button-next,
 .swiper-button-prev {
   top: 45%;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  z-index: 5;
+}
+
+.category-item:hover {
+  z-index: 9500;
+}
+
+/* 스와이퍼 관련 z-index 조정 */
+.swiper,
+.swiper-container {
+  position: relative;
+  z-index: 1 !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  z-index: 5 !important;
+}
+
+.swiper-pagination {
+  z-index: 5 !important;
+}
+
+.main-categories {
+  position: relative;
+  z-index: 100 !important;
+}
+
+.category-item {
+  position: relative;
+}
+
+.mid-categories {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  display: none;
+  z-index: 101;
+}
+
+.category-item:hover {
+  z-index: 9500 !important;
+}
+
+.category-item:hover .mid-categories {
+  display: block;
+}
+
+/* 스와이퍼 섹션 z-index 조정 */
+.category-container .swiper,
+.category-container .swiper-container {
+  position: relative;
+  z-index: 0;
+}
+
+/* 카테고리 네비게이션 컨테이너 */
+.category-container:first-child {
+  position: relative;
+  z-index: 100;
+}
+
+/* 다른 category-container들의 z-index 조정 */
+.category-container:not(:first-child) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 메인 카테고리 리스트 */
+.main-categories {
+  position: relative;
+  z-index: 100;
+}
+
+/* 중간 카테고리 드롭다운 */
+.mid-categories {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  display: none;
+  z-index: 101;
 }
