@@ -39,109 +39,55 @@ document.addEventListener('DOMContentLoaded', function () {
   // 페이지 로드 시 중간 카테고리 로드
   loadMidCategories();
 
-  // Swiper 설정 (기존 코드 유지)
-  const swiperConfig = {
-    slidesPerView: 5,
-    centeredSlides: true,
+  // 스와이퍼 공통 설정
+  const commonSwiperConfig = {
+    slidesPerView: 4,
+    spaceBetween: 20,
     loop: true,
-    spaceBetween: 30,
-    speed: 400,
     pagination: {
       el: '.swiper-pagination',
       clickable: true,
+      dynamicBullets: true
     },
     navigation: {
       nextEl: '.swiper-button-next',
-      prevEl: '.swiper-button-prev',
+      prevEl: '.swiper-button-prev'
     },
     autoplay: {
-      delay: 1000,
+      delay: 2000,
       disableOnInteraction: false,
-      pauseOnMouseEnter: false,
+      pauseOnMouseEnter: true,
       enabled: false
     },
-    effect: 'coverflow',
-    coverflowEffect: {
-      rotate: 0,
-      stretch: 0,
-      depth: 100,
-      modifier: 1,
-      slideShadows: false,
-    },
     breakpoints: {
-      320: {
-        slidesPerView: 1,
-      },
-      640: {
-        slidesPerView: 2,
-      },
-      768: {
-        slidesPerView: 3,
-      },
-      1024: {
-        slidesPerView: 5,
-      },
-    },
-    on: {
-      click: function (swiper, event) {
-        // 클릭된 슬라이드의 book-card를 찾아서 처리
-        const clickedSlide = swiper.clickedSlide;
-        if (clickedSlide) {
-          const bookCard = clickedSlide.querySelector('.book-card');
-          if (bookCard) {
-            // 클릭한 상품의 상세 페이지로 이동
-            const bookId = bookCard.dataset.bookId; // data-book-id 속성 필요
-            window.location.href = `/item?bookId=${bookId}`;
-          }
-        }
-      }
+      320: { slidesPerView: 1 },
+      768: { slidesPerView: 2 },
+      1024: { slidesPerView: 3 },
+      1280: { slidesPerView: 4 }
     }
   };
 
-  // 기존 Swiper 초기화
-  const newSwiper = new Swiper('.new-swiper', swiperConfig);
-  const bestSwiper = new Swiper('.best-swiper', swiperConfig);
+  // 스와이퍼 초기화 함수
+  function initializeSwiper(selector, config = {}) {
+    return new Swiper(selector, { ...commonSwiperConfig, ...config });
+  }
 
-  // 새로운 추천 섹션 Swiper 초기화
-  const personalizedSwiper = new Swiper('.personalized-swiper', swiperConfig);
-  const collaborativeSwiper = new Swiper('.collaborative-swiper', swiperConfig);
-  const contentBasedSwiper = new Swiper('.content-based-swiper', swiperConfig);
+  // 각 스와이퍼 초기화
+  const swipers = {
+    best: initializeSwiper('.best-swiper'),
+    new: initializeSwiper('.new-swiper'),
+    personalized: initializeSwiper('.personalized-swiper'),
+    collaborative: initializeSwiper('.collaborative-swiper'),
+    contentBased: initializeSwiper('.content-based-swiper')
+  };
 
-  // 기존 hover 이벤트
-  const newContainer = document.querySelector('.new-swiper');
-  newContainer.addEventListener('mouseenter', function () {
-    newSwiper.autoplay.start();
-  });
-  newContainer.addEventListener('mouseleave', function () {
-    newSwiper.autoplay.stop();
-  });
-  const bestContainer = document.querySelector('.best-swiper');
-  bestContainer.addEventListener('mouseenter', function () {
-    bestSwiper.autoplay.start();
-  });
-  bestContainer.addEventListener('mouseleave', function () {
-    bestSwiper.autoplay.stop();
-  });
-  const personalizedContainer = document.querySelector('.personalized-swiper');
-  personalizedContainer.addEventListener('mouseenter', function () {
-    personalizedSwiper.autoplay.start();
-  });
-  personalizedContainer.addEventListener('mouseleave', function () {
-    personalizedSwiper.autoplay.stop();
-  });
-  const collaborativeContainer = document.querySelector('.collaborative-swiper');
-  collaborativeContainer.addEventListener('mouseenter', function () {
-    collaborativeSwiper.autoplay.start();
-  });
-  collaborativeContainer.addEventListener('mouseleave', function () {
-    collaborativeSwiper.autoplay.stop();
-  });
-  const contentBasedContainer = document.querySelector('.content-based-swiper');
-  contentBasedContainer.addEventListener('mouseenter', function () {
-    contentBasedSwiper.autoplay.start();
-  });
-  contentBasedContainer.addEventListener('mouseleave', function () {
-    contentBasedSwiper.autoplay.stop();
+  // 스와이퍼 마우스 이벤트 처리
+  Object.entries(swipers).forEach(([key, swiper]) => {
+    const container = document.querySelector(`.${key}-swiper`);
+    if (container) {
+      container.addEventListener('mouseenter', () => swiper.autoplay.start());
+      container.addEventListener('mouseleave', () => swiper.autoplay.stop());
+    }
   });
 
   // 챗봇 관련 요소 선택

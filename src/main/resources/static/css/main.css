@@ -17,17 +17,18 @@
 }
 
 .book-card {
-  width: 100%;
-  max-width: 200px;
-  margin: 0 auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  height: 100%;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .book-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .book-image {
@@ -55,12 +56,17 @@
 
 .swiper-button-next,
 .swiper-button-prev {
-  color: #333;
+  background: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .swiper-button-next:after,
 .swiper-button-prev:after {
-  font-size: 20px;
+  font-size: 18px;
+  color: #333;
 }
 
 .category-section {
@@ -69,8 +75,9 @@
 
 .category-container {
   max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 20px;
+  margin: 50px auto;
+  padding: 0;
+  overflow: hidden;
 }
 
 .main-categories {
@@ -227,14 +234,6 @@
   }
 }
 
-.new-section,
-.best-section {
-  max-width: 1200px;
-  margin: 50px auto;
-  padding: 0;
-  overflow: hidden;
-}
-
 .section-title {
   font-size: 24px;
   font-weight: bold;
@@ -252,58 +251,35 @@
 
 .swiper-container {
   width: 100%;
-  padding: 20px 0;
-  position: relative;
+  padding: 20px 40px;
   overflow: visible;
+  position: relative;
+  padding-bottom: 50px;
 }
 
-.swiper-wrapper {
-  align-items: center;
+.swiper {
+  padding-bottom: 50px;
 }
 
 .swiper-slide {
-  width: 200px;
-  opacity: 0.5;
-  transition: all 0.3s ease;
-  transform: scale(0.8);
+  height: 380px;
 }
 
-.swiper-slide-active {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.swiper-slide-next,
-.swiper-slide-prev {
-  opacity: 0.7;
-  transform: scale(0.9);
-}
-
-.swiper-button-next,
-.swiper-button-prev {
-  color: #333;
-  background: #fff;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.swiper-button-next {
-  right: 0;
-}
-
-.swiper-button-prev {
-  left: 0;
-}
-
-.swiper-button-next:after,
-.swiper-button-prev:after {
-  font-size: 18px;
+.swiper-slide-prev,
+.swiper-slide-next {
+  transform: scale(0.98);
+  opacity: 0.8;
 }
 
 .book-card {
-  margin: 0 auto;
+  height: 100%;
+  /* 슬라이드 높이에 맞춤 */
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
   transition: all 0.3s ease;
 }
 
@@ -315,6 +291,11 @@
 
 .book-info {
   padding: 15px;
+  flex-grow: 1;
+  /* 남은 공간 채우기 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .book-title {
@@ -323,7 +304,10 @@
   margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  height: 2.6em;
 }
 
 .book-price {
@@ -333,12 +317,32 @@
 }
 
 .swiper-pagination {
-  bottom: -5px;
+  position: absolute;
+  bottom: 0 !important;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
 }
 
 .swiper-pagination-bullet {
-  background: #333;
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #ccc;
+  margin: 0 4px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
+
+.swiper-pagination-bullet-active {
+  opacity: 1;
+  background: #2196F3;
+  transform: scale(1.2);
+}
+
 /* 고정 사이드바 스타일 */
 .fixed-sidebar {
   position: fixed;
@@ -351,6 +355,7 @@
   z-index: 1000;
   transition: all 0.3s ease;
 }
+
 /* 최근 본 상품 사이드바 스타일 */
 .recent-products-sidebar {
   position: fixed;
@@ -597,6 +602,7 @@
   gap: 8px;
   width: 100%;
 }
+
 .sidebar-item {
   display: flex;
   flex-direction: column;
@@ -663,4 +669,21 @@
   .sidebar-item:last-child {
     border-right: none;
   }
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+  .swiper-container {
+    padding: 20px;
+  }
+
+  .swiper-slide {
+    height: 350px;
+  }
+}
+
+/* 네비게이션 버튼 위치 조정 */
+.swiper-button-next,
+.swiper-button-prev {
+  top: 45%;
 }
