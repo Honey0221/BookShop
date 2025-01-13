@@ -2,6 +2,8 @@ package com.bbook.controller;
 
 import com.bbook.dto.MemberNicknameDto;
 import com.bbook.service.MemberService;
+import com.bbook.service.RequestService;
+
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +16,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import com.bbook.dto.MemberSignUpDto;
+import com.bbook.dto.RequestFormDto;
 import com.bbook.config.MemberDetails;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -26,6 +33,8 @@ import java.util.Map;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
+import java.util.List;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @RequestMapping("/members")
@@ -36,6 +45,7 @@ public class MemberController {
     private final MemberService memberService;
     private final JavaMailSender mailSender;
     private final HttpSession session;
+    private final RequestService requestService;
 
     @GetMapping("/login")
     public String loginForm() {
@@ -174,5 +184,49 @@ public class MemberController {
         } else {
             return ResponseEntity.badRequest().body("인증번호가 일치하지 않습니다.");
         }
+    }
+
+    // 문의하기
+    // 문의 목록 페이지
+    @GetMapping("/request")
+    public String requestList(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        List<RequestFormDto> requests = requestService.getRequestsByEmail(email);
+        model.addAttribute("requests", requests);
+
+        return "member/requestForm";
+    }
+
+    // 문의 생성
+    @PostMapping("/request")
+    @ResponseBody
+    public ResponseEntity<?> createRequest(@RequestBody Map<String, String> request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        String title = request.get("title");
+        String content = request.get("content");
+
+        Long requestId = requestService.createRequest(email, title, content);
+        return ResponseEntity.ok(requestId);
+    }
+
+    // 문의 상세 조회
+    @GetMapping("/request/{id}")
+    @ResponseBody
+    public ResponseEntity<RequestFormDto> getRequest(@PathVariable("id") Long requestId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        RequestFormDto request = requestService.getRequest(requestId);
+
+        // 본인 문의만 조회 가능
+        if (!request.getEmail().equals(email)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(request);
     }
 }

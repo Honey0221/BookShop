@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/layout2}">
+
+<head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<div layout:fragment="content">
+  <div class="request-container">
+    <h2>문의 관리</h2>
+
+    <!-- 검색 영역 -->
+    <div class="search-box">
+      <form th:action="@{/admin/members/requestMng}" method="get">
+        <select name="searchType">
+          <option value="email">이메일</option>
+          <option value="title">제목</option>
+          <option value="status">상태</option>
+        </select>
+        <input type="text" name="searchKeyword" th:value="${param.searchKeyword}">
+        <button type="submit">검색</button>
+      </form>
+    </div>
+
+    <!-- 문의 목록 테이블 -->
+    <table class="request-table">
+      <thead>
+        <tr>
+          <th>번호</th>
+          <th>이메일</th>
+          <th>제목</th>
+          <th>작성일</th>
+          <th>상태</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="request : ${requests}" th:onclick="'viewRequest(' + ${request.id} + ')'" style="cursor: pointer;">
+          <td th:text="${request.id}"></td>
+          <td th:text="${request.email}"></td>
+          <td th:text="${request.title}"></td>
+          <td th:text="${#temporals.format(request.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+          <td th:class="'status-cell-' + ${request.id}">
+            <span th:if="${request.status.name() == 'ANSWERED'}" class="status-complete">답변완료</span>
+            <span th:unless="${request.status.name() == 'ANSWERED'}" class="status-waiting">답변대기</span>
+          </td>
+          <td onclick="event.stopPropagation()">
+            <button th:if="${request.status.name() != 'ANSWERED'}" th:onclick="'openAnswerModal(' + ${request.id} + ')'"
+              th:class="'answer-btn-' + ${request.id}" class="answer-btn">답변하기</button>
+            <button th:if="${request.status.name() == 'ANSWERED'}" th:onclick="'openAnswerModal(' + ${request.id} + ')'"
+              class="edit-btn">답변수정</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 답변 모달 -->
+    <div id="answerModal" class="modal">
+      <div class="modal-content">
+        <h3 id="modalTitle">답변하기</h3>
+        <div class="request-info">
+          <h4 id="requestTitle"></h4>
+          <div id="requestContent"></div>
+        </div>
+        <form id="answerForm">
+          <input type="hidden" id="requestId">
+          <div class="form-group">
+            <label>답변 내용</label>
+            <textarea id="answer" name="answer" rows="5" required></textarea>
+          </div>
+          <div class="modal-buttons">
+            <button type="submit" id="submitBtn">등록</button>
+            <button type="button" onclick="closeAnswerModal()">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 상세보기 모달 -->
+    <div id="viewModal" class="modal">
+      <div class="modal-content">
+        <h3>문의 상세</h3>
+        <div class="request-detail">
+          <h4 id="viewTitle"></h4>
+          <p class="request-date" id="viewDate"></p>
+          <div class="request-content" id="viewContent"></div>
+        </div>
+        <div class="answer-section">
+          <h4>답변 내용</h4>
+          <div class="answer-content" id="viewAnswer"></div>
+        </div>
+        <div class="modal-buttons">
+          <button type="button" onclick="closeViewModal()">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .request-container {
+      width: 60%;
+      min-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .search-box {
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box select,
+    .search-box input {
+      padding: 8px;
+      margin-right: 10px;
+    }
+
+    .request-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .request-table th,
+    .request-table td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    .request-table th {
+      background-color: #f4f4f4;
+    }
+
+    .status-waiting {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .status-complete {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .answer-btn {
+      padding: 6px 12px;
+      background-color: #4A90E2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .view-btn {
+      padding: 6px 12px;
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* 모달 스타일 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      width: 800px;
+      max-width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .request-info {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+    }
+
+    .modal-buttons {
+      text-align: right;
+      margin-top: 20px;
+    }
+
+    .modal-buttons button {
+      padding: 8px 16px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .modal-buttons button[type="submit"] {
+      background-color: #4A90E2;
+      color: white;
+    }
+
+    .modal-buttons button[type="button"] {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .edit-btn {
+      padding: 6px 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .request-table tr:hover {
+      background-color: #f5f5f5;
+    }
+  </style>
+
+  <script th:inline="javascript">
+    function viewRequest(id) {
+      const token = $("meta[name='_csrf']").attr("content");
+      const header = $("meta[name='_csrf_header']").attr("content");
+
+      $.ajax({
+        url: `/admin/members/request/${id}`,
+        type: 'GET',
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        success: function (data) {
+          $('#viewTitle').text(data.title);
+          $('#viewContent').text(data.content);
+          if (data.answer) {
+            $('#viewAnswer').text(data.answer);
+            $('.answer-section').show();
+          } else {
+            $('.answer-section').hide();
+          }
+          document.getElementById('viewModal').style.display = 'block';
+        }
+      });
+    }
+
+    function openAnswerModal(id) {
+      const token = $("meta[name='_csrf']").attr("content");
+      const header = $("meta[name='_csrf_header']").attr("content");
+
+      $.ajax({
+        url: `/admin/members/request/${id}`,
+        type: 'GET',
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        success: function (data) {
+          $('#requestId').val(id);
+          $('#requestTitle').text(data.title);
+          $('#requestContent').text(data.content);
+
+          // 기존 답변이 있는 경우
+          if (data.answer) {
+            $('#modalTitle').text('답변 수정');
+            $('#answer').val(data.answer);
+            $('#submitBtn').text('수정');
+          } else {
+            $('#modalTitle').text('답변하기');
+            $('#answer').val('');
+            $('#submitBtn').text('등록');
+          }
+
+          document.getElementById('answerModal').style.display = 'block';
+        }
+      });
+    }
+
+    $('#answerForm').submit(function (e) {
+      e.preventDefault();
+
+      const token = $("meta[name='_csrf']").attr("content");
+      const header = $("meta[name='_csrf_header']").attr("content");
+      const requestId = $('#requestId').val();
+
+      $.ajax({
+        url: `/admin/members/request/${requestId}/answer`,
+        type: 'POST',
+        data: JSON.stringify({
+          answer: $('#answer').val()
+        }),
+        contentType: 'application/json',
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        success: function () {
+          const statusCell = $(`.status-cell-${requestId}`);
+          const actionBtn = $(`.answer-btn-${requestId}`);
+
+          statusCell.html('<span class="status-complete">답변완료</span>');
+
+          // 버튼을 답변수정 버튼으로 변경
+          actionBtn.replaceWith(`<button onclick="openAnswerModal(${requestId})" class="edit-btn">답변수정</button>`);
+
+          closeAnswerModal();
+          alert($('#submitBtn').text() === '수정' ? '답변이 수정되었습니다.' : '답변이 등록되었습니다.');
+        },
+        error: function () {
+          alert('답변 처리에 실패했습니다.');
+        }
+      });
+    });
+
+    function closeAnswerModal() {
+      document.getElementById('answerModal').style.display = 'none';
+      $('#answerForm')[0].reset();
+    }
+
+    function closeViewModal() {
+      document.getElementById('viewModal').style.display = 'none';
+    }
+  </script>
+</div>
+
+</html>
