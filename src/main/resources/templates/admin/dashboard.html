@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/layout2}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/layout2}">
 <th:block layout:fragment="css">
   <link th:href="@{/css/admin/dashboard.css}" rel="stylesheet">
 </th:block>
@@ -24,8 +23,8 @@
       <li class="nav-item">
         <a class="nav-link" href="#">회원 정보</a>
         <div class="sub-menu">
-          <a href="/admin/memberMng">회원 관리</a>
-          <a href="/admin/memberStat">회원 통계</a>
+          <a href="/admin/members/memberMng">회원 관리</a>
+          <a href="/admin/members/memberStat">회원 통계</a>
         </div>
       </li>
       <li class="nav-item">

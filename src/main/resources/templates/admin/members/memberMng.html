@@ -1,19 +1,466 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/layout2}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/layout2}">
+
+<head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
 <th:block layout:fragment="css">
   <style>
+    .member-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
+    .member-table th,
+    .member-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .member-table th {
+      background-color: #f4f4f4;
+    }
+
+    .search-box {
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .search-box form {
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box select,
+    .search-box input[type="text"] {
+      padding: 6px;
+      margin-right: 10px;
+    }
+
+    .search-box button[type="submit"] {
+      padding: 6px 12px;
+      background-color: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .bulk-actions {
+      margin-left: auto;
+    }
+
+    .bulk-email-btn {
+      padding: 8px 16px;
+      background-color: #4A90E2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .bulk-email-btn:hover {
+      background-color: #357ABD;
+    }
+
+    .member-table th:first-child,
+    .member-table td:first-child {
+      width: 40px;
+      text-align: center;
+    }
+
+    .content-container {
+      width: 60%;
+      margin: 0 auto;
+      padding: 20px;
+      min-width: 800px;
+      max-width: 1200px;
+    }
+
+    @media (max-width: 1400px) {
+      .content-container {
+        width: 80%;
+      }
+    }
+
+    @media (max-width: 1000px) {
+      .content-container {
+        width: 90%;
+        min-width: auto;
+      }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      width: 800px;
+      max-width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .template-buttons {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .template-btn {
+      padding: 8px 20px;
+      margin: 0 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #f8f9fa;
+      transition: all 0.3s ease;
+    }
+
+    .template-btn.active {
+      background-color: #4A90E2;
+      color: white;
+      border-color: #4A90E2;
+    }
+
+    .modal-content label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: bold;
+    }
+
+    .modal-content input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .modal-content textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .email-preview {
+      margin: 20px 0;
+    }
+
+    .email-preview h4 {
+      margin-bottom: 10px;
+      color: #555;
+    }
+
+    #previewFrame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #fff;
+    }
+
+    .modal-buttons {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .modal-buttons button {
+      padding: 8px 16px;
+      margin-left: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .modal-buttons button:first-child {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .modal-buttons button:nth-child(2) {
+      background-color: #4A90E2;
+      color: white;
+    }
+
+    .modal-buttons button:last-child {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .modal-buttons button:hover {
+      opacity: 0.9;
+    }
+
+    @media (max-height: 800px) {
+      .modal-content {
+        margin: 2% auto;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+    }
   </style>
 </th:block>
 <th:block layout:fragment="script">
   <script th:inline="javascript">
+    let currentTemplate = 'notice'; // 현재 선택된 템플릿 추적
 
+    const templates = {
+      notice: {
+        subject: '[BBook] 공지사항',
+        content: '안녕하세요.\n\nBBook 공지사항을 안내드립니다.\n\n',
+        style: `
+                .header { background-color: #2C3E50; }
+                .content { background-color: #f8f9fa; padding: 30px; }
+                .footer { background-color: #34495E; color: #fff; }
+            `
+      },
+      promotion: {
+        subject: '[BBook] 특별 이벤트 안내',
+        content: '안녕하세요.\n\nBBook의 특별한 이벤트를 소개합니다.\n\n',
+        style: `
+                .header { background-color: #E74C3C; }
+                .content { background-color: #fff4f4; padding: 30px; }
+                .footer { background-color: #C0392B; color: #fff; }
+            `
+      }
+    };
+
+    function selectTemplate(type) {
+      currentTemplate = type; // 현재 템플릿 타입 저장
+
+      // 버튼 스타일 변경
+      $('.template-btn').removeClass('active');
+      $(`button[onclick="selectTemplate('${type}')"]`).addClass('active');
+
+      // 템플릿 적용
+      const template = templates[type];
+      $('#emailSubject').val(template.subject);
+      $('#emailContent').val(template.content);
+
+      // 미리보기 업데이트
+      previewEmail();
+    }
+
+    function previewEmail() {
+      const subject = $('#emailSubject').val();
+      const content = $('#emailContent').val();
+      const template = templates[currentTemplate]; // 현재 선택된 템플릿 사용
+
+      const previewHtml = `
+            <style>
+                body { 
+                    margin: 0; 
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                }
+                .email-container { 
+                    max-width: 600px; 
+                    margin: 0 auto;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                }
+                ${template.style}
+            </style>
+            <div class="email-container">
+                <div class="header" style="padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">${subject}</h1>
+                </div>
+                <div class="content">
+                    <p style="white-space: pre-line;">${content}</p>
+                </div>
+                <div class="footer" style="text-align: center; padding: 15px; font-size: 12px;">
+                    <p>© 2024 BBook. All rights reserved.</p>
+                    <p>본 메일은 발신전용입니다.</p>
+                </div>
+            </div>
+        `;
+
+      const frame = document.getElementById('previewFrame');
+      frame.contentDocument.open();
+      frame.contentDocument.write(previewHtml);
+      frame.contentDocument.close();
+    }
+
+    function openEmailModal(email) {
+      $('#recipientEmail').val(email);
+      $('#emailModal').show();
+      selectTemplate('notice'); // 기본적으로 공지 템플릿 선택
+    }
+
+    function closeEmailModal() {
+      $('#emailModal').hide();
+    }
+
+    function sendEmail() {
+      const emails = $('#recipientEmail').val().split(',');
+      const subject = $('#emailSubject').val();
+      const content = $('#emailContent').val();
+      const token = $("meta[name='_csrf']").attr("content");
+      const header = $("meta[name='_csrf_header']").attr("content");
+
+      let successCount = 0;
+      let failCount = 0;
+
+      const sendPromises = emails.map(email => {
+        return $.ajax({
+          type: "POST",
+          url: "/admin/members/send-email",
+          data: JSON.stringify({
+            email: email.trim(),
+            subject: subject,
+            content: content
+          }),
+          contentType: "application/json",
+          beforeSend: function (xhr) {
+            xhr.setRequestHeader(header, token);
+          }
+        })
+          .then(() => successCount++)
+          .catch(() => failCount++);
+      });
+
+      Promise.all(sendPromises).then(() => {
+        alert(`발송 완료\n성공: ${successCount}건\n실패: ${failCount}건`);
+        closeEmailModal();
+      });
+    }
+
+    function toggleAll(source) {
+      const checkboxes = document.getElementsByName('memberCheck');
+      for (let checkbox of checkboxes) {
+        checkbox.checked = source.checked;
+      }
+    }
+
+    function getSelectedEmails() {
+      const checkboxes = document.getElementsByName('memberCheck');
+      const selectedEmails = [];
+      for (let checkbox of checkboxes) {
+        if (checkbox.checked) {
+          selectedEmails.push(checkbox.value);
+        }
+      }
+      return selectedEmails;
+    }
+
+    function openBulkEmailModal() {
+      const selectedEmails = getSelectedEmails();
+      if (selectedEmails.length === 0) {
+        alert('선택된 회원이 없습니다.');
+        return;
+      }
+      $('#recipientEmail').val(selectedEmails.join(','));
+      $('#emailModal').show();
+      selectTemplate('notice'); // 기본적으로 공지 템플릿 선택
+    }
   </script>
 </th:block>
 <div layout:fragment="content">
-  <h1>
-    회원 관리 페이지입니다
-  </h1>
+  <div class="content-container">
+    <h2>회원 관리</h2>
+
+    <div class="search-box">
+      <form th:action="@{/admin/members/memberMng}" method="get">
+        <select name="searchType">
+          <option value="email">이메일</option>
+          <option value="nickname">닉네임</option>
+        </select>
+        <input type="text" name="searchKeyword" th:value="${param.searchKeyword}">
+        <button type="submit">검색</button>
+        <div class="bulk-actions">
+          <button type="button" onclick="openBulkEmailModal()" class="bulk-email-btn">선택회원 이메일 발송</button>
+        </div>
+      </form>
+    </div>
+
+    <table class="member-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+          <th>ID</th>
+          <th>이메일</th>
+          <th>닉네임</th>
+          <th>가입일</th>
+          <th>포인트</th>
+          <th>소셜회원</th>
+          <th>권한</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="member : ${members}">
+          <td><input type="checkbox" name="memberCheck" th:value="${member.email}"></td>
+          <td th:text="${member.id}"></td>
+          <td th:text="${member.email}"></td>
+          <td th:text="${member.nickname}"></td>
+          <td th:text="${#temporals.format(member.createAt, 'yyyy-MM-dd HH:mm')}"></td>
+          <td th:text="${member.point}"></td>
+          <td th:text="${member.socialMember ? '예' : '아니오'}"></td>
+          <td th:text="${member.role}"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 페이징 처리 -->
+    <div th:if="${pages != null}" class="pagination">
+      <span th:each="pageNum : ${#numbers.sequence(0, pages - 1)}">
+        <a th:href="@{/admin/members/memberMng(page=${pageNum})}" th:text="${pageNum + 1}"
+          th:class="${pageNum == currentPage} ? 'active' : ''"></a>
+      </span>
+    </div>
+
+    <!-- 이메일 모달 -->
+    <div id="emailModal" class="modal">
+      <div class="modal-content">
+        <h3>이메일 발송</h3>
+        <input type="hidden" id="recipientEmail">
+
+        <div class="template-buttons">
+          <button type="button" onclick="selectTemplate('notice')" class="template-btn">공지</button>
+          <button type="button" onclick="selectTemplate('promotion')" class="template-btn">홍보</button>
+        </div>
+
+        <div>
+          <label>제목</label>
+          <input type="text" id="emailSubject">
+        </div>
+        <div>
+          <label>내용</label>
+          <textarea id="emailContent" rows="5"></textarea>
+        </div>
+        <div class="email-preview">
+          <h4>미리보기</h4>
+          <iframe id="previewFrame"></iframe>
+        </div>
+        <div class="modal-buttons">
+          <button onclick="previewEmail()">미리보기</button>
+          <button onclick="sendEmail()">발송</button>
+          <button onclick="closeEmailModal()">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
