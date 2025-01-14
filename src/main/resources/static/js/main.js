@@ -117,34 +117,34 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // 챗봇 관련 요소 선택
-  const chatIcon = document.querySelector('.chat-bot-icon');
-  const chatModal = document.querySelector('.chat-modal');
-  const chatClose = document.querySelector('.chat-close');
-  const chatInput = document.querySelector('.chat-input');
-  const chatSend = document.querySelector('.chat-send');
-  const chatMessages = document.querySelector('.chat-messages');
+  const aiChatIcon = document.querySelector('.chat-bot-icon');
+  const aiChatModal = document.querySelector('.chat-modal');
+  const aiChatClose = document.querySelector('.chat-close');
+  const aiChatInput = document.querySelector('.chat-input');
+  const aiChatSend = document.querySelector('.chat-send');
+  const aiChatMessages = document.querySelector('.chat-messages');
 
   // 챗봇 모달 토글
-  chatIcon.addEventListener('click', () => {
-    chatModal.style.display = 'block';
-    if (chatMessages.children.length === 0) {
+  aiChatIcon.addEventListener('click', () => {
+    aiChatModal.style.display = 'block';
+    if (aiChatMessages.children.length === 0) {
       addBotMessage('안녕하세요! 도서 추천 챗봇입니다. 어떤 장르의 책을 찾으시나요? 소설, 자기계발, 과학, 기술 등 관심 있는 분야를 알려주세요.');
     }
   });
 
-  chatClose.addEventListener('click', () => {
-    chatModal.style.display = 'none';
+  aiChatClose.addEventListener('click', () => {
+    aiChatModal.style.display = 'none';
   });
 
   // 메시지 전송 처리
   function sendMessage() {
-    const message = chatInput.value.trim();
+    const message = aiChatInput.value.trim();
     if (message) {
       addUserMessage(message);
-      chatInput.value = '';
+      aiChatInput.value = '';
 
       // 서버로 메시지 전송
-      fetch('/api/chat/message', {
+      fetch('/api/ai-chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,10 +185,10 @@ document.addEventListener('DOMContentLoaded', function () {
               });
             });
 
-            chatMessages.appendChild(recommendationsContainer);
+            aiChatMessages.appendChild(recommendationsContainer);
           }
 
-          chatMessages.scrollTop = chatMessages.scrollHeight;
+          aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
         })
         .catch(error => {
           console.error('Error:', error);
@@ -197,8 +197,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  chatSend.addEventListener('click', sendMessage);
-  chatInput.addEventListener('keypress', (e) => {
+  aiChatSend.addEventListener('click', sendMessage);
+  aiChatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       sendMessage();
     }
@@ -209,15 +209,207 @@ document.addEventListener('DOMContentLoaded', function () {
     const message = document.createElement('div');
     message.className = 'message user-message';
     message.textContent = text;
-    chatMessages.appendChild(message);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    aiChatMessages.appendChild(message);
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
   }
 
   function addBotMessage(text) {
     const message = document.createElement('div');
     message.className = 'message bot-message';
     message.textContent = text;
-    chatMessages.appendChild(message);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    aiChatMessages.appendChild(message);
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
   }
+
+  // 1:1 채팅 관련 요소 선택
+  const chatServiceIcon = document.querySelector('.chat-service-icon');
+  const chatServiceModal = document.querySelector('.chat-service-modal');
+  const chatServiceClose = document.querySelector('.chat-service-close');
+  const chatServiceInput = document.querySelector('.chat-service-input');
+  const chatServiceSend = document.querySelector('.chat-service-send');
+  const chatServiceMessages = document.querySelector('.chat-service-messages');
+
+  // 1:1 채팅 모달 토글
+  chatServiceIcon.addEventListener('click', () => {
+    chatServiceModal.style.display = 'block';
+
+    if (!stompClient) {
+      connectWebSocket();
+      addServiceMessage('안녕하세요! 1:1 문의 채팅입니다. 어떤 도움이 필요하신가요?', 'admin');
+    } else if (currentRoomId) {
+      // 채팅방이 있는 경우 채팅 기록 로드
+      loadChatHistory(currentRoomId);
+
+      // 채팅방 재구독
+      stompClient.subscribe('/queue/chat.' + currentRoomId, function (message) {
+        const received = JSON.parse(message.body);
+        displayMessage(received);
+      }, { id: 'sub-' + currentRoomId });
+    }
+  });
+
+  // 모달 닫기 이벤트
+  chatServiceClose.addEventListener('click', () => {
+    chatServiceModal.style.display = 'none';
+
+    // 현재 구독 중인 채팅방 구독 해제
+    if (currentRoomId) {
+      stompClient.unsubscribe('sub-' + currentRoomId);
+    }
+  });
+
+  // 1:1 채팅 메시지 전송 처리
+  function sendServiceMessage() {
+    const message = chatServiceInput.value.trim();
+    if (message && currentRoomId) {  // currentRoomId 존재 여부 확인
+      const chatMessage = {
+        type: 'MESSAGE',
+        roomId: currentRoomId,
+        sender: 'USER',
+        message: message
+      };
+
+      stompClient.send("/app/chat.message", {}, JSON.stringify(chatMessage));
+      chatServiceInput.value = '';
+
+      // 사용자 메시지 즉시 표시
+      //addServiceMessage(message, 'user');
+    } else {
+      console.error('No active chat room');
+      // 선택적: 사용자에게 채팅방이 없다는 알림 표시
+      alert('채팅방이 선택되지 않았습니다.');
+    }
+  }
+
+  // 1:1 채팅 메시지 추가 함수
+  function addServiceMessage(text, type) {
+    const message = document.createElement('div');
+    message.className = `message ${type}-message`;
+    message.textContent = text;
+    chatServiceMessages.appendChild(message);
+    chatServiceMessages.scrollTop = chatServiceMessages.scrollHeight;
+  }
+
+  // 1:1 채팅 이벤트 리스너
+  chatServiceSend.addEventListener('click', sendServiceMessage);
+  chatServiceInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendServiceMessage();
+    }
+  });
+
+  // WebSocket 연결 및 채팅 관련 코드
+  let stompClient = null;
+  let currentRoomId = null;  // 전역 변수로 선언
+
+  function connectWebSocket() {
+    const socket = new SockJS('/ws-chat');
+    stompClient = Stomp.over(socket);
+    const token = $("meta[name='_csrf']").attr("content");
+    const header = $("meta[name='_csrf_header']").attr("content");
+
+    const headers = {
+      [header]: token
+    };
+
+    stompClient.connect(headers, function (frame) {
+      console.log('Connected: ' + frame);
+
+      // 채팅방 생성 요청
+      fetch('/chat/room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          [header]: token
+        }
+      })
+        .then(response => response.json())
+        .then(room => {
+          currentRoomId = room.roomId;  // 채팅방 ID 저장
+
+          // 채팅방 구독
+          stompClient.subscribe('/queue/chat.' + currentRoomId, function (message) {
+            const received = JSON.parse(message.body);
+            displayMessage(received);
+          });
+
+          // 채팅 기록 로드
+          loadChatHistory(currentRoomId);
+        })
+        .catch(error => {
+          console.error('Error creating chat room:', error);
+        });
+    });
+  }
+
+  function displayMessage(received) {
+    const message = document.createElement('div');
+    message.className = `message ${received.sender.toLowerCase()}-message`;
+
+    // 시간 포맷팅
+    const messageTime = received.time || new Date().toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    message.innerHTML = `
+        <div class="message-content">${received.message}</div>
+        <div class="message-time">${messageTime}</div>
+    `;
+
+    chatServiceMessages.appendChild(message);
+    chatServiceMessages.scrollTop = chatServiceMessages.scrollHeight;
+
+    // 관리자 메시지가 아니고, 현재 채팅방이 열려있지 않은 경우에만 알림 처리
+    if (received.sender !== 'ADMIN' && chatServiceModal.style.display !== 'block') {
+      // 알림 뱃지 표시
+      const chatIcon = document.querySelector('.chat-service-icon');
+      let badge = chatIcon.querySelector('.notification-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'notification-badge';
+        chatIcon.appendChild(badge);
+      }
+      badge.style.display = 'block';
+    }
+  }
+
+  // 채팅 기록 로드 함수
+  function loadChatHistory(roomId) {
+    if (!roomId) return; // roomId가 없으면 함수 종료
+
+    const token = $("meta[name='_csrf']").attr("content");
+    const header = $("meta[name='_csrf_header']").attr("content");
+
+    fetch(`/chat/messages/${roomId}`, {
+      headers: {
+        [header]: token
+      }
+    })
+      .then(response => response.json())
+      .then(messages => {
+        // 기존 메시지 클리어
+        chatServiceMessages.innerHTML = '';
+
+        // 메시지 기록 표시
+        messages.forEach(message => {
+          displayMessage(message);
+        });
+
+        // 스크롤을 최하단으로
+        chatServiceMessages.scrollTop = chatServiceMessages.scrollHeight;
+      })
+      .catch(error => {
+        console.error('Error loading chat history:', error);
+      });
+  }
+
+  // 메시지 전송 이벤트 수정
+  chatServiceSend.addEventListener('click', sendMessage);
+  chatServiceInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
 });

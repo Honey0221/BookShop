@@ -53,7 +53,10 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers("/admin/**")
 				.hasRole("ADMIN")
-
+				.requestMatchers("/chat/**")
+				.permitAll()
+				.requestMatchers("/ws-chat/**")
+				.permitAll()
 				.anyRequest()
 				.authenticated()).formLogin(formLogin -> formLogin
 						.loginPage("/members/login")
@@ -76,7 +79,9 @@ public class SecurityConfig {
 						.ignoringRequestMatchers("/api/**")
 						.ignoringRequestMatchers("/cart/**")
 						.ignoringRequestMatchers("/wish/**")
-						.ignoringRequestMatchers("/order/payment/**"));
+						.ignoringRequestMatchers("/order/payment/**")
+						.ignoringRequestMatchers("/ws-chat/**")
+						.ignoringRequestMatchers("/chat/**"));
 
 		http.exceptionHandling(exception -> exception
 				.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));

@@ -2,6 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
   layout:decorate="~{layouts/layout}">
 
+<head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- SockJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+
+  <!-- STOMP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
 <th:block layout:fragment="css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <link th:href="@{/css/main.css}" rel="stylesheet">
@@ -213,6 +225,28 @@
     <div class="chat-input-container">
       <input type="text" class="chat-input" placeholder="메시지를 입력하세요...">
       <button class="chat-send">전송</button>
+    </div>
+  </div>
+
+  <!-- 1:1 채팅 아이콘 -->
+  <div class="chat-service-icon">
+    <i class="fas fa-headset"></i>
+  </div>
+
+  <!-- 1:1 채팅 모달 -->
+  <div class="chat-service-modal">
+    <div class="chat-service-header">
+      <span>1:1 문의 채팅</span>
+      <span class="chat-service-close">&times;</span>
+    </div>
+    <div class="chat-service-messages">
+      <!-- 메시지들이 여기에 동적으로 추가됨 -->
+    </div>
+    <div class="chat-input-container">
+      <input type="text" class="chat-service-input" placeholder="메시지를 입력하세요...">
+      <button class="chat-service-send">
+        <i class="fas fa-paper-plane"></i>
+      </button>
     </div>
   </div>
 </div>
