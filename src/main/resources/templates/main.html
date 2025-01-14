@@ -210,7 +210,7 @@
     </div>
   </div>
 
-  <div class="chat-bot-icon">
+  <div class="chat-bot-icon" th:if="${#authorization.expression('isAuthenticated()')}">
     <i class="fas fa-comments"></i>
   </div>
 
@@ -229,7 +229,7 @@
   </div>
 
   <!-- 1:1 채팅 아이콘 -->
-  <div class="chat-service-icon">
+  <div class="chat-service-icon" th:if="${#authorization.expression('isAuthenticated()')}">
     <i class="fas fa-headset"></i>
   </div>
 
