@@ -2,6 +2,7 @@ package com.bbook.entity;
 
 import java.time.LocalDateTime;
 
+import com.bbook.constant.RequestPriority;
 import com.bbook.constant.RequestStatus;
 
 import jakarta.persistence.Column;
@@ -20,6 +21,10 @@ import lombok.Setter;
 @Setter
 @Table(name = "requests")
 public class Request extends BaseEntity {
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private RequestPriority priority;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,6 +52,7 @@ public class Request extends BaseEntity {
   // 문의 생성을 위한 정적 팩토리 메서드
   public static Request createRequest(String email, String title, String content) {
     Request request = new Request();
+    request.setPriority(RequestPriority.LOW);
     request.setEmail(email);
     request.setTitle(title);
     request.setContent(content);

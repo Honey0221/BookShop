@@ -3,6 +3,7 @@
   layout:decorate="~{layouts/layout}">
 
 <head>
+  <meta charset="UTF-8">
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 </head>
@@ -18,7 +19,6 @@
     <table class="request-table">
       <thead>
         <tr>
-          <th>번호</th>
           <th>제목</th>
           <th>작성일</th>
           <th>상태</th>
@@ -26,7 +26,6 @@
       </thead>
       <tbody>
         <tr th:each="request : ${requests}" th:onclick="'viewRequest(' + ${request.id} + ')'">
-          <td th:text="${request.id}"></td>
           <td th:text="${request.title}"></td>
           <td th:text="${#temporals.format(request.createDate, 'yyyy-MM-dd HH:mm')}"></td>
           <td th:class="'status-cell-' + ${request.id}">
@@ -65,13 +64,17 @@
         <div class="request-detail">
           <h4 id="viewTitle"></h4>
           <p class="request-date" id="viewDate"></p>
-          <div class="request-content" id="viewContent"></div>
+          <div class="request-content">
+            <textarea id="viewContent" class="content-textarea"></textarea>
+          </div>
         </div>
         <div class="answer-section" id="answerSection">
           <h4>답변</h4>
           <div class="answer-content" id="viewAnswer"></div>
         </div>
         <div class="modal-buttons">
+          <button type="button" onclick="updateRequest()">수정</button>
+          <button type="button" onclick="deleteRequest()">삭제</button>
           <button type="button" onclick="closeViewModal()">닫기</button>
         </div>
       </div>
@@ -79,6 +82,22 @@
   </div>
 
   <style>
+    .content-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+      background-color: transparent;
+    }
+
+    .content-textarea:disabled {
+      border: none;
+      background-color: transparent;
+      resize: none;
+    }
+
     .request-container {
       width: 80%;
       max-width: 1000px;
@@ -228,6 +247,8 @@
   </style>
 
   <script th:inline="javascript">
+    let currentRequestId = null;
+
     function openRequestModal() {
       document.getElementById('requestModal').style.display = 'block';
     }
@@ -241,23 +262,26 @@
     }
 
     function viewRequest(id) {
+      currentRequestId = id;
       const token = $("meta[name='_csrf']").attr("content");
       const header = $("meta[name='_csrf_header']").attr("content");
 
       $.ajax({
         url: `/members/request/${id}`,
         type: 'GET',
+        contentType: 'application/json; charset=utf-8',
         beforeSend: function (xhr) {
           xhr.setRequestHeader(header, token);
+          xhr.setRequestHeader('Accept', 'application/json; charset=utf-8');
         },
         success: function (data) {
-          $('#viewTitle').text(data.title);
+          $('#viewTitle').text(decodeURIComponent(data.title));
           $('#viewDate').text(new Date(data.createDate).toLocaleString());
-          $('#viewContent').text(data.content);
+          $('#viewContent').text(decodeURIComponent(data.content));
 
           if (data.status === 'ANSWERED' && data.answer) {
             $('#answerSection').show();
-            $('#viewAnswer').text(data.answer);
+            $('#viewAnswer').text(decodeURIComponent(data.answer));
           } else {
             $('#answerSection').hide();
           }
@@ -294,6 +318,48 @@
         }
       });
     });
+
+    function updateRequest() {
+      const token = $("meta[name='_csrf']").attr("content");
+      const header = $("meta[name='_csrf_header']").attr("content");
+      const content = encodeURIComponent($('#viewContent').val());
+
+      $.ajax({
+        url: `/members/request/${currentRequestId}/update`,
+        type: 'POST',
+        data: JSON.stringify({ content: content }),
+        contentType: 'application/json; charset=utf-8',
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        success: function () {
+          alert('문의가 수정되었습니다.');
+          location.reload();
+        },
+        error: function () {
+          alert('문의 수정에 실패했습니다.');
+        }
+      });
+    }
+
+    function deleteRequest() {
+      const token = $("meta[name='_csrf']").attr("content");
+      const header = $("meta[name='_csrf_header']").attr("content");
+      $.ajax({
+        url: `/members/request/${currentRequestId}/delete`,
+        type: 'POST',
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(header, token);
+        },
+        success: function () {
+          alert('문의가 삭제되었습니다.');
+          location.reload();
+        },
+        error: function () {
+          alert('문의 삭제에 실패했습니다.');
+        }
+      });
+    }
   </script>
 </div>
 

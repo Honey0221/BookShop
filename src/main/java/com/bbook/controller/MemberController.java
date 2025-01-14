@@ -229,4 +229,21 @@ public class MemberController {
 
         return ResponseEntity.ok(request);
     }
+
+    // 문의 삭제
+    @PostMapping("/request/{id}/delete")
+    @ResponseBody
+    public ResponseEntity<Void> deleteRequest(@PathVariable("id") Long requestId) {
+        requestService.deleteRequest(requestId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 문의 수정
+    @PostMapping("/request/{id}/update")
+    @ResponseBody
+    public ResponseEntity<Void> updateRequest(@PathVariable("id") Long requestId,
+            @RequestBody Map<String, String> request) {
+        requestService.updateRequestContent(requestId, request.get("content"));
+        return ResponseEntity.ok().build();
+    }
 }

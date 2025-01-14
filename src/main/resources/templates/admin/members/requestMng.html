@@ -28,11 +28,24 @@
     <table class="request-table">
       <thead>
         <tr>
-          <th>번호</th>
-          <th>이메일</th>
-          <th>제목</th>
-          <th>작성일</th>
-          <th>상태</th>
+          <th class="sortable" onclick="sortTable(0)">
+            번호 <i class="fas fa-sort"></i>
+          </th>
+          <th class="sortable" onclick="sortTable(1)">
+            이메일 <i class="fas fa-sort"></i>
+          </th>
+          <th class="sortable" onclick="sortTable(2)">
+            제목 <i class="fas fa-sort"></i>
+          </th>
+          <th class="sortable" onclick="sortTable(3)">
+            작성일 <i class="fas fa-sort"></i>
+          </th>
+          <th class="sortable" onclick="sortTable(4)">
+            우선순위 <i class="fas fa-sort"></i>
+          </th>
+          <th class="sortable" onclick="sortTable(5)">
+            상태 <i class="fas fa-sort"></i>
+          </th>
           <th>관리</th>
         </tr>
       </thead>
@@ -42,6 +55,12 @@
           <td th:text="${request.email}"></td>
           <td th:text="${request.title}"></td>
           <td th:text="${#temporals.format(request.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+          <td>
+            <span th:class="'priority-badge ' + 'priority-' + ${request.priority.toString().toLowerCase()}"
+              th:text="${request.priority.getDescription()}">
+              우선순위
+            </span>
+          </td>
           <td th:class="'status-cell-' + ${request.id}">
             <span th:if="${request.status.name() == 'ANSWERED'}" class="status-complete">답변완료</span>
             <span th:unless="${request.status.name() == 'ANSWERED'}" class="status-waiting">답변대기</span>
@@ -245,6 +264,105 @@
     .request-table tr:hover {
       background-color: #f5f5f5;
     }
+
+    .priority-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .priority-urgent {
+      background-color: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .priority-high {
+      background-color: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+    }
+
+    .priority-medium {
+      background-color: #fef9c3;
+      color: #854d0e;
+      border: 1px solid #fef08a;
+    }
+
+    .priority-low {
+      background-color: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* 우선순위 필터 스타일 */
+    .priority-filter {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .priority-filter button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .priority-filter button.active {
+      font-weight: bold;
+    }
+
+    /* 기존 테이블 스타일 개선 */
+    .request-table th {
+      background-color: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      padding: 12px 16px;
+    }
+
+    .request-table td {
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
+
+    .sortable {
+      cursor: pointer;
+      position: relative;
+      padding-right: 20px !important;
+    }
+
+    .sortable i {
+      position: absolute;
+      right: 5px;
+      color: #999;
+    }
+
+    .sortable.asc i::before {
+      content: "\f0de";
+      /* fa-sort-up */
+      color: #2563eb;
+    }
+
+    .sortable.desc i::before {
+      content: "\f0dd";
+      /* fa-sort-down */
+      color: #2563eb;
+    }
+
+    .sortable:hover {
+      background-color: #f8f9fa;
+    }
+
+    /* 정렬 활성화 시 스타일 */
+    .sortable.active {
+      color: #2563eb;
+      background-color: #f0f7ff;
+    }
   </style>
 
   <script th:inline="javascript">
@@ -255,14 +373,16 @@
       $.ajax({
         url: `/admin/members/request/${id}`,
         type: 'GET',
+        contentType: 'application/json; charset=utf-8',
         beforeSend: function (xhr) {
           xhr.setRequestHeader(header, token);
+          xhr.setRequestHeader('Accept', 'application/json; charset=utf-8');
         },
         success: function (data) {
-          $('#viewTitle').text(data.title);
-          $('#viewContent').text(data.content);
+          $('#viewTitle').text(decodeURIComponent(data.title));
+          $('#viewContent').text(decodeURIComponent(data.content));
           if (data.answer) {
-            $('#viewAnswer').text(data.answer);
+            $('#viewAnswer').text(decodeURIComponent(data.answer));
             $('.answer-section').show();
           } else {
             $('.answer-section').hide();
@@ -279,18 +399,20 @@
       $.ajax({
         url: `/admin/members/request/${id}`,
         type: 'GET',
+        contentType: 'application/json; charset=utf-8',
         beforeSend: function (xhr) {
           xhr.setRequestHeader(header, token);
+          xhr.setRequestHeader('Accept', 'application/json; charset=utf-8');
         },
         success: function (data) {
           $('#requestId').val(id);
-          $('#requestTitle').text(data.title);
-          $('#requestContent').text(data.content);
+          $('#requestTitle').text(decodeURIComponent(data.title));
+          $('#requestContent').text(decodeURIComponent(data.content));
 
           // 기존 답변이 있는 경우
           if (data.answer) {
             $('#modalTitle').text('답변 수정');
-            $('#answer').val(data.answer);
+            $('#answer').val(decodeURIComponent(data.answer));
             $('#submitBtn').text('수정');
           } else {
             $('#modalTitle').text('답변하기');
@@ -346,6 +468,86 @@
     function closeViewModal() {
       document.getElementById('viewModal').style.display = 'none';
     }
+    let currentSort = {
+      column: -1,
+      asc: true
+    };
+
+    function sortTable(columnIndex) {
+      const table = document.querySelector('.request-table');
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const headers = table.querySelectorAll('th');
+
+      // 이전 정렬 상태 초기화
+      headers.forEach(header => {
+        header.classList.remove('asc', 'desc', 'active');
+      });
+
+      // 정렬 방향 결정
+      if (currentSort.column === columnIndex) {
+        currentSort.asc = !currentSort.asc;
+      } else {
+        currentSort.column = columnIndex;
+        currentSort.asc = false;
+      }
+
+      // 헤더 스타일 업데이트
+      const header = headers[columnIndex];
+      header.classList.add(currentSort.asc ? 'asc' : 'desc');
+      header.classList.add('active');
+
+      // 데이터 정렬
+      rows.sort((a, b) => {
+        let aValue = a.cells[columnIndex].textContent.trim();
+        let bValue = b.cells[columnIndex].textContent.trim();
+
+        // 날짜 정렬
+        if (columnIndex === 3) {
+          aValue = new Date(aValue);
+          bValue = new Date(bValue);
+        }
+        // 우선순위 정렬
+        else if (columnIndex === 4) {
+          const priorityOrder = {
+            '긴급': 3,
+            '높음': 2,
+            '중간': 1,
+            '낮음': 0
+          };
+          aValue = priorityOrder[aValue] || 0;
+          bValue = priorityOrder[bValue] || 0;
+        }
+        // 상태 정렬
+        else if (columnIndex === 5) {
+          const statusOrder = {
+            '답변대기': 0,
+            '답변완료': 1
+          };
+          aValue = statusOrder[aValue] || 0;
+          bValue = statusOrder[bValue] || 0;
+        }
+        // 번호(ID) 정렬
+        else if (columnIndex === 0) {
+          aValue = parseInt(aValue);
+          bValue = parseInt(bValue);
+        }
+
+        if (aValue < bValue) return currentSort.asc ? -1 : 1;
+        if (aValue > bValue) return currentSort.asc ? 1 : -1;
+        return 0;
+      });
+
+      // 정렬된 행 다시 삽입
+      tbody.innerHTML = '';
+      rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // 초기 정렬 상태 설정 (예: ID 기준 내림차순)
+    document.addEventListener('DOMContentLoaded', function () {
+      sortTable(0);
+    });
+
   </script>
 </div>
 

@@ -1,5 +1,6 @@
 package com.bbook.dto;
 
+import com.bbook.constant.RequestPriority;
 import com.bbook.constant.RequestStatus;
 import com.bbook.entity.Request;
 import lombok.Getter;
@@ -16,6 +17,7 @@ public class RequestFormDto {
   private String content;
   private String answer;
   private RequestStatus status;
+  private RequestPriority priority;
   private LocalDateTime createDate;
 
   // Entity -> DTO 변환
@@ -27,6 +29,7 @@ public class RequestFormDto {
     dto.setContent(request.getContent());
     dto.setAnswer(request.getAnswer());
     dto.setStatus(request.getStatus());
+    dto.setPriority(request.getPriority());
     dto.setCreateDate(request.getCreateDate());
     return dto;
   }
