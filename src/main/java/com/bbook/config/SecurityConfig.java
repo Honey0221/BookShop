@@ -57,6 +57,8 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers("/ws-chat/**")
 				.permitAll()
+				.requestMatchers("/faq", "/faq/**")
+				.permitAll()
 				.anyRequest()
 				.authenticated()).formLogin(formLogin -> formLogin
 						.loginPage("/members/login")
