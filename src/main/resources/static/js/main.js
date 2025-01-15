@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!stompClient) {
       connectWebSocket();
-      addServiceMessage('안녕하세요! 1:1 문의 채팅입니다. 어떤 도움이 필요하신가요?', 'admin');
+
     } else if (currentRoomId) {
       // 채팅방이 있는 경우 채팅 기록 로드
       loadChatHistory(currentRoomId);
@@ -335,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // 채팅 기록 로드
           loadChatHistory(currentRoomId);
+          addServiceMessage('안녕하세요! 1:1 문의 채팅입니다. 어떤 도움이 필요하신가요?', 'admin');
         })
         .catch(error => {
           console.error('Error creating chat room:', error);
@@ -359,7 +360,10 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
 
     chatServiceMessages.appendChild(message);
-    chatServiceMessages.scrollTop = chatServiceMessages.scrollHeight;
+    chatServiceMessages.behavior = 'smooth';
+    chatServiceMessages.scrollTo(0, chatServiceMessages.scrollHeight);
+
+    //chatServiceMessages.scrol lTop = chatServiceMessages.scrollHeight;
 
     // 관리자 메시지가 아니고, 현재 채팅방이 열려있지 않은 경우에만 알림 처리
     if (received.sender !== 'ADMIN' && chatServiceModal.style.display !== 'block') {
