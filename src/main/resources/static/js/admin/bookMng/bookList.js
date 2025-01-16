@@ -137,31 +137,37 @@ export function handlePageSizeChange() {
 }
 
 export function handleEdit(bookId) {
-  loadCategories();
-
+  // 도서 정보를 먼저 가져옴
   $.get(`/admin/items/${bookId}`, function(book) {
-    // 폼 필드 채우기
-    $('#title').val(book.title);
-    $('#author').val(book.author);
-    $('#publisher').val(book.publisher);
-    $('#price').val(book.price);
-    $('#stock').val(book.stock);
-    $('#mainCategory').val(book.mainCategory);
-    $('#midCategory').val(book.midCategory);
-    $('#subCategory').val(book.subCategory);
-    $('#detailCategory').val(book.detailCategory);
-    $('#description').val(book.description);
+    // 카테고리 로드
+    loadCategories('edit').then(() => {
+      // 폼 필드 채우기
+      $('#editBookId').val(bookId);
+      $('#editTitle').val(book.title);
+      $('#editAuthor').val(book.author);
+      $('#editPublisher').val(book.publisher);
+      $('#editPrice').val(book.price);
+      $('#editStock').val(book.stock);
+      $('#editMainCategory').val(book.mainCategory);
+      $('#editMidCategory').val(book.midCategory);
+      $('#editSubCategory').val(book.subCategory);
+      $('#editDetailCategory').val(book.detailCategory);
+      $('#editDescription').val(book.description);
 
-    // 이미지 미리보기 업데이트
-    if (book.imageUrl) {
-      const imageUrl = `${book.imageUrl}`;
-      $('#imagePreview').html(`<img src="${imageUrl}" class="img-fluid" alt="미리보기">`);
-    }
+      // 이미지 미리보기 업데이트
+      if (book.imageUrl) {
+        $('#editImagePreview').html(
+          `<img src="${book.imageUrl}" class="img-fluid" alt="미리보기">`
+        );
+      } else {
+        $('#editImagePreview').empty();
+      }
 
-    // 수정 모드로 모달 설정
-    $('#addBookModalLabel').text('도서 수정');
-    $('#saveBookBtn').data('id', bookId);
-    $('#addBookModal').modal('show');
+      $('#editBookModal').modal('show');
+    }).catch(error => {
+      console.error('카테고리 로드 실패:', error);
+      showAlert('카테고리 로드에 실패했습니다.', 'error');
+    });
   });
 }
 

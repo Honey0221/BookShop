@@ -28,11 +28,24 @@ public class FileService {
 			fos.write(fileData);
 		}
 
-		return "/bookshop/book/" + savedFileName;
+		// 업로드 경로에 따라 다른 URL 반환
+		if (uploadPath.contains("itemImgLocation")) {
+			return "/bookshop/book/" + savedFileName;
+		} else if (uploadPath.contains("reviewImgLocation")) {
+			return "/bookshop/review/" + savedFileName;
+		}
+
+		return savedFileName;
 	}
 
 	public void deleteFile(String uploadPath, String fileName) {
-		String fullPath = uploadPath + "/" + fileName;
+		// 파일명에 URL 경로가 포함된 경우
+		String actualFileName = fileName;
+		if (fileName.startsWith("/boopshop/")) {
+			actualFileName = fileName.substring(fileName.lastIndexOf("/") + 1);
+		}
+
+		String fullPath = uploadPath + "/" + actualFileName;
 		File file = new File(fullPath);
 		if (file.exists()) {
 			file.delete();

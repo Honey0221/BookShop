@@ -19,8 +19,8 @@ $(document).ready(function() {
   });
 
   // 리뷰 이미지 미리보기 함수
-  $("#reviewImages").change(function() {
-    const preview = $('#imagePreivew');
+  $("#reviewImages").off('change').on('change', function() {
+    const preview = $('#imagePreview');
     preview.empty();
 
     if (this.files.length > 3) {

@@ -40,90 +40,99 @@
           <div class="modal-header">
             <h5 class="modal-title" id="addBookModalLabel">도서 추가</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"
-                    aria-label="Close" id="closeModalBtn"></button>
+                    aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form id="addBookForm">
+              <input type="hidden" id="addBookId">
               <div class="row mb-3">
                 <div class="col-md-8">
-                  <label for="title" class="form-label">제목 <span
-                      class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="title"
-                         name="title" required>
+                  <label for="addTitle" class="form-label">제목 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="addTitle"
+                         name="addTitle" required>
                 </div>
                 <div class="col-md-4">
-                  <label for="price" class="form-label">가격 <span
-                      class="text-danger">*</span></label>
-                  <input type="number" class="form-control" id="price"
-                         name="price" required min="0">
+                  <label for="addPrice" class="form-label">가격 <span
+                    class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="addPrice"
+                         name="addPrice" required min="0">
                 </div>
               </div>
 
               <div class="row mb-3">
                 <div class="col-md-6">
-                  <label for="author" class="form-label">저자 <span
-                      class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="author"
-                         name="author" required>
+                  <label for="addAuthor" class="form-label">저자 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="addAuthor"
+                         name="addAuthor" required>
                 </div>
                 <div class="col-md-6">
-                  <label for="publisher" class="form-label">출판사 <span
-                      class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="publisher"
-                         name="publisher" required>
+                  <label for="addPublisher" class="form-label">출판사 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="addPublisher"
+                         name="addPublisher" required>
                 </div>
               </div>
 
               <div class="row mb-3">
                 <div class="col-md-3">
-                  <label for="mainCategory" class="form-label">대분류 <span
-                      class="text-danger">*</span></label>
-                  <select class="form-select" id="mainCategory" name="mainCategory">
+                  <label for="addMainCategory" class="form-label">대분류 <span
+                    class="text-danger">*</span></label>
+                  <select class="form-select" id="addMainCategory"
+                          name="addMainCategory">
                     <option value="">선택</option>
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="midCategory" class="form-label">중분류 <span
-                      class="text-danger">*</span></label>
-                  <select class="form-select" id="midCategory" name="midCategory">
+                  <label for="addMidCategory" class="form-label">중분류 <span
+                    class="text-danger">*</span></label>
+                  <select class="form-select" id="addMidCategory"
+                          name="addMidCategory">
                     <option value="">선택</option>
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="subCategory" class="form-label">소분류 <span
-                      class="text-danger">*</span></label>
-                  <select class="form-select" id="subCategory" name="subCategory">
+                  <label for="addSubCategory" class="form-label">소분류 <span
+                    class="text-danger">*</span></label>
+                  <select class="form-select" id="addSubCategory"
+                          name="addSubCategory">
                     <option value="">선택</option>
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="detailCategory" class="form-label">상세분류</label>
-                  <select class="form-select" id="detailCategory" name="detailCategory">
+                  <label for="addDetailCategory" class="form-label">상세분류</label>
+                  <select class="form-select" id="addDetailCategory"
+                          name="addDetailCategory">
                     <option value="">선택</option>
                   </select>
                 </div>
+              </div>
+
+              <div class="row mb-3">
                 <div class="col-md-3">
-                  <label for="stock" class="form-label">재고 <span
-                      class="text-danger">*</span></label>
-                  <input type="number" class="form-control" id="stock"
-                         name="stock" required min="0">
+                  <label for="addStock" class="form-label">재고 <span
+                    class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="addStock"
+                         name="addStock" required min="0">
                 </div>
               </div>
 
               <div class="mb-3">
-                <label for="bookImage" class="form-label">이미지 <span
-                    class="text-danger">*</span></label>
-                <input type="file" class="form-control" id="bookImage"
-                       name="bookImage" accept="image/*">
-                <div id="imagePreview" class="mt-2" style="max-width: 200px;">
+                <label for="addBookImage" class="form-label">이미지 <span
+                  class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="addBookImage"
+                       name="addBookImage" accept="image/*">
+                <div id="addImagePreview" class="mt-2"
+                     style="max-width: 200px;">
                   <!-- 이미지 미리보기 영역 -->
                 </div>
               </div>
 
               <div class="mb-3">
-                <label for="description" class="form-label">상세 설명</label>
-                <textarea class="form-control" id="description"
-                          name="description" rows="3"></textarea>
+                <label for="addDescription" class="form-label">상세 설명</label>
+                <textarea class="form-control" id="addDescription"
+                          name="addDescription" rows="3"></textarea>
               </div>
             </form>
           </div>
@@ -133,6 +142,122 @@
             </button>
             <button type="button" class="btn btn-primary" id="saveBookBtn">
               저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 도서 수정 모달 -->
+    <div class="modal fade" id="editBookModal" tabindex="-1"
+         aria-labelledby="editBookModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBookModalLabel">도서 수정</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editBookForm">
+              <input type="hidden" id="editBookId">
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label for="editTitle" class="form-label">제목 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="editTitle"
+                         name="editTitle" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="editPrice" class="form-label">가격 <span
+                    class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="editPrice"
+                         name="editPrice" required min="0">
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="editAuthor" class="form-label">저자 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="editAuthor"
+                         name="editAuthor" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="editPublisher" class="form-label">출판사 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="editPublisher"
+                         name="editPublisher" required>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <label for="editMainCategory" class="form-label">대분류 <span
+                    class="text-danger">*</span></label>
+                  <select class="form-select" id="editMainCategory"
+                          name="editMainCategory">
+                    <option value="">선택</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label for="editMidCategory" class="form-label">중분류 <span
+                    class="text-danger">*</span></label>
+                  <select class="form-select" id="editMidCategory"
+                          name="editMidCategory">
+                    <option value="">선택</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label for="editSubCategory" class="form-label">소분류 <span
+                    class="text-danger">*</span></label>
+                  <select class="form-select" id="editSubCategory"
+                          name="editSubCategory">
+                    <option value="">선택</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label for="editDetailCategory"
+                         class="form-label">상세분류</label>
+                  <select class="form-select" id="editDetailCategory"
+                          name="editDetailCategory">
+                    <option value="">선택</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <label for="editStock" class="form-label">재고 <span
+                    class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="editStock"
+                         name="editStock" required min="0">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="editBookImage" class="form-label">이미지 <span
+                  class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="editBookImage"
+                       name="editBookImage" accept="image/*">
+                <div id="editImagePreview" class="mt-2"
+                     style="max-width: 200px;">
+                  <!-- 이미지 미리보기 영역 -->
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="editDescription" class="form-label">상세 설명</label>
+                <textarea class="form-control" id="editDescription"
+                          name="editDescription" rows="3"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">취소
+            </button>
+            <button type="button" class="btn btn-primary" id="updateBookBtn">
+              수정
             </button>
           </div>
         </div>
@@ -218,7 +343,8 @@
                   'yyyy-MM-dd')}"></td>
           <td>
             <div class="btn-group btn-group-sm">
-              <button type="button" class="btn btn-sm btn-primary edit-btn">
+              <button type="button" class="btn btn-sm btn-primary edit-btn"
+                      th:data-id="${book.id}">
                 <i class="fas fa-edit"></i>
               </button>
               <button type="button" class="btn btn-sm btn-danger delete-btn"

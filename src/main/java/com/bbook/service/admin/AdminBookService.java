@@ -152,9 +152,9 @@ public class AdminBookService {
 
 	public Book saveBook(BookFormDto bookFormDto, MultipartFile bookImage)
 			throws Exception {
-		String savedFileName = "";
+		String imageUrl = "";
 		if (bookImage != null && !bookImage.isEmpty()) {
-			savedFileName = fileService.uploadFile(itemImgLocation,
+			imageUrl = fileService.uploadFile(itemImgLocation,
 											bookImage.getOriginalFilename(),
 											bookImage.getBytes());
 		}
@@ -170,7 +170,7 @@ public class AdminBookService {
 				.subCategory(bookFormDto.getSubCategory())
 				.detailCategory(bookFormDto.getDetailCategory())
 				.description(bookFormDto.getDescription())
-				.imageUrl(savedFileName)
+				.imageUrl("/bookshop/book/" + imageUrl)
 				.bookStatus(BookStatus.SELL)
 				.createdAt(LocalDateTime.now())
 				.viewCount(0L)
@@ -212,12 +212,12 @@ public class AdminBookService {
 				fileService.deleteFile(itemImgLocation, book.getImageUrl());
 			}
 
-			String savedFileName = fileService.uploadFile(itemImgLocation,
+			String imageUrl = fileService.uploadFile(itemImgLocation,
 															bookImage.getOriginalFilename(),
 															bookImage.getBytes());
 
-			System.out.println("이미지 저장 완료 : " + savedFileName);
-			book.setImageUrl(savedFileName);
+			System.out.println("이미지 저장 완료 : " + imageUrl);
+			book.setImageUrl(imageUrl);
 		}
 
 		book.updateBook(bookFormDto);

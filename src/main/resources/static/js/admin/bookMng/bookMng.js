@@ -37,24 +37,35 @@ $(document).ready(function() {
     $('#pageSize').change(handlePageSizeChange);
 
     // 이미지 미리보기
-    $('#bookImage').change(handleImagePreview);
+    $('#addBookImage, #editBookImage').change(handleImagePreview);
 
     // 숫자 입력 필드 실시간 검사
-    $('#price, #stock').on('input', handleNumericInput);
+    $('#addPrice, #addStock, #editPrice, #editStock').on('input', handleNumericInput);
 
     // 버튼 클릭 이벤트
     $('tbody').on('click', '.edit-btn', function() {
       handleEdit($(this).data('id'));
     });
+
     $('tbody').on('click', '.delete-btn', function() {
       handleDelete($(this).data('id'));
     });
-    $('#downloadExcelBtn').click(downloadExcel);
-    $('#saveBookBtn').click(saveBook);
 
-    // 모달 관련 이벤트
-    $('#closeModalBtn').click(resetForm);
-    $('#addBookModal').on('hidden.bs.modal', resetForm);
+    $('#downloadExcelBtn').click(downloadExcel);
+    $('#saveBookBtn, #updateBookBtn').click(saveBook);
+
+    // 모달 초기화 이벤트
+    $('#addBookModal').on('show.bs.modal', function() {
+        loadCategories('add');
+    });
+
+    $('#addBookModal').on('hidden.bs.modal', function() {
+      resetForm('#addBookForm');
+    });
+
+    $('#editBookModal').on('hidden.bs.modal', function() {
+      resetForm('#editBookForm');
+    });
 
     loadBooks();
 });

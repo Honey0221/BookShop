@@ -1,37 +1,43 @@
 import { showAlert } from './utils.js';
 import { loadBooks } from './bookList.js';
+import { loadCategories } from './bookCategory.js';
 
-export function createBookFormDto() {
-    return {
-        title: $('#title').val().trim(),
-        author: $('#author').val().trim(),
-        publisher: $('#publisher').val().trim(),
-        price: parseInt($('#price').val()),
-        stock: parseInt($('#stock').val()),
-        mainCategory: $('#mainCategory').val(),
-        midCategory: $('#midCategory').val() || '',
-        subCategory: $('#subCategory').val() || '',
-        detailCategory: $('#detailCategory').val() || '',
-        description: $('#description').val().trim()
-    };
+export function createBookFormDto(formId) {
+  const prefix = formId === '#editBookForm' ? 'edit' : 'add';
+  return {
+    title: $(`#${prefix}Title`).val().trim(),
+    author: $(`#${prefix}Author`).val().trim(),
+    publisher: $(`#${prefix}Publisher`).val().trim(),
+    price: parseInt($(`#${prefix}Price`).val()),
+    stock: parseInt($(`#${prefix}Stock`).val()),
+    mainCategory: $(`#${prefix}MainCategory`).val(),
+    midCategory: $(`#${prefix}MidCategory`).val() || '',
+    subCategory: $(`#${prefix}SubCategory`).val() || '',
+    detailCategory: $(`#${prefix}DetailCategory`).val() || '',
+    description: $(`#${prefix}Description`).val().trim()
+  };
 }
 
 // 도서 저장 관련 함수들
 export function saveBook() {
-  if (!validateBookForm()) {
+  const isEdit = $(this).attr('id') === 'updateBookBtn';
+  const modalId = isEdit ? '#editBookModal' : '#addBookModal';
+  const formId = isEdit ? '#editBookForm' : '#addBookForm';
+  const prefix = formId === '#editBookForm' ? 'edit' : 'add';
+
+  if (!validateBookForm(formId)) {
       return;
   }
 
   const formData = new FormData();
-  const bookFormDto = createBookFormDto();
-  const bookId = $('#saveBookBtn').data('id');
-  const isEdit = !!bookId;
+  const bookFormDto = createBookFormDto(formId);
+  const bookId = isEdit ? $('#editBookId').val() : null;
 
   formData.append('bookFormDto', new Blob([JSON.stringify(bookFormDto)], {
     type: 'application/json'
   }));
 
-  const bookImage = $('#bookImage')[0].files[0];
+  const bookImage = $(`${formId} #${prefix}BookImage`)[0].files[0];
   if (bookImage) {
     formData.append('bookImage', bookImage);
   }
@@ -43,7 +49,7 @@ export function saveBook() {
     processData: false,
     contentType: false,
     success: function(response) {
-      $('#addBookModal').modal('hide');
+      $(modalId).modal('hide');
       showAlert(isEdit ? '수정 완료' : '저장 완료', 'success',
                           `도서가 성공적으로 ${isEdit ? '수정' : '추가'}되었습니다.`
       ).then((result) => {
@@ -51,23 +57,24 @@ export function saveBook() {
             loadBooks();
         }
       });
-      resetForm();
+      resetForm(formId);
     },
     error: function() {
       showAlert(isEdit ? '수정 실패' : '저장 실패', 'error',
-                         `도서가 ${isEdit ? '수정' : '추가'} 중 오류가 발생했습니다.`);
+                         `도서 ${isEdit ? '수정' : '추가'} 중 오류가 발생했습니다.`);
     }
   });
 }
 
-function validateBookForm() {
+function validateBookForm(formId) {
+    const prefix = formId === '#editBookForm' ? 'edit' : 'add';
     const requiredFields = [
-        { id: 'title', name: '제목' },
-        { id: 'author', name: '저자' },
-        { id: 'publisher', name: '출판사' },
-        { id: 'mainCategory', name: '대분류' },
-        { id: 'midCategory', name: '중분류' },
-        { id: 'subCategory', name: '소분류' }
+        { id: `${prefix}Title`, name: '제목' },
+        { id: `${prefix}Author`, name: '저자' },
+        { id: `${prefix}Publisher`, name: '출판사' },
+        { id: `${prefix}MainCategory`, name: '대분류' },
+        { id: `${prefix}MidCategory`, name: '중분류' },
+        { id: `${prefix}SubCategory`, name: '소분류' }
     ];
 
     for (const field of requiredFields) {
@@ -76,12 +83,12 @@ function validateBookForm() {
         }
     }
 
-    if (!validateNumericField('price', '가격') || !validateNumericField('stock', '재고')) {
+    if (!validateNumericField('Price', '가격', formId) || !validateNumericField('Stock', '재고', formId)) {
         return false;
     }
 
-    const isEdit = !!$('#saveBookBtn').data('id');
-    if (!isEdit && !validateImageFile()) {
+    const isEdit = formId === '#editBookForm';
+    if (!isEdit && !validateImageFile(formId)) {
         return false;
     }
 
@@ -99,19 +106,24 @@ function validateField(field) {
     return true;
 }
 
-function validateNumericField(fieldId, fieldName) {
-    const value = parseInt($(`#${fieldId}`).val());
+function validateNumericField(fieldId, fieldName, formId = '#addBookForm') {
+    const prefix = formId === '#editBookForm' ? 'edit' : 'add';
+    const value = parseInt($(`#${prefix}${fieldId}`).val());
     if (isNaN(value) || value < 0) {
-        showAlert('입력 오류', 'warning', `${fieldName}은(는) 0 이상의 숫자를 입력해주세요.`);
-        $(`#${fieldId}`).focus();
+        showAlert('입력 오류', 'warning', `${fieldName}은(는) 0 이상의 숫자로 입력해주세요.`);
+        $(`#${prefix}${fieldId}`).focus();
         return false;
     }
     return true;
 }
 
-function validateImageFile() {
-    const imageFile = $('#bookImage')[0].files[0];
-    if (!imageFile) {
+function validateImageFile(formId) {
+    const prefix = formId === '#editBookForm' ? 'edit' : 'add';
+    const imageFile = $(`${formId} #${prefix}BookImage`)[0].files[0];
+    const isEdit = formId === '#editBookForm';
+
+    // 수정 시에는 이미지 필수 아님
+    if (!isEdit && !imageFile) {
         showAlert('입력 오류', 'warning', '도서 이미지를 선택해주세요.');
         return false;
     }
@@ -119,11 +131,14 @@ function validateImageFile() {
 }
 
 export function handleImagePreview() {
+    const formId = $(this).closest('form').attr('id');
+    const prefix = formId === 'editBookForm' ? 'edit' : 'add';
     const file = this.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            $('#imagePreview').html(`<img src="${e.target.result}" class="img-fluid" alt="미리보기">`);
+            $(`#${prefix}ImagePreview`)
+            .html(`<img src="${e.target.result}" class="img-fluid" alt="미리보기">`);
         };
         reader.readAsDataURL(file);
     }
@@ -137,12 +152,18 @@ export function handleNumericInput() {
 }
 
 // 폼 초기화 함수
-export function resetForm() {
-    $('#addBookForm')[0].reset();
-    $('#imagePreview').empty();
-    $('#midCategory').val('');
-    $('#subCategory').val('');
-    $('#detailCategory').val('');
-    $('#addBookModalLabel').text('도서 추가');
-    $('#saveBookBtn').removeData('id');
+export function resetForm(formId = '#addBookForm') {
+    const prefix = formId === '#editBookForm' ? 'edit' : 'add';
+    $(formId)[0].reset();
+    $(`#${prefix}ImagePreview`).empty();
+    $(`#${prefix}MainCategory`).val('');
+    $(`#${prefix}MidCategory`).val('');
+    $(`#${prefix}SubCategory`).val('');
+    $(`#${prefix}DetailCategory`).val('');
+
+    if (formId === '#editBookForm') {
+        $('#editBookId').val('');
+    }
+
+    loadCategories(prefix);
 }
