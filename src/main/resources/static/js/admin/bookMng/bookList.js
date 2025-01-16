@@ -1,6 +1,6 @@
 import { searchParams } from './bookMng.js';
-import { showAlert, formatDate, createPageItem } from './utils.js';
 import { loadCategories } from './bookCategory.js';
+import { showAlert, formatDate, createPageItem } from './utils.js';
 
 export function loadBooks() {
     $.ajax({
@@ -137,6 +137,8 @@ export function handlePageSizeChange() {
 }
 
 export function handleEdit(bookId) {
+  loadCategories();
+
   $.get(`/admin/items/${bookId}`, function(book) {
     // 폼 필드 채우기
     $('#title').val(book.title);
@@ -145,14 +147,14 @@ export function handleEdit(bookId) {
     $('#price').val(book.price);
     $('#stock').val(book.stock);
     $('#mainCategory').val(book.mainCategory);
-    loadCategories('mid', book.midCategory);
-    loadCategories('sub', book.subCategory);
-    loadCategories('detail', book.detailCategory);
+    $('#midCategory').val(book.midCategory);
+    $('#subCategory').val(book.subCategory);
+    $('#detailCategory').val(book.detailCategory);
     $('#description').val(book.description);
 
     // 이미지 미리보기 업데이트
     if (book.imageUrl) {
-      const imageUrl = `/bookshop/book/${book.imageUrl}`;
+      const imageUrl = `${book.imageUrl}`;
       $('#imagePreview').html(`<img src="${imageUrl}" class="img-fluid" alt="미리보기">`);
     }
 

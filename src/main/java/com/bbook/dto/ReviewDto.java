@@ -23,6 +23,7 @@ public class ReviewDto {
 	private Long id;
 	private Long memberId;
 	private Long bookId;
+	private String bookTitle;
 	private int rating;
 	private String content;
 	private String memberName;
@@ -32,6 +33,7 @@ public class ReviewDto {
 	private int likeCount;
 	private boolean isLiked;
 	private LocalDateTime createdAt;
+	private boolean blocked;
 
 	@JsonProperty("isOwner")
 	private boolean isOwner;
@@ -50,5 +52,9 @@ public class ReviewDto {
 		this.likeCount = likeCount;
 		this.createdAt = createdAt;
 		this.isOwner = false;
+	}
+
+	public String getDisplayContent() {
+		return blocked ? "클린봇에 의해 차단되었습니다." : content;
 	}
 }

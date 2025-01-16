@@ -1,0 +1,40 @@
+.review-content {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analysis-result {
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-size: 0.9em;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.alert {
+  margin-bottom: 1.5rem;
+}
+
+.pagination {
+  margin-top: 2rem;
+}
+
+.table-danger {
+    opacity: 0.8;
+}
+
+.table-warning {
+    background-color: #fff3cd !important;
+}

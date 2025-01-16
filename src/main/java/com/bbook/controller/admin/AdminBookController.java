@@ -50,8 +50,6 @@ public class AdminBookController {
 			direction = Sort.Direction.DESC) Pageable pageable, Model model) {
 		Page<Book> books = adminBookService.getAdminBookPage(pageable);
 		model.addAttribute("books", books);
-		List<String> mainCategories = adminBookRepository.findDistinctMainCategories();
-		model.addAttribute("mainCategories", mainCategories);
 
 		return "/admin/books/bookMng";
 	}
@@ -163,6 +161,12 @@ public class AdminBookController {
 		} catch (Exception e) {
 			return ResponseEntity.internalServerError().build();
 		}
+	}
+
+	@GetMapping("/categories/main")
+	@ResponseBody
+	public List<String> getMainCategories() {
+		return adminBookRepository.findDistinctMainCategories();
 	}
 
 	@GetMapping("/categories/mid")

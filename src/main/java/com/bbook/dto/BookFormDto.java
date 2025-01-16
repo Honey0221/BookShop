@@ -24,4 +24,8 @@ public class BookFormDto {
 	private String imageUrl;
 	private String description;
 	private String trailerUrl;
+
+	public String getFullImageUrl() {
+		return imageUrl != null ? "/bookshop/book/" + imageUrl : null;
+	}
 }

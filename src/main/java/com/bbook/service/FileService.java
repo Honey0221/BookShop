@@ -13,19 +13,25 @@ import lombok.RequiredArgsConstructor;
 public class FileService {
 	public String uploadFile(String uploadPath,
 			String originalFileName, byte[] fileData) throws Exception {
-		UUID uuid = UUID.randomUUID();
+		File uploadDir = new File(uploadPath);
+		if (!uploadDir.exists()) {
+			uploadDir.mkdirs();
+		}
+
 		String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-		String savedFileName = uuid.toString() + extension;
+		String savedFileName = UUID.randomUUID().toString() + extension;
 		String fileUploadFullUrl = uploadPath + "/" + savedFileName;
 
-		FileOutputStream fos = new FileOutputStream(fileUploadFullUrl);
-		fos.write(fileData);
-		fos.close();
+		System.out.println("파일 저장 경로 : " + fileUploadFullUrl);
 
-		return savedFileName;
+		try (FileOutputStream fos = new FileOutputStream(fileUploadFullUrl)) {
+			fos.write(fileData);
+		}
+
+		return "/bookshop/book/" + savedFileName;
 	}
 
-	public void deleteFile(String uploadPath, String fileName) throws Exception {
+	public void deleteFile(String uploadPath, String fileName) {
 		String fullPath = uploadPath + "/" + fileName;
 		File file = new File(fullPath);
 		if (file.exists()) {

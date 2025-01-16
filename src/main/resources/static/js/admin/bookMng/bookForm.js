@@ -11,6 +11,7 @@ export function createBookFormDto() {
         mainCategory: $('#mainCategory').val(),
         midCategory: $('#midCategory').val() || '',
         subCategory: $('#subCategory').val() || '',
+        detailCategory: $('#detailCategory').val() || '',
         description: $('#description').val().trim()
     };
 }
@@ -79,7 +80,8 @@ function validateBookForm() {
         return false;
     }
 
-    if (!validateImageFile()) {
+    const isEdit = !!$('#saveBookBtn').data('id');
+    if (!isEdit && !validateImageFile()) {
         return false;
     }
 

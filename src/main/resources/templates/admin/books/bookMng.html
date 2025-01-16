@@ -80,10 +80,6 @@
                       class="text-danger">*</span></label>
                   <select class="form-select" id="mainCategory" name="mainCategory">
                     <option value="">선택</option>
-                    <option th:each="category : ${mainCategories}"
-                            th:value="${category}"
-                            th:text="${category}">
-                    </option>
                   </select>
                 </div>
                 <div class="col-md-3">

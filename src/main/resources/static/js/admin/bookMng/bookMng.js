@@ -1,11 +1,14 @@
 import { formatDate, showAlert, createPageItem, downloadExcel } from './utils.js';
+import { loadCategories } from './bookCategory.js';
 import {
     loadBooks,
     handleSearch,
     handleSearchKeypress,
     handleFilterChange,
     handleSortChange,
-    handlePageSizeChange
+    handlePageSizeChange,
+    handleEdit,
+    handleDelete
 } from './bookList.js';
 import {
     handleImagePreview,
@@ -32,20 +35,26 @@ $(document).ready(function() {
     $('#statusFilter').change(handleFilterChange);
     $('#sortBy').change(handleSortChange);
     $('#pageSize').change(handlePageSizeChange);
-    
+
     // 이미지 미리보기
     $('#bookImage').change(handleImagePreview);
-    
+
     // 숫자 입력 필드 실시간 검사
     $('#price, #stock').on('input', handleNumericInput);
 
     // 버튼 클릭 이벤트
+    $('tbody').on('click', '.edit-btn', function() {
+      handleEdit($(this).data('id'));
+    });
+    $('tbody').on('click', '.delete-btn', function() {
+      handleDelete($(this).data('id'));
+    });
     $('#downloadExcelBtn').click(downloadExcel);
     $('#saveBookBtn').click(saveBook);
 
     // 모달 관련 이벤트
     $('#closeModalBtn').click(resetForm);
     $('#addBookModal').on('hidden.bs.modal', resetForm);
-    
+
     loadBooks();
 });

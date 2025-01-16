@@ -102,6 +102,10 @@ public class Book {
 		this.stock = restStock; // 5
 	}
 
+	public String getDetailCategory() {
+		return detailCategory != null ? detailCategory : "";
+	}
+
 	public void addStock(int stockNumber) {
 		this.stock += stockNumber;
 	}

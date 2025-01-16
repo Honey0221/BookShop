@@ -42,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminBookService {
 	private final AdminBookRepository adminBookRepository;
 	private final FileService fileService;
+	private final TelegramAlertService telegramAlertService;
 
 	@Value("${itemImgLocation}")
 	private String itemImgLocation;
@@ -151,12 +152,11 @@ public class AdminBookService {
 
 	public Book saveBook(BookFormDto bookFormDto, MultipartFile bookImage)
 			throws Exception {
-		String originalFilename = bookImage.getOriginalFilename();
 		String savedFileName = "";
-
-		if (StringUtils.hasText(originalFilename)) {
-			savedFileName = fileService.uploadFile(itemImgLocation, originalFilename,
-					bookImage.getBytes());
+		if (bookImage != null && !bookImage.isEmpty()) {
+			savedFileName = fileService.uploadFile(itemImgLocation,
+											bookImage.getOriginalFilename(),
+											bookImage.getBytes());
 		}
 
 		Book book = Book.builder()
@@ -176,7 +176,12 @@ public class AdminBookService {
 				.viewCount(0L)
 				.build();
 
-		return adminBookRepository.save(book);
+		Book savedBook = adminBookRepository.save(book);
+
+		// 도서 저장 후 알림 발송
+		telegramAlertService.sendNewBookAlert(bookFormDto);
+
+		return savedBook;
 	}
 
 	public BookFormDto getBookId(Long bookId) {
@@ -207,13 +212,11 @@ public class AdminBookService {
 				fileService.deleteFile(itemImgLocation, book.getImageUrl());
 			}
 
-			String originalFilename = bookImage.getOriginalFilename();
-			String savedFileName = "";
+			String savedFileName = fileService.uploadFile(itemImgLocation,
+															bookImage.getOriginalFilename(),
+															bookImage.getBytes());
 
-			if (StringUtils.hasText(originalFilename)) {
-				savedFileName = fileService.uploadFile(itemImgLocation, originalFilename,
-						bookImage.getBytes());
-			}
+			System.out.println("이미지 저장 완료 : " + savedFileName);
 			book.setImageUrl(savedFileName);
 		}
 

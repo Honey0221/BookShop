@@ -82,6 +82,7 @@ public class SecurityConfig {
 						.ignoringRequestMatchers("/cart/**")
 						.ignoringRequestMatchers("/wish/**")
 						.ignoringRequestMatchers("/order/payment/**")
+						.ignoringRequestMatchers("/admin/**")
 						.ignoringRequestMatchers("/ws-chat/**")
 						.ignoringRequestMatchers("/chat/**"));
 

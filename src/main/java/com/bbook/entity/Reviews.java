@@ -45,6 +45,7 @@ public class Reviews {
 
 	@Column(name = "image_url")
 	@ElementCollection
+	@Builder.Default
 	private List<String> images = new ArrayList<>();
 
 	@Column
@@ -52,9 +53,18 @@ public class Reviews {
 	private TagType tagType;
 
 	@Column
+	@Builder.Default //
 	private int likeCount = 0;
 
 	private LocalDateTime createdAt;
+
+	@Column(nullable = false)
+	@Builder.Default
+	private boolean blocked = false;
+
+	@Column(nullable = false)
+	@Builder.Default
+	private boolean flagged = false;
 
 	public void updateReview(int rating, String content, TagType tagType) {
 		this.rating = rating;
@@ -75,5 +85,12 @@ public class Reviews {
 
 	public void decreaseLikeCount() {
 		this.likeCount--;
+	}
+
+	public String getDisplayContent() {
+		if (this.blocked) {
+			return "클린봇에 의해 차단되었습니다.";
+		}
+		return this.content;
 	}
 }

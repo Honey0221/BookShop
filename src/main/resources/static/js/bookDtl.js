@@ -1,5 +1,9 @@
 $(document).ready(function() {
-  updateReviewCount();
+  // 중복 바인딩 방지
+  if (!window.reviewCountChecked) {
+    window.reviewCountChecked = true;
+    updateReviewCount();
+  }
 
   // 기존 이벤트 리스너 제거
   $('#review-tab').off('shown.bs.tab');
@@ -78,22 +82,26 @@ $(document).ready(function() {
       data: formData,
       processData: false,
       contentType: false,
-      success: function(result) {
-        const reviewModal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
-        if (reviewModal) {
-          reviewModal.hide();
-          cleanupModal();
+      success: function(response) {
+        console.log("서버 응답 : ", response);
+        console.log("응답 메시지 : ", response.message);
+        if (response.success) {
+          const reviewModal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+          if (reviewModal) {
+            reviewModal.hide();
+            cleanupModal();
+          }
+
+          $("#content").val("");
+          $("#rating").val("5");
+          $("#reviewImages").val("");
+          $("#imagePreview").empty();
+          $("input[name='tagType']").prop('checked', false);
+
+          loadReviews(currentPage, currentSort);
+
+          showAlert(response.message, response.blocked ? 'warning' : 'success');
         }
-
-        $("#content").val("");
-        $("#rating").val("5");
-        $("#reviewImages").val("");
-        $("#imagePreview").empty();
-        $("input[name='tagType']").prop('checked', false);
-
-        loadReviews(currentPage, currentSort);
-
-        showAlert('리뷰가 등록되었습니다.', 'success');
       },
       error: function(xhr) {
         if (xhr.status === 403) {
@@ -110,8 +118,6 @@ $(document).ready(function() {
     e.preventDefault();
 
     const bookId = $("#bookId").val();
-
-    $(this).modal('hide');
 
     $.get(`/orders/check/${bookId}`)
       .done(function(response) {
@@ -254,6 +260,7 @@ $(document).ready(function() {
     });
   });
 
+  // 정렬 버튼 change 이벤트
   $("#reviewSort").change(function() {
     const sortType = $(this).val();
     loadReviews(0, sortType);
@@ -303,6 +310,7 @@ $(document).ready(function() {
 
   $('.book-trailer').hide();
 
+  // 중복 바인딩 방지
   if (!window.trailerChecked) {
     window.trailerChecked = true;
     checkBookTrailer();
@@ -365,7 +373,7 @@ function createReviewHtml(review) {
         </div>
       </div>
       ${imagesHtml}
-      <div class="review-content mt-2">${review.content}</div>
+      <div class="review-content mt-2">${review.displayContent}</div>
       <div class="d-flex justify-content-end align-items-end mt-2">
         <div class="d-flex gap-2">
           ${likeBtn}
@@ -653,7 +661,6 @@ $('#editReviewModal').on('hidden.bs.modal', function() {
 function deleteReview(reviewId) {
   Swal.fire({
     title: '리뷰를 삭제하시겠습니까?',
-    text: '삭제된 리뷰는 복구할 수 없습니다.',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -789,7 +796,7 @@ function order() {
   });
 }
 
-// 장바구니 추가
+// 장바구니
 function addCart() {
   // bookId 값을 hidden input에서 가져오기
   const bookId = document.getElementById('bookId').value;

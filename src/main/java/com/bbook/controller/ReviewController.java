@@ -52,19 +52,7 @@ public class ReviewController {
 			String email = userDetails.getUsername();
 			Long memberId = memberService.getMemberIdByEmail(email);
 
-			boolean hasPurchased =
-					orderService.hasUserPurchasedBook(memberId, request.getBookId());
-
-			if (!hasPurchased) {
-				return ResponseEntity.status(HttpStatus.FORBIDDEN)
-						.body(Map.of("success", false));
-			}
-
-			System.out.println("받은 리뷰 데이터 - bookId: " + request.getBookId());
-			System.out.println("받은 리뷰 데이터 - rating: " + request.getRating());
-			System.out.println("받은 리뷰 데이터 - content: " + request.getContent());
-			System.out.println("받은 리뷰 데이터 - tagType: " + request.getTagType());
-
+			// 리뷰 DTO 생성
 			ReviewDto reviewDto = ReviewDto.builder()
 							.memberId(memberId)
 							.bookId(request.getBookId())
@@ -74,7 +62,17 @@ public class ReviewController {
 							.tagType(request.getTagType())
 							.build();
 
-			reviewService.createReview(reviewDto);
+			// 리뷰 DB에 저장(클린봇 검사 포함)
+			boolean isBlocked = reviewService.createReview(reviewDto);
+			Map<String, Object> response = new HashMap<>();
+
+			// 리뷰 등록 시 클린봇 검사 결과에 따른 알림창 설정
+			if (isBlocked) {
+				response.put("success", true);
+				response.put("blocked", true);
+				response.put("message", "악플성 댓글이 감지되었습니다.");
+				return ResponseEntity.ok(response);
+			}
 
 			// 리뷰 활동 기록 저장 코드 영역
 			if (email != null) {
@@ -86,14 +84,14 @@ public class ReviewController {
 			ReviewStatsDto updatedStats = reviewService.getReviewStats(request.getBookId());
 			Double updatedAvgRating = reviewService.getAverageRatingByBookId(request.getBookId());
 
-			Map<String, Object> response = new HashMap<>();
 			response.put("success", true);
+			response.put("blocked", false);
+			response.put("message", "리뷰가 등록되었습니다.");
 			response.put("stats", updatedStats);
 			response.put("avgRating", updatedAvgRating);
 
 			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			System.out.println("에러 발생 : " + e.getMessage());
 			return ResponseEntity.badRequest().body(Map.of("success", false,
 					"error", e.getMessage()));
 		}
