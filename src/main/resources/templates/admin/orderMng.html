@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout}">
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.6.0/kakao.min.js"></script>
+</head>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 날짜 선택기 초기화
+            flatpickr(".datepicker", {
+                locale: "ko",
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+            });
+
+            // 검색 조건 적용
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                searchOrders();
+            });
+
+            // 초기 데이터 로드
+            searchOrders();
+        });
+
+        function searchOrders(page) {
+            const searchParams = {
+                searchType: document.getElementById('searchType').value,
+                searchKeyword: document.getElementById('searchKeyword').value,
+                orderStatus: document.getElementById('orderStatus').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                page: page || 0
+            };
+
+            fetch('/admin/api/orders?' + new URLSearchParams(searchParams))
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(text || '데이터를 불러오는 중 오류가 발생했습니다.');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateOrderTable(data.content);
+                    updatePagination(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || '데이터를 불러오는 중 오류가 발생했습니다.');
+                });
+        }
+
+        function updateOrderTable(orders) {
+            const tbody = document.querySelector('#orderTable tbody');
+            tbody.innerHTML = '';
+
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.merchantUid}</td>
+                    <td>${order.memberName}</td>
+                    <td>${order.email}</td>
+                    <td>${order.orderName}</td>
+                    <td>${new Intl.NumberFormat('ko-KR').format(order.totalPrice)}원</td>
+                    <td>${order.orderStatus === 'PAID' ? 
+                        '<span class="badge badge-success">결제완료</span>' : 
+                        '<span class="badge badge-danger">취소완료</span>'}</td>
+                    <td>${order.orderDate}</td>
+                    <td>
+                        <button onclick="viewOrderDetail('${order.merchantUid}')" 
+                                class="btn btn-sm btn-primary">상세보기</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updatePagination(pageData) {
+            const paginationEl = document.querySelector('.pagination');
+            const infoEl = document.getElementById('dataTable_info');
+            if (!paginationEl || !infoEl) return;
+
+            // 페이지 정보 업데이트
+            const start = pageData.number * pageData.size + 1;
+            const end = Math.min((pageData.number + 1) * pageData.size, pageData.totalElements);
+            infoEl.textContent = `전체 ${pageData.totalElements}개 중 ${start}-${end}`;
+
+            let html = '';
+            
+            // 첫 페이지 버튼
+            html += `
+                <li class="page-item ${pageData.first ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="event.preventDefault(); searchOrders(0)">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+            `;
+            
+            // 이전 페이지 버튼
+            html += `
+                <li class="page-item ${pageData.first ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="event.preventDefault(); searchOrders(${pageData.number - 1})">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            `;
+
+            // 페이지 번호
+            let startPage = Math.max(0, pageData.number - 2);
+            let endPage = Math.min(pageData.totalPages - 1, startPage + 4);
+            startPage = Math.max(0, endPage - 4);  // endPage를 기준으로 startPage 재조정
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${pageData.number === i ? 'active' : ''}">
+                        <a class="page-link" href="javascript:void(0)" onclick="event.preventDefault(); searchOrders(${i})">${i + 1}</a>
+                    </li>
+                `;
+            }
+
+            // 다음 페이지 버튼
+            html += `
+                <li class="page-item ${pageData.last ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="event.preventDefault(); searchOrders(${pageData.number + 1})">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+            `;
+            
+            // 마지막 페이지 버튼
+            html += `
+                <li class="page-item ${pageData.last ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="event.preventDefault(); searchOrders(${pageData.totalPages - 1})">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            `;
+
+            paginationEl.innerHTML = html;
+        }
+
+        function viewOrderDetail(merchantUid) {
+            fetch(`/admin/api/orders/${merchantUid}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(text || '주문 상세 정보를 불러오는 중 오류가 발생했습니다.');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const modalElement = document.getElementById('orderDetailModal');
+                    const orderModal = new bootstrap.Modal(modalElement);
+                    
+                    // 기본 정보 설정
+                    document.getElementById('modalOrderId').textContent = data.merchantUid;
+                    document.getElementById('modalOrderDate').textContent = new Date(data.orderDate).toLocaleString();
+                    
+                    // 주문 상태 설정
+                    const orderStatusEl = document.getElementById('modalOrderStatus');
+                    orderStatusEl.textContent = data.orderStatus === 'PAID' ? '결제완료' : '취소완료';
+                    orderStatusEl.className = `badge ${data.orderStatus === 'PAID' ? 'badge-success' : 'badge-danger'}`;
+                    
+                    // 환불 버튼 상태 설정
+                    const refundButton = document.getElementById('refundButton');
+                    refundButton.style.display = data.orderStatus === 'PAID' ? 'block' : 'none';
+                    refundButton.setAttribute('data-merchant-uid', data.merchantUid);
+                    
+                    // 주문자 정보 설정
+                    document.getElementById('modalMemberName').textContent = data.memberName;
+                    document.getElementById('modalEmail').textContent = data.email;
+                    
+                    // 구독 상태 설정
+                    const subscriberEl = document.getElementById('modalIsSubscriber');
+                    subscriberEl.textContent = data.subscriber ? '구독중' : '구독안함';
+                    subscriberEl.className = `badge ${data.subscriber ? 'badge-primary' : 'badge-secondary'}`;
+                    
+                    // 주문 상품 테이블 설정
+                    const tbody = document.querySelector('#modalOrderBooks tbody');
+                    tbody.innerHTML = '';
+                    data.orderBooks.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.bookTitle}</td>
+                            <td class="text-center">${item.count}권</td>
+                            <td class="text-right">${new Intl.NumberFormat('ko-KR').format(item.price)}원</td>
+                            <td class="text-right">${new Intl.NumberFormat('ko-KR').format(item.totalPrice)}원</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    // 결제 정보 설정
+                    document.getElementById('modalItemsPrice').textContent = 
+                        new Intl.NumberFormat('ko-KR').format(data.totalPrice - data.shippingFee) + '원';
+                    document.getElementById('modalShippingFee').textContent = 
+                        new Intl.NumberFormat('ko-KR').format(data.shippingFee) + '원';
+                    document.getElementById('modalTotalPrice').textContent = 
+                        new Intl.NumberFormat('ko-KR').format(data.totalPrice) + '원';
+                    
+                    orderModal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || '주문 상세 정보를 불러오는 중 오류가 발생했습니다.');
+                });
+        }
+
+        function refundOrder() {
+            const merchantUid = document.getElementById('refundButton').getAttribute('data-merchant-uid');
+            
+            if (!merchantUid) {
+                alert('주문 정보를 찾을 수 없습니다.');
+                return;
+            }
+
+            if (!confirm('이 주문을 환불하시겠습니까?')) {
+                return;
+            }
+
+            fetch(`/admin/api/orders/${merchantUid}/refund`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || '환불 처리 중 오류가 발생했습니다.');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('환불이 성공적으로 처리되었습니다.');
+                location.reload(); // 페이지 새로고침
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || '환불 처리 중 오류가 발생했습니다.');
+            });
+        }
+    </script>
+</th:block>
+
+<th:block layout:fragment="css">
+    <style>
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .search-label {
+            min-width: 100px;
+            font-weight: 500;
+        }
+
+        .search-input {
+            flex: 1;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .badge-success {
+            background-color: #1f8ce6;
+        }
+
+        .badge-danger {
+            background-color: #e64d3d;
+        }
+
+        .btn-search {
+            background-color: #4E73DF;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+        }
+
+        .btn-reset {
+            background-color: #858796;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+        }
+
+        .modal-header {
+            border-radius: 0.3rem 0.3rem 0 0;
+        }
+        
+        .modal-body h6 {
+            color: #4e73df;
+            font-weight: 600;
+        }
+        
+        .modal-body .badge {
+            font-size: 0.9rem;
+            padding: 0.5em 1em;
+        }
+        
+        #modalOrderStatus.badge-success {
+            background-color: #1cc88a;
+        }
+        
+        #modalOrderStatus.badge-danger {
+            background-color: #e74a3b;
+        }
+        
+        #modalIsSubscriber.badge-primary {
+            background-color: #4e73df;
+        }
+        
+        #modalIsSubscriber.badge-secondary {
+            background-color: #858796;
+        }
+        
+        .table th {
+            background-color: #f8f9fc;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid #e3e6f0;
+            padding: 1.25rem;
+        }
+        
+        .btn-danger {
+            background-color: #e74a3b;
+            border-color: #e74a3b;
+        }
+        
+        .btn-danger:hover {
+            background-color: #be2617;
+            border-color: #be2617;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .pagination {
+            margin: 0;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .pagination .page-item .page-link {
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: #4e73df;
+            background-color: #fff;
+            border: 1px solid #dddfeb;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #4e73df;
+            border-color: #4e73df;
+            color: #fff;
+        }
+        
+        .pagination .page-item.disabled .page-link {
+            color: #858796;
+            pointer-events: none;
+            background-color: #fff;
+            border-color: #dddfeb;
+        }
+        
+        .dataTables_info {
+            color: #858796;
+            font-size: 0.9rem;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h1 class="h3 mb-4 text-gray-800">주문 관리</h1>
+
+        <div class="search-section">
+            <form id="searchForm">
+                <div class="search-row">
+                    <div class="search-label">검색어</div>
+                    <div class="search-input d-flex">
+                        <select class="form-control w-25" id="searchType">
+                            <option value="merchantUid">주문번호</option>
+                            <option value="memberName">고객명</option>
+                            <option value="email">이메일</option>
+                            <option value="orderName">상품명</option>
+                        </select>
+                        <input type="text" class="form-control ml-2" id="searchKeyword">
+                    </div>
+                </div>
+
+                <div class="search-row">
+                    <div class="search-label">주문상태</div>
+                    <div class="search-input">
+                        <select class="form-control" id="orderStatus">
+                            <option value="">전체</option>
+                            <option value="PAID">결제완료</option>
+                            <option value="CANCEL">취소완료</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="search-row">
+                    <div class="search-label">주문일자</div>
+                    <div class="search-input d-flex align-items-center">
+                        <input type="text" class="form-control datepicker" id="startDate">
+                        <span class="mx-2">~</span>
+                        <input type="text" class="form-control datepicker" id="endDate">
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-search">검색</button>
+                    <button type="reset" class="btn btn-reset ml-2">초기화</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="orderTable" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 150px">주문번호</th>
+                                <th style="min-width: 100px">고객명</th>
+                                <th style="min-width: 150px">이메일</th>
+                                <th style="min-width: 300px">상품명</th>
+                                <th style="min-width: 100px">결제금액</th>
+                                <th style="min-width: 100px">주문상태</th>
+                                <th style="min-width: 150px">주문일자</th>
+                                <th style="min-width: 100px">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 페이지네이션 -->
+                <div class="d-flex flex-column align-items-center mt-4">
+                    <nav>
+                        <ul class="pagination mb-2">
+                        </ul>
+                    </nav>
+                    <div class="dataTables_info" id="dataTable_info" role="status" aria-live="polite">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 주문 상세 모달 -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">주문 상세 정보</h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- 주문 기본 정보 -->
+                    <h6 class="border-bottom pb-2 mb-3 d-flex align-items-center">
+                        <i class="fas fa-info-circle mr-2"></i>주문 기본 정보
+                    </h6>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">주문번호</div>
+                        <div class="col-9 font-weight-bold" id="modalOrderId"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">주문일시</div>
+                        <div class="col-9" id="modalOrderDate"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">주문상태</div>
+                        <div class="col-9">
+                            <span id="modalOrderStatus" class="badge"></span>
+                        </div>
+                    </div>
+
+                    <!-- 주문자 정보 -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 d-flex align-items-center">
+                        <i class="fas fa-user mr-2"></i>주문자 정보
+                    </h6>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">고객명</div>
+                        <div class="col-9" id="modalMemberName"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">이메일</div>
+                        <div class="col-9" id="modalEmail"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">구독여부</div>
+                        <div class="col-9">
+                            <span id="modalIsSubscriber" class="badge"></span>
+                        </div>
+                    </div>
+
+                    <!-- 주문 상품 정보 -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 d-flex align-items-center">
+                        <i class="fas fa-shopping-cart mr-2"></i>주문 상품 정보
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="modalOrderBooks">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>상품명</th>
+                                    <th>수량</th>
+                                    <th>가격</th>
+                                    <th>소계</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 결제 정보 -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 d-flex align-items-center">
+                        <i class="fas fa-credit-card mr-2"></i>결제 정보
+                    </h6>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">상품 금액</div>
+                        <div class="col-9" id="modalItemsPrice"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">배송비</div>
+                        <div class="col-9" id="modalShippingFee"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-3 text-muted">총 결제금액</div>
+                        <div class="col-9">
+                            <span id="modalTotalPrice" class="h5 font-weight-bold text-primary"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-danger" id="refundButton" onclick="refundOrder()">환불하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html> 
+</html> 

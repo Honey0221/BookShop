@@ -16,20 +16,20 @@ public class OrderHistDto {
 	private Long orderId;
 	private String orderDate;
 	private OrderStatus orderStatus;
-	private List<OrderItemDto> orderItemDtoList = new ArrayList<>();
+	private List<OrderBookDto> orderBookDtoList = new ArrayList<>();
 
 	public OrderHistDto(Order order) {
 		this.orderId = order.getId();
 		this.orderDate = order.getOrderDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 		this.orderStatus = order.getOrderStatus();
 		
-		order.getOrderItems().forEach(orderItem -> {
-			OrderItemDto orderItemDto = new OrderItemDto(orderItem, orderItem.getBook().getImageUrl());
-			orderItemDtoList.add(orderItemDto);
+		order.getOrderBooks().forEach(orderBook -> {
+			OrderBookDto orderBookDto = new OrderBookDto(orderBook, orderBook.getBook().getImageUrl());
+			orderBookDtoList.add(orderBookDto);
 		});
 	}
 
-	public void addOrderItemDto(OrderItemDto orderItemDto) {
-		orderItemDtoList.add(orderItemDto);
+	public void addOrderBookDto(OrderBookDto orderBookDto) {
+		orderBookDtoList.add(orderBookDto);
 	}
 }

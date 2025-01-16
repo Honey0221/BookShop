@@ -1,27 +1,19 @@
 package com.bbook.service;
 
 import com.bbook.constant.OrderStatus;
-import com.bbook.dto.CancelData;
 import com.bbook.dto.OrderDto;
 import com.bbook.dto.OrderHistDto;
 import com.bbook.entity.Book;
 import com.bbook.entity.Member;
 import com.bbook.entity.Order;
-import com.bbook.entity.OrderItem;
+import com.bbook.entity.OrderBook;
 import com.bbook.repository.BookRepository;
 import com.bbook.repository.MemberRepository;
 import com.bbook.repository.OrderRepository;
-import com.bbook.dto.PaymentDto;
-import com.bbook.exception.IamportResponseException;
-import com.bbook.client.IamportClient;
-import com.bbook.client.IamportResponse;
-import com.bbook.dto.Payment;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.io.IOException;
-import java.math.BigDecimal;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +39,6 @@ public class OrderService {
 	private final BookRepository bookRepository; // 상품 정보 관리
 	private final MemberRepository memberRepository; // 회원 정보 관리
 	private final OrderRepository orderRepository; // 주문 정보 관리
-	private final IamportClient iamportClient; // 아임포트 결제 API 클라이언트
 
 	// 아임포트 API 인증 정보
 	@Value("${iamport.key}")
@@ -75,18 +66,17 @@ public class OrderService {
 
 			// 회원 조회
 			Member member = memberRepository.findByEmail(email)
-					.orElseThrow(EntityNotFoundException::new);
+					.orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 			log.info("회원 조회 완료 - 회원명: {}", member.getNickname());
 
 			// 주문 상품 생성
-			OrderItem orderItem = OrderItem.createOrderItem(item, orderDto.getCount());
+			OrderBook orderBook = OrderBook.createOrderBook(item, orderDto.getCount());
 			log.info("주문 상품 생성 완료 - 수량: {}, 총 가격: {}",
-					orderItem.getCount(), orderItem.getTotalPrice());
+					orderBook.getCount(), orderBook.getTotalPrice());
 
 			// 주문 생성
-			Order order = Order.createOrder(member, List.of(orderItem));
-			order.setMerchantUid(orderDto.getMerchantUid());
-			order.setImpUid(orderDto.getImpUid());
+			Order order = Order.createOrder(member, List.of(orderBook), orderDto.getImpUid(),
+					orderDto.getMerchantUid());
 
 			// 주문 저장
 			orderRepository.save(order);
@@ -136,61 +126,6 @@ public class OrderService {
 	}
 
 	/**
-	 * 주문 취소 권한을 검증하는 메소드
-	 * 
-	 * @param orderId 주문 ID
-	 * @param email   사용자 이메일
-	 * @return 취소 권한 여부
-	 */
-	@Transactional(readOnly = true)
-	public boolean validateOrder(Long orderId, String email) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
-
-		// 주문한 회원의 이메일과 현재 로그인한 사용자의 이메일이 같은지 확인
-		return order.getMember().getEmail().equals(email);
-	}
-
-	/**
-	 * 주문을 취소하는 메소드
-	 * 
-	 * @param orderId 주문 ID
-	 * @param email   사용자 이메일
-	 */
-	@Transactional
-	public void cancelOrder(Long orderId, String email) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
-
-		// 주문자 검증
-		if (!order.getMember().getEmail().equals(email)) {
-			throw new IllegalStateException("주문 취소 권한이 없습니다.");
-		}
-
-		// 주문 상태 검증
-		if (order.getOrderStatus() != OrderStatus.PAID) {
-			throw new IllegalStateException("이미 취소되었거나 취소할 수 없는 주문입니다.");
-		}
-
-		try {
-			String impUid = order.getImpUid();
-			if (impUid != null) {
-				CancelData cancelData = new CancelData(impUid, true);
-				IamportResponse<Payment> cancellation = iamportClient.cancelPayment(cancelData);
-
-				if (cancellation.getResponse() == null) {
-					throw new RuntimeException("결제 취소에 실패했습니다.");
-				}
-
-				order.cancelOrder();
-			}
-		} catch (IamportResponseException | IOException e) {
-			log.error("결제 취소 중 오류 발생: {}", e.getMessage());
-			throw new RuntimeException("결제 취소 중 오류가 발생했습니다: " + e.getMessage());
-		}
-	}
-
-	/**
 	 * 장바구니에서 여러 상품을 주문하는 메소드
 	 * 
 	 * @param orderDtoList 주문할 상품 목록
@@ -200,16 +135,17 @@ public class OrderService {
 	@Transactional
 	public Long orders(List<OrderDto> orderDtoList, String email) {
 		Member member = memberRepository.findByEmail(email).orElseThrow(EntityNotFoundException::new);
-		List<OrderItem> orderItemList = new ArrayList<>();
+		List<OrderBook> orderBooks = new ArrayList<>();
 
 		for (OrderDto orderDto : orderDtoList) {
 			Book item = bookRepository.findById(orderDto.getBookId())
 					.orElseThrow(EntityNotFoundException::new);
-			OrderItem orderItem = OrderItem.createOrderItem(item, orderDto.getCount());
-			orderItemList.add(orderItem);
+			OrderBook orderBook = OrderBook.createOrderBook(item, orderDto.getCount());
+			orderBooks.add(orderBook);
 		}
 
-		Order order = Order.createOrder(member, orderItemList);
+		Order order = Order.createOrder(member, orderBooks, orderDtoList.get(0).getImpUid(),
+				orderDtoList.get(0).getMerchantUid());
 		if (orderDtoList.get(0).getImpUid() != null) {
 			order.setImpUid(orderDtoList.get(0).getImpUid());
 			order.setMerchantUid(orderDtoList.get(0).getMerchantUid());
@@ -220,76 +156,7 @@ public class OrderService {
 	}
 
 	/**
-	 * 주문 상세 정보를 조회하는 메소드
-	 * 
-	 * @param orderId 주문 ID
-	 * @return 주문 상세 정보
-	 */
-	public OrderDto getOrderDetails(Long orderId) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
-		return OrderDto.of(order);
-	}
-
-	/**
-	 * 결제 정보를 검증하고 업데이트하는 메소드
-	 * 
-	 * @param paymentDto 결제 정보
-	 */
-	public void validateAndUpdatePayment(PaymentDto paymentDto) throws IamportResponseException, IOException {
-		IamportResponse<Payment> payment = iamportClient.paymentByImpUid(paymentDto.getImpUid());
-
-		// 결제 금액 검증
-		if (payment.getResponse().getAmount().compareTo(BigDecimal.valueOf(paymentDto.getAmount())) != 0) {
-			throw new RuntimeException("결제 금액이 일치하지 않습니다.");
-		}
-
-		// 주문 상태 업데이트
-		Order order = orderRepository.findByMerchantUid(paymentDto.getMerchantUid())
-				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
-
-		order.setOrderStatus(OrderStatus.PAID);
-		orderRepository.save(order);
-	}
-
-	/**
-	 * 주문번호로 주문 정보를 조회하는 메소드
-	 * 
-	 * @param merchantUid 주문번호
-	 * @return 주문 정보
-	 */
-	public OrderDto getOrderByMerchantUid(String merchantUid) {
-		Order order = orderRepository.findByMerchantUid(merchantUid)
-				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
-		return OrderDto.of(order);
-	}
-
-	/**
-	 * 주문의 총 금액을 계산하는 메소드
-	 * 
-	 * @param orderDto 주문 정보
-	 * @return 총 주문 금액
-	 */
-	public int getTotalPrice(OrderDto orderDto) {
-		Book item = bookRepository.findById(orderDto.getBookId())
-				.orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
-		return item.getPrice() * orderDto.getCount();
-	}
-
-	/**
-	 * 주문명을 생성하는 메소드
-	 * 
-	 * @param orderDto 주문 정보
-	 * @return 생성된 주문명
-	 */
-	public String getOrderName(OrderDto orderDto) {
-		Book item = bookRepository.findById(orderDto.getBookId())
-				.orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
-		return item.getTitle() + " 외 " + orderDto.getCount() + "개";
-	}
-
-	/**
-	 * 결제 정보를 검증하는 메소드
+	 * 결제 정보를 검증증하는 메소드
 	 * 
 	 * @param impUid      아임포트 거래 고유번호
 	 * @param merchantUid 주문번호
@@ -325,24 +192,32 @@ public class OrderService {
 
 		// 포인트 환불 처리
 		Member member = order.getMember();
-		log.info("사용한 포인트: {}, 적립된 포인트: {}", order.getUsedPoints(), order.getEarnedPoints());
-		if (order.getUsedPoints() > 0) {
-			// 사용한 포인트 환불
-			member.setPoint(member.getPoint() + order.getUsedPoints());
+		int usedPoints = order.getUsedPoints(); // 주문 시 사용한 포인트
+		int earnedPoints = order.getEarnedPoints(); // 주문으로 적립된 포인트
+
+		// 현재 보유 포인트가 차감할 적립 포인트보다 작은 경우
+		if (member.getPoint() < earnedPoints) {
+			// 부족한 포인트만큼 사용 포인트에서 차감
+			int shortagePoints = (int) (earnedPoints - member.getPoint());
+			usedPoints = Math.max(0, usedPoints - shortagePoints);
+
+			// 현재 포인트를 0으로 만들고
+			member.setPoint(0);
+			// 남은 사용 포인트만 환불
+			member.addPoint(usedPoints);
+		} else {
+			// 정상적인 경우: 적립 포인트 차감 후 사용 포인트 환불
+			member.addPoint(-earnedPoints); // 적립 포인트 차감
+			member.addPoint(usedPoints); // 사용 포인트 환불
 		}
-		log.info("사용한 포인트 환불 처리 후 포인트: {}", member.getPoint());
-		if (order.getEarnedPoints() > 0) {
-			// 적립된 포인트 차감
-			member.setPoint(member.getPoint() - order.getEarnedPoints());
-		}
-		log.info("포인트 환불 처리 후 포인트: {}", member.getPoint());
+
 		// 주문 취소 처리
 		order.cancelOrder();
 
 		// 주문한 상품의 재고를 원복
-		for (OrderItem orderItem : order.getOrderItems()) {
-			Book book = orderItem.getBook();
-			book.addStock(orderItem.getCount());
+		for (OrderBook orderBook : order.getOrderBooks()) {
+			Book book = orderBook.getBook();
+			book.addStock(orderBook.getCount());
 		}
 	}
 
@@ -359,26 +234,9 @@ public class OrderService {
 				.orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다. ID: " + orderId));
 	}
 
-	@Transactional(readOnly = true)
-	public Order findByMerchantUid(String merchantUid) {
-		return orderRepository.findByMerchantUid(merchantUid)
-				.orElse(null);
-	}
-
 	@Transactional
 	public Order saveOrder(Order order) {
 		return orderRepository.save(order);
-	}
-
-	public Long order(OrderDto orderDto) {
-		Order order = new Order();
-		// ... 기존 코드 ...
-
-		order.setOriginalPrice(orderDto.getOriginalPrice());
-		order.setShippingFee(orderDto.getOriginalPrice() < 15000 ? 3000L : 0L);
-		order.setTotalPrice(orderDto.getTotalPrice());
-
-		return orderRepository.save(order).getId();
 	}
 
 	public boolean hasUserPurchasedBook(Long memberId, Long bookId) {

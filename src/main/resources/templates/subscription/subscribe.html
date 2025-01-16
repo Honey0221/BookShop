@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout}">
+      <head>
+        <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+<script src="/js/firebase-init.js"></script>
+      </head>
+
+<th:block layout:fragment="css">
+    <style>
+        .subscription-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .subscription-title {
+            text-align: center;
+            margin-bottom: 50px;
+            color: #1b1b1b;
+        }
+        .subscription-title h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .subscription-title p {
+            font-size: 18px;
+            color: #666;
+        }
+        .subscription-plans {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+        .plan-card {
+            flex: 1;
+            max-width: 380px;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fff;
+            position: relative;
+            border: 1px solid #e8e8e8;
+            display: flex;
+            flex-direction: column;
+        }
+        .plan-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        .plan-title {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #1b1b1b;
+        }
+        .plan-price {
+            font-size: 42px;
+            font-weight: 700;
+            color: #474C98;
+            margin-bottom: 30px;
+            line-height: 1.2;
+        }
+        .plan-price small {
+            font-size: 18px;
+            font-weight: 400;
+            color: #666;
+        }
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 35px;
+            text-align: left;
+            flex-grow: 1;
+        }
+        .plan-features li {
+            margin: 15px 0;
+            color: #444;
+            font-size: 16px;
+            padding-left: 28px;
+            position: relative;
+        }
+        .plan-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #474C98;
+            font-weight: bold;
+        }
+        .subscribe-btn {
+            background-color: #474C98;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto;
+            align-self: flex-end;
+        }
+        .subscribe-btn:hover {
+            background-color: #363B77;
+            transform: translateY(-2px);
+        }
+        .benefits-section {
+            margin-top: 80px;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 60px 0;
+            border-radius: 16px;
+        }
+        .benefits-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            color: #1b1b1b;
+        }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .benefit-item {
+            padding: 25px 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            min-width: 0;
+        }
+        .benefit-item:hover {
+            transform: translateY(-5px);
+        }
+        .benefit-item i {
+            font-size: 32px;
+            color: #474C98;
+            margin-bottom: 20px;
+        }
+        .benefit-item h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1b1b1b;
+        }
+        .benefit-item p {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.5;
+            margin: 0;
+            word-break: keep-all;
+        }
+        /* 연간 구독 추천 배지 */
+        .plan-card.yearly {
+            border: 2px solid #474C98;
+        }
+        .yearly-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #474C98;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="subscription-container">
+        <div class="subscription-title">
+            <h1>BBOOK 구독 서비스</h1>
+            <p>더 많은 혜택과 함께 독서를 즐겨보세요</p>
+        </div>
+
+        <div class="subscription-plans">
+            <div class="plan-card">
+                <div class="plan-title">월간 구독</div>
+                <div class="plan-price">
+                    ₩9,900<small>/월</small>
+                </div>
+                <ul class="plan-features">
+                    <li>매월 5,000원 상당의 적립금 지급</li>
+                    <li>모든 도서 5% 추가 할인</li>
+                    <li>무료 배송 서비스</li>
+                    <li>신간 도서 알림 서비스</li>
+                    <li>구매 시 10% 포인트 적립</li>
+                </ul>
+                <button class="subscribe-btn" id="monthlyBtn">월간 구독 시작하기</button>
+            </div>
+
+            <div class="plan-card yearly">
+                <div class="yearly-badge">추천</div>
+                <div class="plan-title">연간 구독</div>
+                <div class="plan-price">
+                    ₩99,000<small>/년</small>
+                </div>
+                <ul class="plan-features">
+                    <li>매월 10,000원 상당의 적립금 지급</li>
+                    <li>모든 도서 10% 추가 할인</li>
+                    <li>무료 배송 서비스</li>
+                    <li>신간 도서 알림 서비스</li>
+                    <li>독서 모임 무료 참여</li>
+                    <li>구매 시 10% 포인트 적립</li>
+                    <li>2개월 무료 (10개월 가격)</li>
+                </ul>
+                <button class="subscribe-btn" id="yearlyBtn">연간 구독 시작하기</button>
+            </div>
+        </div>
+
+        <div class="benefits-section">
+            <h2 class="benefits-title">구독 회원만의 특별한 혜택</h2>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <i class="fas fa-coins"></i>
+                    <h3>추가 적립금</h3>
+                    <p>매월 정기적으로 지급되는 추가 적립금으로 더 저렴하게 구매하세요</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-percent"></i>
+                    <h3>추가 할인</h3>
+                    <p>모든 도서에 적용되는 추가 할인으로 더 많은 책을 만나보세요</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-truck"></i>
+                    <h3>무료 배송</h3>
+                    <p>구매 금액에 상관없이 무료로 배송해드립니다</p>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-bell"></i>
+                    <h3>신간 알림</h3>
+                    <p>관심 분야의 신간이 출시되면 가장 먼저 알려드립니다</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        let selectedType = '';
+        
+        $(document).ready(function() {
+            // 페이지 로드 시 구독 상태 확인
+            $.ajax({
+                url: '/subscription/check',
+                method: 'GET',
+                success: function(response) {
+                    if (response.isSubscriber) {
+                        // 이미 구독 중인 경우 버튼 비활성화 및 메시지 표시
+                        $("#monthlyBtn, #yearlyBtn").prop('disabled', true);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '이미 구독 중입니다',
+                            text: '이미 활성화된 구독이 존재합니다.',
+                            confirmButtonColor: '#4E73DF'
+                        });
+                    }
+                }
+            });
+
+            $("#monthlyBtn").click(function() {
+                requestPay('MONTHLY');
+            });
+
+            $("#yearlyBtn").click(function() {
+                requestPay('YEARLY');
+            });
+        });
+        
+        function requestPay(type) {
+            // 구독 상태 한번 더 확인
+            $.ajax({
+                url: '/subscription/check',
+                method: 'GET',
+                success: function(response) {
+                    if (response.isSubscriber) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '이미 구독 중입니다',
+                            text: '이미 활성화된 구독이 존재합니다.',
+                            confirmButtonColor: '#4E73DF'
+                        });
+                        return;
+                    }
+                    // 기존 결제 로직 실행
+                    proceedWithPayment(type);
+                }
+            });
+        }
+
+        function proceedWithPayment(type) {
+            const IMP = window.IMP;
+            IMP.init('imp80047713');
+
+            const customerUid = 'customer_' + [[${#authentication.principal.member.email}]];
+            const subscriptionName = type === 'MONTHLY' ? 'BBOOK 월간 구독' : 'BBOOK 연간 구독';
+            const amount = type === 'MONTHLY' ? 9900 : 99000;
+            const merchantUid = 'SUB_' + new Date().getTime();
+
+            IMP.request_pay({
+                pg: "tosspayments",
+                pay_method: "card",
+                merchant_uid: merchantUid,
+                name: subscriptionName,
+                amount: amount,
+                customer_uid: customerUid,
+                buyer_email: [[${#authentication.principal.member.email}]],
+                buyer_name: [[${#authentication.principal.member.nickname}]]
+            }, function (rsp) {
+                if (rsp.success) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/subscription/complete',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            merchantUid: rsp.merchant_uid,
+                            impUid: rsp.imp_uid,
+                            customerUid: customerUid,
+                            subscriptionType: type
+                        }),
+                        success: function(data) {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '구독 완료',
+                                    text: '구독이 완료되었습니다. 1분 후부터 정기 결제가 시작됩니다.',
+                                    confirmButtonColor: '#4E73DF'
+                                }).then(() => {
+                                    window.location.href = '/';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '구독 실패',
+                                    text: data.message,
+                                    confirmButtonColor: '#4E73DF'
+                                });
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error details:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: '오류 발생',
+                                text: '구독 완료 처리 중 오류가 발생했습니다.',
+                                confirmButtonColor: '#4E73DF'
+                            });
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '결제 실패',
+                        text: "결제에 실패하였습니다. " + rsp.error_msg,
+                        confirmButtonColor: '#4E73DF'
+                    });
+                }
+            });
+        }
+    </script>
+</th:block>
+</html> 

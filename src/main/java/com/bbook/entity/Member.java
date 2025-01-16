@@ -46,6 +46,13 @@ public class Member extends BaseEntity {
     @Column(updatable = false)
     private LocalDateTime createAt; // 등록일
 
+    @Column
+    private LocalDateTime subscriptionExpiryDate; 
+
+    public LocalDateTime getSubscriptionExpiryDate() {
+        return subscriptionExpiryDate;
+    }
+
     // 일반 회원가입용 생성 메소드
     public static Member createMember(MemberSignUpDto signUpDto, PasswordEncoder passwordEncoder) {
         Member member = new Member();
@@ -72,5 +79,19 @@ public class Member extends BaseEntity {
             throw new IllegalStateException("이미 닉네임이 설정되어 있습니다.");
         }
         this.nickname = nickname;
+    }
+
+    // 포인트 추가 메소드
+    public void addPoint(int point) {
+        this.point += point;
+        // 포인트가 음수가 되지 않도록 보장
+        if (this.point < 0) {
+            this.point = 0L;
+        }
+    }
+
+    // 포인트 설정 메소드
+    public void setPoint(long point) {
+        this.point = Math.max(0, point); // 음수가 되지 않도록 보장
     }
 }

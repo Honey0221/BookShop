@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout}">
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 날짜 선택기 초기화
+            flatpickr(".datepicker", {
+                locale: "ko",
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+            });
+
+            // 초기 날짜 설정 (최근 30일)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 29);
+
+            document.getElementById('startDate').value = formatDate(thirtyDaysAgo);
+            document.getElementById('endDate').value = formatDate(today);
+
+            // 검색 조건 적용
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                loadStatistics();
+            });
+
+            // 초기화 버튼 이벤트
+            document.getElementById('searchForm').addEventListener('reset', function(e) {
+                setTimeout(() => {
+                    document.getElementById('startDate').value = formatDate(thirtyDaysAgo);
+                    document.getElementById('endDate').value = formatDate(today);
+                    loadStatistics();
+                }, 0);
+            });
+
+            // 초기 데이터 로드
+            loadStatistics();
+        });
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function loadStatistics() {
+            const searchParams = {
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value
+            };
+
+            fetch('/admin/api/statistics?' + new URLSearchParams(searchParams))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('통계 데이터를 불러오는 중 오류가 발생했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateDashboardCards(data.summary);
+                    updateProductChart(data.topProducts);
+                    updateCategoryChart(data.categoryStats);
+                    updateSubscriptionChart(data.subscriptionStats);
+                    updateOrderPatternChart(data.orderPattern);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+        }
+
+        function updateDashboardCards(summary) {
+            document.getElementById('totalOrders').textContent = summary.totalOrders.toLocaleString() + '건';
+            document.getElementById('avgDailyOrders').textContent = summary.avgDailyOrders.toFixed(1) + '건';
+            document.getElementById('subscriberOrderRate').textContent = summary.subscriberOrderRate.toFixed(1) + '%';
+            document.getElementById('cancelRate').textContent = summary.cancelRate.toFixed(1) + '%';
+        }
+
+        function updateProductChart(topProducts) {
+            const ctx = document.getElementById('productChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topProducts.map(item => item.name),
+                    datasets: [{
+                        label: '판매량',
+                        data: topProducts.map(item => item.quantity),
+                        backgroundColor: '#1cc88a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '상위 판매 상품'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCategoryChart(categoryStats) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: categoryStats.map(item => item.category),
+                    datasets: [{
+                        data: categoryStats.map(item => item.count),
+                        backgroundColor: [
+                            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                            '#858796', '#5a5c69', '#2e59d9', '#17a673', '#2c9faf'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '카테고리별 판매 현황'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSubscriptionChart(subscriptionStats) {
+            const ctx = document.getElementById('subscriptionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['구독자', '비구독자'],
+                    datasets: [{
+                        data: [subscriptionStats.subscriber, subscriptionStats.nonSubscriber],
+                        backgroundColor: ['#4e73df', '#858796']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '구독자/비구독자 주문 비율'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateOrderPatternChart(orderPattern) {
+            const ctx = document.getElementById('orderPatternChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: orderPattern.map(item => `${item.hour}시`),
+                    datasets: [
+                        {
+                            label: '구독자',
+                            data: orderPattern.map(item => item.subscriberCount),
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: '비구독자',
+                            data: orderPattern.map(item => item.nonSubscriberCount),
+                            borderColor: '#858796',
+                            backgroundColor: 'rgba(133, 135, 150, 0.1)',
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '시간대별 주문 패턴'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</th:block>
+
+<th:block layout:fragment="css">
+    <style>
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .search-label {
+            min-width: 100px;
+            font-weight: 500;
+        }
+
+        .search-input {
+            flex: 1;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .stats-card .title {
+            color: #4e73df;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .stats-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            height: 400px;
+        }
+
+        .btn-search {
+            background-color: #4E73DF;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+        }
+
+        .btn-reset {
+            background-color: #858796;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h1 class="h3 mb-4 text-gray-800">주문 통계</h1>
+
+        <div class="search-section">
+            <form id="searchForm">
+                <div class="search-row">
+                    <div class="search-label">기간 선택</div>
+                    <div class="search-input d-flex align-items-center">
+                        <input type="text" class="form-control datepicker" id="startDate">
+                        <span class="mx-2">~</span>
+                        <input type="text" class="form-control datepicker" id="endDate">
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-search">검색</button>
+                    <button type="reset" class="btn btn-reset ml-2">초기화</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="title">총 주문 수</div>
+                    <div class="value" id="totalOrders">0건</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="title">일평균 주문 수</div>
+                    <div class="value" id="avgDailyOrders">0건</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="title">구독자 주문 비율</div>
+                    <div class="value" id="subscriberOrderRate">0%</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="title">주문 취소율</div>
+                    <div class="value" id="cancelRate">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 -->
+        <div class="row">
+            <div class="col-xl-8">
+                <div class="chart-container">
+                    <canvas id="productChart"></canvas>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-8">
+                <div class="chart-container">
+                    <canvas id="orderPatternChart"></canvas>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="chart-container">
+                    <canvas id="subscriptionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html> 

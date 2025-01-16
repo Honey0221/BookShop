@@ -156,72 +156,72 @@
       var mailChecked = false;
       var passwordMatch = false;
 
-      // 이메일 인증번호 받기 클릭 이벤트
-      $("#mailCheckBtn").click(function () {
-        const email = $("#email").val();
-        if (!email) {
-          alert("이메일을 입력해주세요.");
-          return;
-        }
+      // // 이메일 인증번호 받기 클릭 이벤트
+      // $("#mailCheckBtn").click(function () {
+      //   const email = $("#email").val();
+      //   if (!email) {
+      //     alert("이메일을 입력해주세요.");
+      //     return;
+      //   }
 
-        const token = $("meta[name='_csrf']").attr("content");
-        const header = $("meta[name='_csrf_header']").attr("content");
+      //   const token = $("meta[name='_csrf']").attr("content");
+      //   const header = $("meta[name='_csrf_header']").attr("content");
 
-        $.ajax({
-          type: "POST",
-          url: "/members/emailCheck",
-          data: JSON.stringify({ "email": email }),
-          contentType: "application/json",
-          beforeSend: function (xhr) {
-            xhr.setRequestHeader(header, token);
-          },
-          success: function (response) {
-            alert(response);
-            $("#mailCheckBox").show();
-            $("#mailCheckInput").focus();
-          },
-          error: function (xhr) {
-            alert(xhr.responseText);
-          }
-        });
-      });
+      //   $.ajax({
+      //     type: "POST",
+      //     url: "/members/emailCheck",
+      //     data: JSON.stringify({ "email": email }),
+      //     contentType: "application/json",
+      //     beforeSend: function (xhr) {
+      //       xhr.setRequestHeader(header, token);
+      //     },
+      //     success: function (response) {
+      //       alert(response);
+      //       $("#mailCheckBox").show();
+      //       $("#mailCheckInput").focus();
+      //     },
+      //     error: function (xhr) {
+      //       alert(xhr.responseText);
+      //     }
+      //   });
+      // });
 
-      // 인증번호 확인 클릭 이벤트
-      $("#mailCheckConfirmBtn").click(function () {
-        const inputCode = $("#mailCheckInput").val();
-        const email = $("#email").val();
-        const resultMsg = $("#mailCheckWarn");
-        const token = $("meta[name='_csrf']").attr("content");
-        const header = $("meta[name='_csrf_header']").attr("content");
+      // // 인증번호 확인 클릭 이벤트
+      // $("#mailCheckConfirmBtn").click(function () {
+      //   const inputCode = $("#mailCheckInput").val();
+      //   const email = $("#email").val();
+      //   const resultMsg = $("#mailCheckWarn");
+      //   const token = $("meta[name='_csrf']").attr("content");
+      //   const header = $("meta[name='_csrf_header']").attr("content");
 
-        $.ajax({
-          type: "POST",
-          url: "/members/verifyEmail",
-          data: JSON.stringify({
-            "code": inputCode,
-            "email": email
-          }),
-          contentType: "application/json",
-          beforeSend: function (xhr) {
-            xhr.setRequestHeader(header, token);
-          },
-          success: function (response) {
-            resultMsg.html(response);
-            resultMsg.addClass("correct").removeClass("incorrect");
-            $("#mailCheckInput").attr("disabled", true);
-            $("#mailCheckBtn").attr("disabled", true);
-            $("#email").attr("readonly", true);
-            mailChecked = true;
-            resultMsg.show();
-          },
-          error: function (xhr) {
-            resultMsg.html(xhr.responseText);
-            resultMsg.addClass("incorrect").removeClass("correct");
-            mailChecked = false;
-            resultMsg.show();
-          }
-        });
-      });
+      //   $.ajax({
+      //     type: "POST",
+      //     url: "/members/verifyEmail",
+      //     data: JSON.stringify({
+      //       "code": inputCode,
+      //       "email": email
+      //     }),
+      //     contentType: "application/json",
+      //     beforeSend: function (xhr) {
+      //       xhr.setRequestHeader(header, token);
+      //     },
+      //     success: function (response) {
+      //       resultMsg.html(response);
+      //       resultMsg.addClass("correct").removeClass("incorrect");
+      //       $("#mailCheckInput").attr("disabled", true);
+      //       $("#mailCheckBtn").attr("disabled", true);
+      //       $("#email").attr("readonly", true);
+      //       mailChecked = true;
+      //       resultMsg.show();
+      //     },
+      //     error: function (xhr) {
+      //       resultMsg.html(xhr.responseText);
+      //       resultMsg.addClass("incorrect").removeClass("correct");
+      //       mailChecked = false;
+      //       resultMsg.show();
+      //     }
+      //   });
+      // });
 
       // 비밀번호 확인 실시간 체크
       $("#passwordConfirm, #password").keyup(function () {
@@ -247,11 +247,11 @@
 
       // 폼 제출 시 검증
       $("form").submit(function (e) {
-        if (!mailChecked) {
-          alert("이메일 인증을 완료해주세요.");
-          e.preventDefault();
-          return;
-        }
+        // if (!mailChecked) {
+        //   alert("이메일 인증을 완료해주세요.");
+        //   e.preventDefault();
+        //   return;
+        // }
         if (!passwordMatch) {
           alert("비밀번호가 일치하지 않습니다.");
           e.preventDefault();

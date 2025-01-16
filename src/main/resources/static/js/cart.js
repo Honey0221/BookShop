@@ -8,6 +8,7 @@ $(document).ready(function() {
     });
 
     // 배송비 안내 버튼 클릭 이벤트
+
     $(".btn_shipping_info").click(function() {
         $("#shippingInfoModal").show();
     });
@@ -27,14 +28,14 @@ function calculateCheckedPrice() {
 
     // 체크된 상품만의 주문 금액 계산 (순수 상품 금액)
     $("input[name=cartChkBox]:checked").each(function () {
-        var cartItemId = $(this).val();
-        var price = $("#price_" + cartItemId).data("price");
-        var count = $("#count_" + cartItemId).val();
-        var itemTotal = price * count;
-        orderTotalPrice += itemTotal;
+        var cartBookId = $(this).val();
+        var price = $("#price_" + cartBookId).data("price");
+        var count = $("#count_" + cartBookId).val();
+        var cartBookTotal = price * count;
+        orderTotalPrice += cartBookTotal;
         
         // 개별 상품의 총 금액 업데이트 (배송비 제외)
-        $("#totalPrice_" + cartItemId).html(itemTotal.toLocaleString() + "원");
+        $("#totalPrice_" + cartBookId).html(cartBookTotal.toLocaleString() + "원");
     });
 
     // 배송비 계산 (15,000원 미만 주문 시 3,000원)
@@ -70,125 +71,183 @@ function uncheck() {
 
 // 수량 증가
 function increaseCount(button) {
-    const input = button.previousElementSibling;
-    const itemId = input.id.split('_')[1];
-    const newCount = parseInt(input.value) + 1;
-    input.value = newCount;
-    updateQuantity(itemId, newCount);
+    const cartBookId = button.getAttribute('data-id');
+    const input = document.querySelector(`#count_${cartBookId}`);
+    const stock = parseInt(button.getAttribute('data-stock'));
+    const currentValue = parseInt(input.value);
+    
+    if (currentValue >= stock) {
+        Swal.fire({
+            icon: 'warning',
+            title: '재고 부족',
+            text: '재고가 부족합니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        return;
+    }
+    
+    input.value = currentValue + 1;
+    updateQuantity(input);
 }
 
 // 수량 감소
 function decreaseCount(button) {
-    const input = button.nextElementSibling;
-    const itemId = input.id.split('_')[1];
-    const newCount = Math.max(1, parseInt(input.value) - 1);
-    input.value = newCount;
-    updateQuantity(itemId, newCount);
+    const cartBookId = button.getAttribute('data-id');
+    const input = document.querySelector(`#count_${cartBookId}`);
+    const currentValue = parseInt(input.value);
+    
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+        updateQuantity(input);
+    }
 }
 
 // 수량 변경 시 호출되는 함수
 function changeCount(input) {
-    const itemId = input.id.split('_')[1];
-    const newCount = Math.max(1, parseInt(input.value));
-    input.value = newCount;
-    updateQuantity(itemId, newCount);
+    const cartBookId = input.getAttribute('data-id');
+    const stock = parseInt(input.getAttribute('data-stock'));
+    let newValue = parseInt(input.value);
+    
+    if (isNaN(newValue) || newValue < 1) {
+        newValue = 1;
+    } else if (newValue > stock) {
+        Swal.fire({
+            icon: 'warning',
+            title: '재고 부족',
+            text: '재고가 부족합니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        newValue = stock;
+    }
+    
+    input.value = newValue;
+    updateQuantity(input);
 }
 
 // 선택된 상품 삭제
-function deleteSelectedItems() {
-    var selectedItems = [];
+function deleteSelectedCartBooks() {
+    var selectedCartBooks = [];
     $("input[name=cartChkBox]:checked").each(function() {
-        selectedItems.push($(this).val());
+        selectedCartBooks.push($(this).val());
     });
 
-    if (selectedItems.length === 0) {
-        alert("삭제할 상품을 선택해주세요.");
+    if (selectedCartBooks.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: '선택된 상품 없음',
+            text: '삭제할 상품을 선택해주세요.',
+            confirmButtonColor: '#4E73DF'
+        });
         return;
     }
 
-    if (!confirm("장바구니에서 삭제하시겠습니까?")) {
-        return;
-    }
+    Swal.fire({
+        title: '상품 삭제',
+        text: '장바구니에서 삭제하시겠습니까?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#4E73DF',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소'
+    }).then((result) => {
+        if (result.isConfirmed) {
 
-    var token = $("meta[name='_csrf']").attr("content");
-    var header = $("meta[name='_csrf_header']").attr("content");
-
-    $.ajax({
-        url: '/cart/items',
-        type: 'DELETE',
-        data: JSON.stringify(selectedItems),
-        contentType: 'application/json',
-        beforeSend: function(xhr) {
-            xhr.setRequestHeader(header, token);
-        },
-        success: function() {
-            location.reload();
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            alert("상품 삭제 중 오류가 발생했습니다.");
+            $.ajax({
+                url: '/cart/books',
+                type: 'DELETE',
+                data: JSON.stringify(selectedCartBooks),
+                contentType: 'application/json',
+                success: function() {
+                    location.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '오류 발생',
+                        text: '상품 삭제 중 오류가 발생했습니다.',
+                        confirmButtonColor: '#4E73DF'
+                    });
+                }
+            });
         }
     });
 }
 
 // 개별 상품 삭제
-function deleteCartItem(btn) {
-    var cartItemId = $(btn).data("id");
+function deleteCartBook(btn) {
+    var cartBookId = $(btn).data("id");
     
-    if (!confirm("선택하신 상품을 장바구니에서 삭제하시겠습니까?")) {
-        return;
-    }
+    Swal.fire({
+        title: '상품 삭제',
+        text: '선택하신 상품을 장바구니에서 삭제하시겠습니까?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#4E73DF',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소'
+    }).then((result) => {
+        if (result.isConfirmed) {
 
-    var token = $("meta[name='_csrf']").attr("content");
-    var header = $("meta[name='_csrf_header']").attr("content");
-
-    $.ajax({
-        url: '/cart/' + cartItemId,
-        type: 'DELETE',
-        data: JSON.stringify(cartItemId),
-        beforeSend: function(xhr) {
-            xhr.setRequestHeader(header, token);
-        },
-        success: function() {
-            location.reload();
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            alert("상품 삭제 중 오류가 발생했습니다.");
+            $.ajax({
+                url: '/cart/' + cartBookId,
+                type: 'DELETE',
+                data: JSON.stringify(cartBookId),
+                success: function() {
+                    location.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '오류 발생',
+                        text: '상품 삭제 중 오류가 발생했습니다.',
+                        confirmButtonColor: '#4E73DF'
+                    });
+                }
+            });
         }
     });
 }
 
 // 선택된 상품 주문 처리 함수
 function orders() {
-    // 선택된 상품들의 cartItemId 수집
-    var checkedItems = $("input[name=cartChkBox]:checked");
+    var checkedCartBooks = $("input[name=cartChkBox]:checked");
 
-    // 선택된 상품이 없는 경우
-    if(checkedItems.length === 0){
-        alert("주문할 상품을 선택해주세요.");
+    if(checkedCartBooks.length === 0){
+        Swal.fire({
+            icon: 'warning',
+            title: '선택된 상품 없음',
+            text: '주문할 상품을 선택해주세요.',
+            confirmButtonColor: '#4E73DF'
+        });
         return;
     }
 
-    // 선택된 상품들의 정보를 배열에 추가
-    var cartItems = [];
-    checkedItems.each(function() {
-        cartItems.push({
-            cartItemId: $(this).val()
+    var cartBooks = [];
+    checkedCartBooks.each(function() {
+        cartBooks.push({
+            cartBookId: $(this).val()
         });
     });
 
-    // 주문 데이터를 OrderController로 전송
     $.ajax({
         url: "/order/payment",
         type: "POST",
         contentType: "application/json",
         data: JSON.stringify({
-            cartItems: cartItems
+            cartBooks: cartBooks
         }),
         success: function(response) {
             location.href = '/order/payment';
         },
         error: function(jqXHR) {
-            alert(jqXHR.responseText);
+            Swal.fire({
+                icon: 'error',
+                title: '오류 발생',
+                text: jqXHR.responseText,
+                confirmButtonColor: '#4E73DF'
+            });
         }
     });
 }
@@ -223,43 +282,58 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updateQuantity(input) {
-    const itemId = input.getAttribute('data-id');
+    const cartBookId = input.getAttribute('data-id');
+    const stock = parseInt(input.getAttribute('data-stock'));
     const quantity = parseInt(input.value) || 1;
+    
+    if (quantity > stock) {
+        Swal.fire({
+            icon: 'warning',
+            title: '재고 부족',
+            text: '재고가 부족합니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        input.value = stock;
+        return;
+    }
     
     if (quantity < 1) {
         input.value = 1;
         return;
     }
-
-    const token = document.querySelector("meta[name='_csrf']").content;
-    const header = document.querySelector("meta[name='_csrf_header']").content;
     
     $.ajax({
-        url: `/cartItem/${itemId}`,
+        url: `/cartBook/${cartBookId}`,
         type: 'PATCH',
         contentType: 'application/json',
         data: JSON.stringify({ 
             count: quantity 
         }),
-        beforeSend: function(xhr) {
-            xhr.setRequestHeader(header, token);
-        },
         success: function(result) {
-            updateItemPrice(itemId);
+            // 개별 상품 금액 업데이트
+            const price = $("#price_" + cartBookId).data("price");
+            const totalPrice = price * quantity;
+            $("#totalPrice_" + cartBookId).html(totalPrice.toLocaleString() + "원");
+            
+            // 전체 금액 재계산
             calculateCheckedPrice();
         },
         error: function(error) {
             console.error('수량 업데이트 실패:', error);
-            alert('수량 변경에 실패했습니다.');
-            location.reload();
+            Swal.fire({
+                icon: 'error',
+                title: '오류 발생',
+                text: '수량 변경에 실패했습니다.',
+                confirmButtonColor: '#4E73DF'
+            });
         }
     });
 }
 
-function updateItemPrice(itemId) {
-    const countInput = document.querySelector(`#count_${itemId}`);
-    const priceElement = document.querySelector(`#price_${itemId}`);
-    const totalPriceElement = document.querySelector(`#totalPrice_${itemId}`);
+function updateCartBookPrice(cartBookId) {
+    const countInput = document.querySelector(`#count_${cartBookId}`);
+    const priceElement = document.querySelector(`#price_${cartBookId}`);
+    const totalPriceElement = document.querySelector(`#totalPrice_${cartBookId}`);
     
     const quantity = parseInt(countInput.value);
     const price = parseInt(priceElement.getAttribute('data-price'));
@@ -274,9 +348,9 @@ function updateTotalPrice() {
 
     // 체크된 상품만의 주문 금액 계산
     $("input[name=cartChkBox]:checked").each(function () {
-        var cartItemId = $(this).val();
-        var price = $("#price_" + cartItemId).data("price");
-        var count = $("#count_" + cartItemId).val();
+        var cartBookId = $(this).val();
+        var price = $("#price_" + cartBookId).data("price");
+        var count = $("#count_" + cartBookId).val();
         orderTotalPrice += price * count;
     });
 
@@ -290,38 +364,3 @@ function updateTotalPrice() {
     $("#deliveryFee").html(deliveryFee.toLocaleString());
     $("#orderTotalPrice").html((orderTotalPrice + deliveryFee).toLocaleString());
 }
-
-function decreaseCount(button) {
-    const itemId = button.getAttribute('data-id');
-    const input = document.querySelector(`#count_${itemId}`);
-    const currentValue = parseInt(input.value);
-    
-    if (currentValue > 1) {
-        input.value = currentValue - 1;
-        updateQuantity(input);
-    }
-}
-
-function increaseCount(button) {
-    const itemId = button.getAttribute('data-id');
-    const input = document.querySelector(`#count_${itemId}`);
-    input.value = parseInt(input.value) + 1;
-    updateQuantity(input);
-}
-
-function changeCount(input) {
-    updateQuantity(input);
-}
-
-function updateItemPrice(itemId) {
-    const countInput = document.querySelector(`#count_${itemId}`);
-    const priceElement = document.querySelector(`#price_${itemId}`);
-    const totalPriceElement = document.querySelector(`#totalPrice_${itemId}`);
-    
-    const quantity = parseInt(countInput.value);
-    const price = parseInt(priceElement.getAttribute('data-price'));
-    const totalPrice = quantity * price;
-    
-    // 개별 상품의 금액은 배송비를 제외한 순수 상품 금액만 표시
-    totalPriceElement.textContent = totalPrice.toLocaleString() + '원';
-} 

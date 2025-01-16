@@ -3,7 +3,8 @@
     margin: 0 auto;
     padding: 30px;
     position: relative;
-    padding-bottom: 100px;
+    min-height: calc(100vh - 300px);
+    padding-bottom: 120px;
 }
 
 .payment-header {
@@ -109,8 +110,21 @@
     font-weight: bold;
 }
 
+.payment-button-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 20px 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    text-align: center;
+}
+
 .payment-button {
     width: 100%;
+    max-width: 400px;
     padding: 15px;
     background: #4E73DF;
     color: white;
@@ -120,16 +134,6 @@
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    position: absolute;
-    bottom: 20px; /* footer 위에 위치하도록 설정 */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10; /* footer보다 위에 표시되도록 설정 */
-}
-
-footer {
-    position: relative;
-    z-index: 5;
 }
 
 .payment-button:hover {
@@ -285,26 +289,46 @@ footer {
     margin-bottom: 10px;
 }
 
-#usePoint {
+.point-input-container input {
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
+    padding: 8px;
+    border: 1px solid #d1d3e2;
     border-radius: 4px;
-    font-size: 14px;
 }
 
-.point-apply-btn {
-    padding: 8px 15px;
-    background-color: #4CAF50;
-    color: white;
+.point-apply-btn, .point-cancel-btn, .coupon-apply-btn, .coupon-cancel-btn {
+    padding: 8px 16px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    font-weight: 500;
+    min-width: 80px;
+    height: 40px;
 }
 
-.point-apply-btn:hover {
-    background-color: #45a049;
+.point-apply-btn, .coupon-apply-btn {
+    background-color: #4E73DF;
+    color: white;
+}
+
+.point-cancel-btn, .coupon-cancel-btn {
+    background-color: #858796;
+    color: white;
+    margin-left: 5px;
+}
+
+.point-apply-btn:hover, .coupon-apply-btn:hover {
+    background-color: #2e59d9;
+}
+
+.point-cancel-btn:hover, .coupon-cancel-btn:hover {
+    background-color: #717384;
+}
+
+.point-apply-btn:disabled, .coupon-apply-btn:disabled,
+.point-cancel-btn:disabled, .coupon-cancel-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
 
 .point-notice {
@@ -315,31 +339,56 @@ footer {
 
 /* 쿠폰 섹션 스타일 */
 .coupon-info {
-    margin: 20px 0;
+    background: #fff;
     padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
 .coupon-info h4 {
     margin-bottom: 15px;
     font-weight: bold;
+    color: #333;
 }
 
 .available-coupons {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    align-items: center;
 }
 
-.available-coupons select {
+#couponSelect {
     flex: 1;
+    padding: 8px;
+    border: 1px solid #d1d3e2;
+    border-radius: 4px;
+    height: 40px;
+}
+
+#couponSelect:focus {
+    border-color: #4E73DF;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(78,115,223,0.25);
 }
 
 .coupon-notice {
     color: #666;
-    font-size: 0.9em;
+    font-size: 12px;
     margin-top: 5px;
+}
+
+.coupon-count {
+    color: #4E73DF;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.no-coupon {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 8px;
 }
 
 /* 결제 금액 정보 스타일 */

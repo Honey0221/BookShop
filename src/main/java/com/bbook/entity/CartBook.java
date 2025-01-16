@@ -7,13 +7,14 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "cart_item")
-public class CartItem extends BaseEntity {
+@Table(name = "cart_book")
+public class CartBook {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	@Column(name = "cart_item_id")
+	@Column(name = "cart_book_id")
 	private Long id;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cart_id")
 	private Cart cart;
@@ -23,12 +24,12 @@ public class CartItem extends BaseEntity {
 	private Book book;
 	private int count;
 
-	public static CartItem createCartItem(Cart cart, Book book, int count) {
-		CartItem cartItem = new CartItem();
-		cartItem.setCart(cart);
-		cartItem.setBook(book);
-		cartItem.setCount(count);
-		return cartItem;
+	public static CartBook createCartBook(Cart cart, Book book, int count) {
+		CartBook cartBook = new CartBook();
+		cartBook.setCart(cart);
+		cartBook.setBook(book);
+		cartBook.setCount(count);
+		return cartBook;
 	}
 
 	public void addCount(int count) {

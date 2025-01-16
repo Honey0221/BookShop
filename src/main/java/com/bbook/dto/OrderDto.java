@@ -38,7 +38,7 @@ public class OrderDto {
 		OrderDto orderDto = new OrderDto();
 
 		// Book 정보 로깅
-		Book book = order.getOrderItems().get(0).getBook();
+		Book book = order.getOrderBooks().get(0).getBook();
 		System.out.println("Book ID: " + book.getId());
 		System.out.println("Book Title: " + book.getTitle());
 		System.out.println("Book Image URL: " + book.getImageUrl());
@@ -49,6 +49,7 @@ public class OrderDto {
 		orderDto.setTotalPrice(order.getTotalPrice());
 		orderDto.setMerchantUid(order.getMerchantUid());
 		orderDto.setImpUid(order.getImpUid());
+		orderDto.setShippingFee(order.getShippingFee());
 
 		orderDto.setEmail(order.getMember().getEmail());
 		orderDto.setName(order.getMember().getNickname());

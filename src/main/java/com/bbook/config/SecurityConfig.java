@@ -80,11 +80,14 @@ public class SecurityConfig {
 						.ignoringRequestMatchers("/reviews/**")
 						.ignoringRequestMatchers("/api/**")
 						.ignoringRequestMatchers("/cart/**")
+						.ignoringRequestMatchers("/cartBook/**")
 						.ignoringRequestMatchers("/wish/**")
-						.ignoringRequestMatchers("/order/payment/**")
+						.ignoringRequestMatchers("/order/**")
 						.ignoringRequestMatchers("/admin/**")
 						.ignoringRequestMatchers("/ws-chat/**")
-						.ignoringRequestMatchers("/chat/**"));
+						.ignoringRequestMatchers("/chat/**")
+						.ignoringRequestMatchers("/orders/**")
+						.ignoringRequestMatchers("/subscription/**"));
 
 		http.exceptionHandling(exception -> exception
 				.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));

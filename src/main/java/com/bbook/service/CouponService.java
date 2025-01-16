@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,9 +88,12 @@ public class CouponService {
      */
     @Transactional
     public void restoreCoupon(Member member) {
-        // 가장 최근에 사용된 쿠폰을 찾아서 복원
-        Optional<Coupon> usedCoupon = couponRepository.findFirstByMemberAndIsUsedTrue(member);
-        usedCoupon.ifPresent(coupon -> coupon.setIsUsed(false));
+        // 회원의 사용된 쿠폰 중 가장 최근 쿠폰을 찾아서 상태를 복원
+        Optional<Coupon> coupon = couponRepository.findFirstByMemberAndIsUsedTrue(member);
+        if (coupon.isPresent()) {
+            coupon.get().setIsUsed(false);
+            couponRepository.save(coupon.get());
+        }
     }
 
     /**
@@ -140,12 +142,15 @@ public class CouponService {
      * 
      * @param member 회원
      */
+    @Transactional
     public void consumeCoupon(Member member) {
-        List<Coupon> coupons = couponRepository.findByMemberAndIsUsedFalse(member);
-        if (!coupons.isEmpty()) {
-            Coupon coupon = coupons.get(0);
+        Optional<Coupon> unusedCoupon = couponRepository.findFirstByMemberAndIsUsedFalse(member);
+        if (unusedCoupon.isPresent()) {
+            Coupon coupon = unusedCoupon.get();
             coupon.setIsUsed(true);
             couponRepository.save(coupon);
+        } else {
+            throw new IllegalStateException("사용 가능한 쿠폰이 없습니다.");
         }
     }
 }

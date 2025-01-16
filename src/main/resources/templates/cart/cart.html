@@ -10,10 +10,6 @@
     
     <!-- CSS -->
     <link rel="stylesheet" th:href="@{/css/cart.css}">
-    
-    <!-- CSRF 토큰 메타 태그 추가 -->
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 
 <th:block layout:fragment="script">
@@ -33,7 +29,7 @@
             <div class="cart_tab_wrap">
                 <ul class="cart_tab_list">
                     <li class="cart_tab_item active">
-                        <span class="tab_text">일반배송(<span th:text="${#lists.size(cartItems)}">0</span>)</span>
+                        <span class="tab_text">일반배송(<span th:text="${#lists.size(cartBooks)}">0</span>)</span>
                     </li>
                 </ul>
             </div>
@@ -48,7 +44,7 @@
                         <input type="checkbox" id="checkall" onclick="checkAll()">
                         <label for="checkall">전체선택</label>
                     </span>
-                    <button type="button" class="btn_delete_selected" onclick="deleteSelectedItems()">선택삭제</button>
+                    <button type="button" class="btn_delete_selected" onclick="deleteSelectedCartBooks()">선택삭제</button>
                 </div>
                 <div class="right_area">
                     <button type="button" class="btn_shipping_info">배송비 안내</button>
@@ -61,7 +57,7 @@
                 <div class="cart_list_header">
                     <div class="list_summary">
                         <span class="list_title">담은 상품</span>
-                        <span class="list_count">총 <strong th:text="${#lists.size(cartItems)}">0</strong>개</span>
+                        <span class="list_count">총 <strong th:text="${#lists.size(cartBooks)}">0</strong>개</span>
                     </div>
                     <button type="button" class="btn_toggle" onclick="toggleCartList(this)">
                         <i class="fas fa-chevron-up"></i>
@@ -71,16 +67,16 @@
                 <!-- 상품 목록 컨테이너 -->
                 <div class="cart_items_container">
                     <ul class="cart_list">
-                        <li class="cart_item" th:each="cartItem : ${cartItems}">
+                        <li class="cart_item" th:each="cartItem : ${cartBooks}">
                             <div class="item_wrap">
                                 <!-- 체크박스 -->
                                 <div class="check_area">
                                     <span class="form_chk">
                                         <input type="checkbox" name="cartChkBox" 
-                                               th:id="${'chk_' + cartItem.cartItemId}"
-                                               th:value="${cartItem.cartItemId}"
+                                               th:id="${'chk_' + cartItem.cartBookId}"
+                                               th:value="${cartItem.cartBookId}"
                                                onclick="uncheck()">
-                                        <label th:for="${'chk_' + cartItem.cartItemId}"></label>
+                                        <label th:for="${'chk_' + cartItem.cartBookId}"></label>
                                     </span>
                                 </div>
                                 
@@ -94,7 +90,7 @@
                                     <div class="item_info">
                                         <div class="item_title" th:text="${cartItem.bookName}"></div>
                                         <div class="item_price">
-                                            <span class="price" th:id="'price_' + ${cartItem.cartItemId}"
+                                            <span class="price" th:id="'price_' + ${cartItem.cartBookId}"
                                                   th:data-price="${cartItem.price}"
                                                   th:text="${#numbers.formatInteger(cartItem.price, 0, 'COMMA')} + '원'">
                                             </span>
@@ -105,30 +101,31 @@
                                 <!-- 수량 조절 -->
                                 <div class="quantity_area">
                                     <div class="quantity_box">
-                                        <button type="button" class="btn_minus" th:data-id="${cartItem.cartItemId}" onclick="decreaseCount(this)">-</button>
+                                        <button type="button" class="btn_minus" th:data-id="${cartItem.cartBookId}" onclick="decreaseCount(this)">-</button>
                                         <input type="number" name="count" 
-                                               th:id="'count_' + ${cartItem.cartItemId}"
+                                               th:id="'count_' + ${cartItem.cartBookId}"
                                                th:value="${cartItem.count}" 
-                                               th:data-id="${cartItem.cartItemId}"
+                                               th:data-id="${cartItem.cartBookId}"
+                                               th:data-stock="${cartItem.stock}"
                                                min="1"
                                                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                                onchange="changeCount(this)"
-                                               onkeyup="updateQuantity(this)">
-                                        <button type="button" class="btn_plus" th:data-id="${cartItem.cartItemId}" onclick="increaseCount(this)">+</button>
+                                               onkeyup="if(event.keyCode === 13) updateQuantity(this)">
+                                        <button type="button" class="btn_plus" th:data-id="${cartItem.cartBookId}" th:data-stock="${cartItem.stock}" onclick="increaseCount(this)">+</button>
                                     </div>
                                 </div>
 
                                 <!-- 주문 금액 -->
                                 <div class="price_area">
-                                    <span class="total_price" th:id="'totalPrice_'+${cartItem.cartItemId}"
+                                    <span class="total_price" th:id="'totalPrice_'+${cartItem.cartBookId}"
                                           th:text="${#numbers.formatInteger(cartItem.price * cartItem.count, 0, 'COMMA')} + '원'">
                                     </span>
                                 </div>
 
                                 <!-- 삭제 버튼 -->
                                 <button type="button" class="btn_item_delete"
-                                        th:data-id="${cartItem.cartItemId}"
-                                        onclick="deleteCartItem(this)">
+                                        th:data-id="${cartItem.cartBookId}"
+                                        onclick="deleteCartBook(this)">
                                     <span class="hidden">삭제</span>
                                 </button>
                             </div>

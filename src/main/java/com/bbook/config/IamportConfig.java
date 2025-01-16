@@ -5,8 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.converter.StringHttpMessageConverter;
-import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class IamportConfig {
@@ -23,10 +21,7 @@ public class IamportConfig {
      */
     @Bean
     public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getMessageConverters()
-                .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        return restTemplate;
+        return new RestTemplate();
     }
 
     /**
@@ -36,7 +31,7 @@ public class IamportConfig {
      * @return 아임포트 API 클라이언트 객체
      */
     @Bean
-    public IamportClient iamportClient(RestTemplate restTemplate) {
-        return new IamportClient(apiKey, apiSecret, restTemplate);
+    public IamportClient iamportClient() {
+        return new IamportClient(apiKey, apiSecret, restTemplate());
     }
 }

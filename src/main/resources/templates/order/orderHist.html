@@ -3,39 +3,86 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/layout}">
 <head>
-  <meta name="_csrf" th:content="${_csrf.token}"/>
-  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.6.0/kakao.min.js"></script>
 </head>
 <th:block layout:fragment="script">
   <script th:inline="javascript">
     function cancelOrder(orderId) {
-        if (!confirm('주문을 취소하시겠습니까?\n취소 시 전체 금액이 환불됩니다.')) {
-            return;
-        }
-
-        const token = $("meta[name='_csrf']").attr("content");
-        const header = $("meta[name='_csrf_header']").attr("content");
-
-        $.ajax({
-            url: `/order/${orderId}/cancel`,
-            type: 'POST',
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader(header, token);
-            },
-            success: function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    location.reload();
-                } else {
-                    alert(response.message || '주문 취소에 실패했습니다.');
-                }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON || {};
-                alert(response.message || '주문 취소 중 오류가 발생했습니다.');
+        Swal.fire({
+            title: '주문 취소',
+            text: '주문을 취소하시겠습니까?\n취소 시 전체 금액이 환불됩니다.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4E73DF',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '취소',
+            cancelButtonText: '돌아가기'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/orders/cancel',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify([orderId]),
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '주문 취소 완료',
+                                text: response.message,
+                                confirmButtonColor: '#4E73DF'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '주문 취소 실패',
+                                text: response.message || '주문 취소에 실패했습니다.',
+                                confirmButtonColor: '#4E73DF'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        const response = xhr.responseJSON || {};
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류 발생',
+                            text: response.message || '주문 취소 중 오류가 발생했습니다.',
+                            confirmButtonColor: '#4E73DF'
+                        });
+                    }
+                });
             }
         });
     }
+    
+    function toggleOrderBooks(button) {
+        const orderBooks = button.closest('.order-header').nextElementSibling;
+        const icon = button.querySelector('i');
+        
+        if (orderBooks.classList.contains('collapsed')) {
+            orderBooks.classList.remove('collapsed');
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            orderBooks.classList.add('collapsed');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderCards = document.querySelectorAll('.order-card');
+        orderCards.forEach(card => {
+            const items = card.querySelectorAll('.order-item');
+            if (items.length > 1) {
+                const orderBooks = card.querySelector('.order-items');
+                orderBooks.classList.add('collapsed');
+            }
+        });
+    });
   </script>
 </th:block>
 
@@ -128,13 +175,20 @@
     
     /* 주문 상품 영역 */
     .order-items {
-      padding: 20px;
+      padding: 0;
+      max-height: 1000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .order-items.collapsed {
+      max-height: 140px; /* 첫 번째 아이템만 보이도록 설정 */
     }
     
     .order-item {
       display: flex;
       align-items: center;
-      padding: 20px 0;
+      padding: 20px;
       border-bottom: 1px solid #eee;
     }
     
@@ -203,6 +257,41 @@
       border-color: #1f8ce6;
       color: #1f8ce6;
     }
+    
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .order-header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .item-count {
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .btn-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .btn-toggle i {
+        font-size: 16px;
+        color: #666;
+    }
   </style>
 </th:block>
 
@@ -213,7 +302,10 @@
   
   <div th:each="order : ${orders.getContent()}" class="order-card">
     <div class="order-header">
-      <span class="order-date" th:text="${order.orderDate}"></span>
+      <div class="order-header-left">
+        <span class="order-date" th:text="${order.orderDate}"></span>
+        <span class="item-count" th:text="'총 ' + ${#lists.size(order.orderBookDtoList)} + '개'"></span>
+      </div>
       <div class="order-status">
         <th:block th:switch="${order.orderStatus}">
           <th:block th:case="${T(com.bbook.constant.OrderStatus).PAID}">
@@ -225,18 +317,22 @@
             <span class="badge badge-danger">환불완료</span>
           </th:block>
         </th:block>
+        <button type="button" class="btn-toggle" th:onclick="'toggleOrderBooks(this)'"
+                th:if="${#lists.size(order.orderBookDtoList) > 1}">
+          <i class="fas fa-chevron-down"></i>
+        </button>
       </div>
     </div>
     
-    <div class="order-items">
-      <div th:each="orderItem : ${order.orderItemDtoList}" class="order-item">
-        <img th:src="${orderItem.imgUrl}" class="item-image" th:alt="${orderItem.bookName}">
+    <div class="order-items" th:classappend="${#lists.size(order.orderBookDtoList) > 1 ? 'collapsed' : ''}">
+      <div th:each="orderBook : ${order.orderBookDtoList}" class="order-item">
+        <img th:src="${orderBook.imgUrl}" class="item-image" th:alt="${orderBook.bookName}">
         <div class="item-info">
-          <div class="item-name" th:text="${orderItem.bookName}"></div>
+          <div class="item-name" th:text="${orderBook.bookName}"></div>
           <div class="item-details">
-            <span th:text="${#numbers.formatInteger(orderItem.orderPrice, 0, 'COMMA') + '원'}"></span>
+            <span th:text="${#numbers.formatInteger(orderBook.orderPrice, 0, 'COMMA') + '원'}"></span>
             <span>|</span>
-            <span th:text="${orderItem.count + '개'}"></span>
+            <span th:text="${orderBook.count + '개'}"></span>
           </div>
         </div>
       </div>
@@ -249,18 +345,18 @@ start + (maxPage - 1) : orders.totalPages)})">
     <ul class="pagination justify-content-center">
 
       <li class="page-item" th:classappend="${orders.number eq 0}?'disabled' : ''">
-        <a th:href="@{'/orders/'+ ${orders.number-1}}" aria-label="Previous" class="page-link">
+        <a th:href="@{/orders(page=${orders.number-1})}" aria-label="Previous" class="page-link">
           <span aria-hidden="true">Previous</span>
         </a>
       </li>
 
       <li class="page-item" th:each="page: ${#numbers.sequence(start,end)}"
           th:classappend="${orders.number eq page-1}? ' active':''">
-        <a th:href="@{'/orders/'+${page-1}}" th:inline="text" class="page-link">[[${page}]]</a>
+        <a th:href="@{/orders(page=${page-1})}" th:inline="text" class="page-link">[[${page}]]</a>
       </li>
 
       <li class="page-item" th:classappend="${orders.number+1 ge orders.totalPages}?'disabled' : ''">
-        <a th:href="@{'/orders/'+${orders.number+1}}" aria-label="Next" class="page-link">
+        <a th:href="@{/orders(page=${orders.number+1})}" aria-label="Next" class="page-link">
           <span aria-hidden="true">Next</span>
         </a>
       </li>

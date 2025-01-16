@@ -245,14 +245,29 @@
             button.classList.add('downloaded');
             button.querySelector('span').textContent = '발급완료';
           });
-          alert('쿠폰이 발급되었습니다.');
+          Swal.fire({
+            title: '쿠폰 발급',
+            text: '쿠폰이 발급되었습니다.',
+            icon: 'success',
+            confirmButtonColor: '#4E73DF'
+          });
         } else {
-          alert(data.message || '쿠폰 발급에 실패했습니다.');
+          Swal.fire({
+            title: '쿠폰 발급 실패',
+            text: data.message || '쿠폰 발급에 실패했습니다.',
+            icon: 'error',
+            confirmButtonColor: '#4E73DF'
+          });
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('쿠폰 발급 중 오류가 발생했습니다.');
+        Swal.fire({
+          title: '쿠폰 발급 오류',
+          text: '쿠폰 발급 중 오류가 발생했습니다.',
+          icon: 'error',
+          confirmButtonColor: '#4E73DF'
+        });
       });
     }
   </script>

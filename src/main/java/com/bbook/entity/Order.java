@@ -17,12 +17,11 @@ import java.util.List;
 public class Order extends BaseEntity {
 	// 주문 엔티티의 기본키
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE) 
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	@Column(name = "order_id")
 	private Long id;
 
-	// 주문한 회원 정보 (다대일 관계)
-	// fetch = LAZY로 지연 로딩 설정하여 성능 최적화
+	// fetch = LAZY는 지연 로딩 설정하여 성능 최적화
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "member_id")
 	private Member member;
@@ -34,19 +33,18 @@ public class Order extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private OrderStatus orderStatus;
 
-	// 한 주문에 여러 주문상품을 매핑 (일대다 관계)
 	// mappedBy로 양방향 관계 설정, order가 주인
 	// cascade로 주문상품도 함께 저장/삭제
 	// orphanRemoval로 주문상품 제거시 DB에서도 삭제
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	private List<OrderItem> orderItems = new ArrayList<>();
+	private List<OrderBook> orderBooks = new ArrayList<>();
 
 	// 아임포트 결제 시스템에서 사용하는 가맹점 주문번호
 	// unique 제약조건으로 중복 방지
 	@Column(unique = true)
 	private String merchantUid;
 
-	// 아임포트 결제 시스템에서 부여하는 고유 결제번호  
+	// 아임포트 결제 시스템에서 부여하는 고유 결제번호
 	@Column(name = "imp_uid")
 	private String impUid;
 
@@ -55,54 +53,45 @@ public class Order extends BaseEntity {
 	private Long shippingFee; // 배송비
 	private Long totalPrice; // 최종 금액 (상품 + 배송비)
 
-	private Integer usedPoints = 0;
-	private Integer earnedPoints = 0;
+	private Integer usedPoints = 0; // 사용 포인트
+	private Integer earnedPoints = 0; // 적립 포인트
 	private Integer discountAmount = 0; // 쿠폰 할인 금액
 	private Boolean isCouponUsed = false; // 쿠폰 사용 여부
 
-	// private LocalDateTime regTime;
-	//
-	// private LocalDateTime updateTime;
-
-	// 주문서 주문아이템 리스트에 주문 아이템 추가
-	// 주문 아이템에 주문서 추가
-	public void addOrderItem(OrderItem orderItem) {
-		orderItems.add(orderItem);
-		orderItem.setOrder(this);
+	public void addOrderBook(OrderBook orderBook) {
+		orderBooks.add(orderBook);
+		orderBook.setOrder(this);
 	}
 
-	// 주문서 생성
-	// 현재 로그인된 멤버 주문서에 추가
-	// 주문아이템 리스트를 반복문을 통해서 주문서에 추가
-	// 상태는 주문으로 세팅
-	// 주문 시간은 현재시간으로 세팅
-	// 주문서 리턴
-	public static Order createOrder(Member member, List<OrderItem> orderItemList) {
+	public static Order createOrder(Member member, List<OrderBook> orderBookList, String impUid, String merchantUid) {
 		Order order = new Order();
 		order.setMember(member);
-		for (OrderItem orderItem : orderItemList) {
-			order.addOrderItem(orderItem);
+		for (OrderBook orderBook : orderBookList) {
+			order.addOrderBook(orderBook);
 		}
 		order.setOrderStatus(OrderStatus.PAID);
 		order.setOrderDate(LocalDateTime.now());
+		order.setImpUid(impUid);
+		order.setMerchantUid(merchantUid);
 		return order;
 	}
 
-	// 주문서에 있는 주문 아이템 리스트를 반복
-	// 주문 아이템마다 총 가격을 tatalPrice에 추가
 	public Long getTotalPrice() {
 		if (this.totalPrice != null) {
 			return this.totalPrice;
 		}
 
 		// 기존 계산 로직은 originalPrice 계산용으로 사용
-		long itemsTotal = orderItems.stream()
-				.mapToLong(OrderItem::getTotalPrice)
+		long booksTotal = orderBooks.stream()
+				.mapToLong(OrderBook::getTotalPrice)
 				.sum();
 
-		this.originalPrice = itemsTotal;
-		this.shippingFee = itemsTotal < 15000 ? 3000L : 0L;
-		this.totalPrice = itemsTotal + this.shippingFee - (usedPoints != null ? usedPoints : 0)
+		this.originalPrice = booksTotal;
+
+		// 구독자는 무조건 무료배송, 비구독자는 15,000원 미만일 때만 배송비 부과
+		this.shippingFee = booksTotal < 15000 ? 3000L : 0L;
+
+		this.totalPrice = booksTotal + this.shippingFee - (usedPoints != null ? usedPoints : 0)
 				- (discountAmount != null ? discountAmount : 0);
 
 		return this.totalPrice;
@@ -111,8 +100,8 @@ public class Order extends BaseEntity {
 	// 순수 상품 금액 조회
 	public Long getOriginalPrice() {
 		if (this.originalPrice == null) {
-			this.originalPrice = orderItems.stream()
-					.mapToLong(OrderItem::getTotalPrice)
+			this.originalPrice = orderBooks.stream()
+					.mapToLong(OrderBook::getTotalPrice)
 					.sum();
 		}
 		return this.originalPrice;
@@ -153,6 +142,14 @@ public class Order extends BaseEntity {
 
 	public void setEarnedPoints(Integer earnedPoints) {
 		this.earnedPoints = earnedPoints;
+	}
+
+	public Long getShippingFee() {
+		return shippingFee;
+	}
+
+	public void setShippingFee(Long shippingFee) {
+		this.shippingFee = shippingFee;
 	}
 
 }

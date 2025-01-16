@@ -1,7 +1,7 @@
 package com.bbook.client;
 
 import com.bbook.dto.CancelData;
-import com.bbook.dto.Payment;   
+import com.bbook.dto.PaymentDto;
 import com.bbook.exception.IamportResponseException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,7 +12,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import java.io.IOException;
 import org.springframework.http.HttpMethod;
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -21,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * 아임포트 결제 API와 통신하기 위한 클라이언트 클래스
@@ -29,9 +31,13 @@ import java.nio.charset.StandardCharsets;
 @groovy.util.logging.Slf4j
 public class IamportClient {
     private static final Logger log = LoggerFactory.getLogger(IamportClient.class);
+    private static final String API_URL = "https://api.iamport.kr";
     private final String apiKey; // 아임포트에서 발급받은 API 키
     private final String apiSecret; // 아임포트에서 발급받은 API Secret
     private final RestTemplate restTemplate; // HTTP 요청을 보내기 위한 RestTemplate
+    private String cachedToken;
+    private long tokenExpirationTime;
+    private static final long TOKEN_VALIDITY_PERIOD = 1000 * 60 * 30; // 30분
 
     /**
      * IamportClient 생성자
@@ -47,36 +53,9 @@ public class IamportClient {
     }
 
     /**
-     * 토큰 발급 요청을 위한 내부 DTO 클래스
-     */
-    private static class TokenRequest {
-        @JsonProperty("imp_key")
-        private String imp_key;
-        @JsonProperty("imp_secret")
-        private String imp_secret;
-
-        public TokenRequest(String impKey, String impSecret) {
-            this.imp_key = impKey;
-            this.imp_secret = impSecret;
-        }
-
-        @JsonProperty("imp_key")
-        public String getImp_key() {
-            return imp_key;
-        }
-
-        @JsonProperty("imp_secret")
-        public String getImp_secret() {
-            return imp_secret;
-        }
-    }
-
-    /**
      * 토큰 응답을 처리하기 위한 내부 DTO 클래스
      */
     private static class TokenResponse {
-        private int code;
-        private String message;
         private Response response;
 
         private static class Response {
@@ -91,26 +70,10 @@ public class IamportClient {
             public String getAccess_token() {
                 return access_token;
             }
-
-            public void setAccess_token(String access_token) {
-                this.access_token = access_token;
-            }
         }
 
         public Response getResponse() {
             return response;
-        }
-
-        public void setResponse(Response response) {
-            this.response = response;
-        }
-
-        public int getCode() {
-            return code;
-        }
-
-        public String getMessage() {
-            return message;
         }
     }
 
@@ -122,9 +85,18 @@ public class IamportClient {
      * @throws IOException              HTTP 통신 오류 발생시
      */
     private String getToken() throws IamportResponseException, IOException {
-        // API 키와 시크릿 키를 이용하여 아임포트 API 토큰을 발급받는 메서드
+        // 캐시된 토큰이 있고 아직 유효한 경우 재사용
+        if (cachedToken != null && System.currentTimeMillis() < tokenExpirationTime) {
+            log.debug("Using cached token");
+            return cachedToken;
+        }
 
         // 디버그 로그 - API 키와 시크릿 키 정보 기록
+        log.debug("Requesting new token");
+
+        // API 키와 시크릿 키를 이용하여 아임포트 API 토큰을 발급받는 메서드
+
+        // 디버그 로그 - API 키와 시크릿 키키 정보 기록
         log.debug("Attempting to get token with apiKey: {}", apiKey);
         log.debug("Attempting to get token with apiSecret: {}", apiSecret);
 
@@ -171,24 +143,11 @@ public class IamportClient {
         }
 
         // 발급받은 액세스 토큰 반환
-        return tokenResponse.getResponse().getAccess_token();
-    }
+        cachedToken = tokenResponse.getResponse().getAccess_token();
+        tokenExpirationTime = System.currentTimeMillis() + TOKEN_VALIDITY_PERIOD;
+        log.debug("New token cached, valid until: {}", new Date(tokenExpirationTime));
 
-    /**
-     * 결제 정보를 조회하는 메서드
-     * 
-     * @param impUid 아임포트 거래 고유번호
-     * @return 결제 정보가 담긴 응답 객체
-     * @throws IamportResponseException 결제 정보 조회 실패시 발생
-     */
-    public IamportResponse<Payment> paymentByImpUid(String impUid) throws IamportResponseException {
-        // 실제 구현에서는 아임포트 API를 호출
-        // 현재는 테스트를 위한 더미 데이터 반환
-        IamportResponse<Payment> response = new IamportResponse<>();
-        Payment payment = new Payment();
-        payment.setImpUid(impUid);
-        response.setResponse(payment);
-        return response;
+        return cachedToken;
     }
 
     /**
@@ -199,88 +158,109 @@ public class IamportClient {
      * @throws IamportResponseException 결제 취소 실패시 발생
      * @throws IOException              HTTP 통신 오류 발생시
      */
-    public IamportResponse<Payment> cancelPayment(CancelData cancelData) throws IamportResponseException, IOException {
-        // 아임포트 API 인증 토큰 발급 받기
-        String token = this.getToken();
+    public IamportResponse<PaymentDto> cancelPayment(CancelData cancelData)
+            throws IamportResponseException, IOException {
+        // 파라미터 유효성 검증
+        if ((cancelData.getImp_uid() == null || cancelData.getImp_uid().isEmpty()) &&
+                (cancelData.getMerchant_uid() == null || cancelData.getMerchant_uid().isEmpty())) {
+            throw new IamportResponseException("imp_uid 또는 merchant_uid 중 하나는 반드시 지정되어야 합니다.");
+        }
 
-        // HTTP 요청 헤더 설정
-        // - Bearer 토큰 인증 방식 사용
-        // - JSON 형식의 요청 본문 사용
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        try {
+            // 아임포트 API 인증 토큰 발급 받기
+            String token = this.getToken();
 
-        // HTTP 요청 엔티티 생성
-        // - 취소 요청 데이터(CancelData)와 헤더 포함
-        HttpEntity<CancelData> entity = new HttpEntity<>(cancelData, headers);
+            // HTTP 요청 헤더 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // 아임포트 결제 취소 API 호출
-        // - POST 방식으로 요청
-        // - 응답은 IamportResponse<Payment> 타입으로 파싱
-        ResponseEntity<IamportResponse<Payment>> responseEntity = restTemplate.exchange(
-                "https://api.iamport.kr/payments/cancel", // 결제 취소 API 엔드포인트
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<IamportResponse<Payment>>() {
-                });
+            // 취소 요청 전 로깅
+            log.debug("Canceling payment with data: {}", cancelData);
 
-        // API 응답 본문 반환
-        // - 결제 취소 결과 정보 포함
-        return responseEntity.getBody();
+            HttpEntity<CancelData> entity = new HttpEntity<>(cancelData, headers);
+
+            ResponseEntity<IamportResponse<PaymentDto>> responseEntity = restTemplate.exchange(
+                    "https://api.iamport.kr/payments/cancel",
+                    HttpMethod.POST,
+                    entity,
+                    new ParameterizedTypeReference<IamportResponse<PaymentDto>>() {
+                    });
+
+            // 응답 로깅
+            log.debug("Cancel payment response: {}", responseEntity.getBody());
+
+            return responseEntity.getBody();
+        } catch (Exception e) {
+            log.error("Payment cancellation failed", e);
+            throw e;
+        }
+    }
+
+    public IamportResponse<PaymentDto> paymentByImpUid(String impUid) {
+        String url = API_URL + "/payments/" + impUid;
+
+        try {
+            String token = this.getToken();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<IamportResponse<PaymentDto>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<IamportResponse<PaymentDto>>() {
+                    });
+
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("결제 정보 조회 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("결제 정보 조회 실패", e);
+        }
     }
 
     /**
-     * 결제를 취소하고 환불하는 메서드
+     * 여러 결제를 순차적으로 취소하는 메서드
      * 
-     * @param impUid       아임포트 거래 고유번호
-     * @param cancelAmount 취소/환불 금액
-     * @param reason       취소 사유
-     * @return 결제 취소 결과가 담긴 응답 객체
-     * @throws IamportResponseException 결제 취소 API 호출 실패 시 발생
-     * @throws IOException              HTTP 통신 오류 발생 시
+     * @param cancelDataList 취소할 결제들의 정보 리스트
+     * @return 취소된 결제들의 정보가 담긴 응답 객체 리스트
+     * @throws IamportResponseException 결제 취소 실패시 발생
+     * @throws IOException              HTTP 통신 오류 발생시
      */
-    public IamportResponse<Payment> cancelPayment(String impUid, BigDecimal cancelAmount, String reason)
+    public List<IamportResponse<PaymentDto>> cancelPayments(List<CancelData> cancelDataList)
             throws IamportResponseException, IOException {
-        Map<String, Object> params = new HashMap<>();
-        params.put("imp_uid", impUid);
-        params.put("amount", cancelAmount);
-        params.put("reason", reason);
+        List<IamportResponse<PaymentDto>> responses = new ArrayList<>();
+        List<String> failedPayments = new ArrayList<>();
 
-        // API 요청 전 로그 추가
-        log.debug("Cancel payment request - params: {}", params);
+        for (CancelData cancelData : cancelDataList) {
+            try {
+                IamportResponse<PaymentDto> response = cancelPayment(cancelData);
+                responses.add(response);
 
-        return this.post("/payments/cancel", params);
-    }
+                if (response.getCode() != 0) {
+                    failedPayments.add(String.format("주문번호: %s, 사유: %s",
+                            cancelData.getMerchant_uid(), response.getMessage()));
+                }
 
-    private IamportResponse<Payment> post(String path, Map<String, Object> params)
-            throws IamportResponseException, IOException {
-        String token = this.getToken();
-        String url = "https://api.iamport.kr" + path;
+                // API 호출 간 짧은 간격 추가
+                Thread.sleep(100);
+            } catch (Exception e) {
+                log.error("Failed to cancel payment: {}", cancelData.getMerchant_uid(), e);
+                failedPayments.add(String.format("주문번호: %s, 사유: %s",
+                        cancelData.getMerchant_uid(), e.getMessage()));
+            }
+        }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // 실패한 결제가 있다면 예외 발생
+        if (!failedPayments.isEmpty()) {
+            String errorMessage = "일부 결제 취소에 실패했습니다:\n" + String.join("\n", failedPayments);
+            throw new IamportResponseException(errorMessage);
+        }
 
-        // ObjectMapper를 사용하여 Map을 JSON 문자열로 변환
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonBody = mapper.writeValueAsString(params);
-
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        log.debug("Request URL: {}", url);
-        log.debug("Request Headers: {}", headers);
-        log.debug("Request Body JSON: {}", jsonBody);
-
-        ResponseEntity<IamportResponse<Payment>> responseEntity = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<IamportResponse<Payment>>() {
-                });
-
-        log.debug("Response Status: {}", responseEntity.getStatusCode());
-        log.debug("Response Body: {}", responseEntity.getBody());
-
-        return responseEntity.getBody();
+        return responses;
     }
 }

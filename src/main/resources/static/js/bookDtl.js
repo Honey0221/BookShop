@@ -764,77 +764,88 @@ function showAlert(title, icon = '') {
   });
 }
 
-// 주문하기
+// 바로구매 함수
 function order() {
-  const bookId = document.getElementById('bookId').value;
-  const quantity = document.getElementById('quantity').value;
-  const price = parseInt($("#totalPrice").text().replace(/[^0-9]/g, ""));
+    const bookId = document.getElementById('bookId').value;
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const price = parseInt($("#totalPrice").text().replace(/[^0-9]/g, ""));
 
-  const paramData = {
-    bookId: Number(bookId),
-    count: parseInt(quantity),
-    totalPrice: price
-  }
-
-  $.ajax({
-    url: "/order/payment",
-    type: "POST",
-    contentType: "application/json",
-    data: JSON.stringify(paramData),
-    success: function (response) {
-      location.href = '/order/payment';
-    },
-    error: function (jqXHR) {
-      if (jqXHR.status == '401') {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-          location.href = '/members/login';
-        }
-      } else {
-        alert(jqXHR.responseText);
-      }
+    if (!checkStock(quantity)) {
+        return;
     }
-  });
+
+    const paramData = {
+        bookId: Number(bookId),
+        count: quantity,
+        totalPrice: price
+    }
+
+    $.ajax({
+        url: "/order/payment",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(paramData),
+        success: function (response) {
+            location.href = '/order/payment';
+        },
+        error: function (jqXHR) {
+            if (jqXHR.status == '401') {
+                if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    location.href = '/members/login';
+                }
+            } else {
+                showAlert(jqXHR.responseText, 'error');
+            }
+        }
+    });
 }
 
-// 장바구니
+// 장바구니 담기 함수
 function addCart() {
-  // bookId 값을 hidden input에서 가져오기
-  const bookId = document.getElementById('bookId').value;
-  console.log("Raw bookId value:", bookId);
+    const bookId = document.getElementById('bookId').value;
+    const quantity = parseInt(document.getElementById('quantity').value);
 
-  const quantity = document.getElementById('quantity').value;
-  console.log("Raw quantity value:", quantity);
-
-  const url = "/cart";
-  const paramData = {
-    bookId: Number(bookId),
-    count: parseInt(quantity)
-  };
-
-  console.log("전송할 데이터:", paramData);
-
-  $.ajax({
-    url: url,
-    type: "POST",
-    contentType: "application/json",
-    data: JSON.stringify(paramData),
-
-    success: function (result, status) {
-      alert("상품을 장바구니에 담았습니다.");
-    },
-    error: function (jqXHR, status, error) {
-      console.log("에러 발생:", error);
-      if (jqXHR.status == '401') {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-          location.href = '/members/login';
-        }
-      } else {
-        alert(jqXHR.responseText);
-      }
+    if (!checkStock(quantity)) {
+        return;
     }
-  });
-}
 
+    const url = "/cart";
+    const paramData = {
+        bookId: Number(bookId),
+        count: quantity
+    };
+
+    $.ajax({
+        url: url,
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(paramData),
+        success: function (result, status) {
+            showAlert("상품을 장바구니에 담았습니다.", 'success');
+        },
+        error: function (jqXHR, status, error) {
+            console.log("에러 발생:", error);
+            if (jqXHR.status == '401') {
+                if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    location.href = '/members/login';
+                }
+            } else {
+                showAlert(jqXHR.responseText, 'error');
+            }
+        }
+    });
+}
+// 재고 체크 함수
+function checkStock(quantity) {
+    const stock = parseInt($("#stock").val());
+    if (quantity > stock) {
+        showAlert(`재고가 부족합니다. 현재 재고: ${stock}개`, 'warning');
+        $("#quantity").val(stock);
+        updateTotalPrice(stock);
+        return false;
+    }
+    return true;
+}
 // 북 트레일러 검사
 function checkBookTrailer() {
   const bookId = $("#bookId").val();

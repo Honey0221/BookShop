@@ -210,7 +210,7 @@
         </div>
         <div class="order-detail">
             <span class="detail-label">배송비</span>
-            <span class="detail-value" th:text="${order.originalPrice < 15000 ? '3,000원' : '무료'}">0원</span>
+            <span class="detail-value" th:text="${order.shippingFee == 0 ? '무료' : #numbers.formatInteger(order.shippingFee, 0, 'COMMA') + '원'}">0원</span>
         </div>
         <div class="order-detail" th:if="${order.usedPoints > 0}">
             <span class="detail-label">포인트 사용</span>

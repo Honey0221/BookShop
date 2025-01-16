@@ -19,13 +19,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.bbook.constant.ActivityType;
 import com.bbook.dto.CartDetailDto;
-import com.bbook.dto.CartItemDto;
-import com.bbook.dto.CartOrderDto;
-import com.bbook.dto.OrderDto;
+import com.bbook.dto.CartBookDto;
 import com.bbook.service.CartService;
 import com.bbook.service.MemberActivityService;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -38,17 +35,18 @@ public class CartController {
 	/**
 	 * 장바구니에 상품을 추가하는 API 엔드포인트
 	 * 
-	 * @param cartItemDto   장바구니에 담을 상품 정보 (상품 ID, 수량 등)
+	 * @param cartBookDto   장바구니에 담을 상품 정보 (상품 ID, 수량 등)
 	 * @param bindingResult 검증 결과
 	 * @param principal     현재 로그인한 사용자 정보
 	 * @return ResponseEntity 장바구니 아이템 ID 또는 에러 메시지
 	 */
+	@SuppressWarnings("rawtypes")
 	@PostMapping(value = "/cart")
 	public @ResponseBody ResponseEntity order(
-			@RequestBody @Valid CartItemDto cartItemDto,
+			@RequestBody @Valid CartBookDto cartBookDto,
 			BindingResult bindingResult, Principal principal) {
 		// 입력값 검증 실패시 에러 메시지 반환
-		System.out.println("cartItemDto: " + cartItemDto);
+		System.out.println("cartBookDto: " + cartBookDto);
 		if (bindingResult.hasErrors()) {
 			StringBuilder sb = new StringBuilder();
 			List<FieldError> fieldErrors = bindingResult.getFieldErrors();
@@ -59,17 +57,17 @@ public class CartController {
 		}
 
 		String email = principal.getName();
-		Long cartItemId;
-		System.out.println("cartItemDto: " + cartItemDto);
+		Long cartBookId;
+		System.out.println("cartBookDto: " + cartBookDto);
 		try {
 			// 장바구니에 상품 추가 후 생성된 장바구니 아이템 ID 반환
-			cartItemId = cartService.addCart(cartItemDto, email);
-			memberActivityService.saveActivity(email, cartItemDto.getBookId(), ActivityType.CART);
+			cartBookId = cartService.addCart(cartBookDto, email);
+			memberActivityService.saveActivity(email, cartBookDto.getBookId(), ActivityType.CART);
 		} catch (Exception e) {
 			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 
-		return new ResponseEntity<Long>(cartItemId, HttpStatus.OK);
+		return new ResponseEntity<Long>(cartBookId, HttpStatus.OK);
 	}
 
 	/**
@@ -85,83 +83,62 @@ public class CartController {
 		List<CartDetailDto> cartDetailList = cartService.getCartList(
 				principal.getName());
 		// 뷰에 장바구니 아이템 목록 전달
-		model.addAttribute("cartItems", cartDetailList);
-		return "cart/cartList";
+		model.addAttribute("cartBooks", cartDetailList);
+		return "cart/cart";
 	}
 
-	@PatchMapping("/cartItem/{cartItemId}")
+	@PatchMapping("/cartBook/{cartBookId}")
 	@ResponseBody
-	public ResponseEntity<String> updateCartItem(
-			@PathVariable("cartItemId") Long cartItemId,
-			@RequestBody CartItemDto cartItemDto,
+	public ResponseEntity<String> updateCartBook(
+			@PathVariable("cartBookId") Long cartBookId,
+			@RequestBody CartBookDto cartBookDto,
 			Principal principal) {
 
-		if (cartItemDto.getCount() <= 0) {
+		if (cartBookDto.getCount() <= 0) {
 			return new ResponseEntity<>("최소 1개 이상 담아주세요", HttpStatus.BAD_REQUEST);
 		}
 
 		try {
-			cartService.updateCartItemCount(cartItemId, cartItemDto.getCount());
+			cartService.updateCartBookCount(cartBookId, cartBookDto.getCount());
 			return new ResponseEntity<>("수량을 변경했습니다.", HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	@DeleteMapping(value = "/cart/{cartItemId}")
-	public @ResponseBody ResponseEntity deleteCartItem(
-			@PathVariable("cartItemId") Long cartItemId,
+	@SuppressWarnings("rawtypes")
+	@DeleteMapping(value = "/cart/{cartBookId}")
+	public @ResponseBody ResponseEntity deleteCartBook(
+			@PathVariable("cartBookId") Long cartBookId,
 			Principal principal) {
-		if (!cartService.validateCartItem(cartItemId, principal.getName())) {
+		if (!cartService.validateCartBook(cartBookId, principal.getName())) {
 			return new ResponseEntity<String>("수정 권한이 없습니다.", HttpStatus.FORBIDDEN);
 		}
-		Long bookId = cartService.deleteCartItem(cartItemId);
+		Long bookId = cartService.deleteCartBook(cartBookId);
 		memberActivityService.cancelActivity(principal.getName(), bookId, ActivityType.CART);
-		return new ResponseEntity<Long>(cartItemId, HttpStatus.OK);
+		return new ResponseEntity<Long>(cartBookId, HttpStatus.OK);
 	}
 
-	@DeleteMapping(value = "/cart/items")
-	public @ResponseBody ResponseEntity deleteCartItems(
-			@RequestBody List<Long> cartItemIds,
+	@SuppressWarnings("rawtypes")
+	@DeleteMapping(value = "/cart/books")
+	public @ResponseBody ResponseEntity deleteCartBooks(
+			@RequestBody List<Long> cartBookIds,
 			Principal principal) {
 
-		for (Long cartItemId : cartItemIds) {
-			if (!cartService.validateCartItem(cartItemId, principal.getName())) {
+		for (Long cartBookId : cartBookIds) {
+			if (!cartService.validateCartBook(cartBookId, principal.getName())) {
 				return new ResponseEntity<String>("삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
 			}
 		}
 
 		try {
-			for (Long cartItemId : cartItemIds) {
-				Long bookId = cartService.deleteCartItem(cartItemId);
+			for (Long cartBookId : cartBookIds) {
+				Long bookId = cartService.deleteCartBook(cartBookId);
 				memberActivityService.cancelActivity(principal.getName(), bookId, ActivityType.CART);
 			}
-			return new ResponseEntity<List<Long>>(cartItemIds, HttpStatus.OK);
+			return new ResponseEntity<List<Long>>(cartBookIds, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
-
-	@PostMapping(value = "/cart/orders")
-	public @ResponseBody ResponseEntity<?> orderCartItem(@RequestBody CartOrderDto cartOrderDto, Principal principal,
-			HttpSession session) {
-		List<CartOrderDto> cartOrderDtoList = cartOrderDto.getCartOrderDtoList();
-
-		if (cartOrderDtoList == null || cartOrderDtoList.isEmpty()) {
-			return new ResponseEntity<String>("주문할 상품을 선택해주세요", HttpStatus.BAD_REQUEST);
-		}
-
-		try {
-			// 주문 정보를 세션에 저장 (결제 완료 후 주문 생성에 사용)
-			session.setAttribute("cartOrderDtoList", cartOrderDtoList);
-			session.setAttribute("orderEmail", principal.getName());
-
-			// 결제 페이지에 표시할 정보만 생성
-			OrderDto tempOrderDto = cartService.createTempOrderInfo(cartOrderDtoList, principal.getName());
-			return new ResponseEntity<OrderDto>(tempOrderDto, HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
-		}
-	}
-
 }

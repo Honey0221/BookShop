@@ -2,12 +2,25 @@ package com.bbook.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter
 @Setter
 public class PaymentDto {
-    private String impUid; // 아임포트 결제 고유 번호
-    private String merchantUid; // 주문 번호
-    private Long amount; // 결제 금액
-    private String status; // 결제 상태
+    @JsonProperty("imp_uid")
+    private String impUid;
+    @JsonProperty("merchant_uid")
+    private String merchantUid;
+    private Long amount;
+    private String status;
+
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "impUid='" + impUid + '\'' +
+                ", merchantUid='" + merchantUid + '\'' +
+                ", amount=" + amount +
+                ", status='" + status + '\'' +
+                '}';
+    }
 }
