@@ -1,4 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // 모든 탭 버튼에서 active 클래스 제거
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      // 모든 탭 패널에서 active 클래스 제거
+      tabPanes.forEach(pane => pane.classList.remove('active'));
+
+      // 클릭된 버튼과 해당 패널에 active 클래스 추가
+      button.classList.add('active');
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(tabId).classList.add('active');
+
+      // Swiper 업데이트 (필요한 경우)
+      const swiper = document.querySelector(`#${tabId} .swiper`).swiper;
+      if (swiper) {
+        swiper.update();
+      }
+    });
+  });
+
   // 중간 카테고리 로드 함수
   const loadMidCategories = function () {
     const mainCategories = document.querySelectorAll('.main-category-header');
