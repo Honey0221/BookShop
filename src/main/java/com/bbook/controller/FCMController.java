@@ -17,8 +17,13 @@ public class FCMController {
     @PostMapping("/token")
     public void registerToken(@RequestBody Map<String, String> request) {
         String token = request.get("token");
-        log.info("새로운 FCM 토큰 등록 요청: {}", token.substring(0, 20) + "...");
-        firebaseNotificationService.addAdminToken(token);
-        log.info("FCM 토큰 등록 완료");
+        log.info("새로운 FCM 토큰 등록 요청: {}", token);
+        try {
+            firebaseNotificationService.addAdminToken(token);
+            log.info("FCM 토큰 등록 완료");
+        } catch (Exception e) {
+            log.error("FCM 토큰 등록 실패", e);
+            throw e;
+        }
     }
 }

@@ -11,20 +11,32 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 웹 푸시 인증서 설정
-messaging.getToken({ 
-  vapidKey: "BLVV2y4lBSp4dqntmM-i6WeQhzeJwYRssznEw8uY76ALx8V0aKStQHqW-DLWnphampmzxaA8vwi3Vf1aV-K9WLM" 
-}).then((currentToken) => {
-  if (currentToken) {
-    console.log('FCM 토큰:', currentToken);
-    // 토큰을 서버에 전송하는 로직을 여기에 추가할 수 있습니다
-    sendTokenToServer(currentToken);
-  } else {
-    console.log('토큰을 가져올 수 없습니다.');
+async function initializeFirebaseMessaging() {
+  try {
+    const permission = await Notification.requestPermission();
+    console.log('알림 권한 상태:', permission);
+    
+    if (permission === 'granted') {
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      console.log('Service Worker 등록됨:', registration.scope);
+      
+      const token = await messaging.getToken({
+        vapidKey: "BLVV2y4lBSp4dqntmM-i6WeQhzeJwYRssznEw8uY76ALx8V0aKStQHqW-DLWnphampmzxaA8vwi3Vf1aV-K9WLM",
+        serviceWorkerRegistration: registration
+      });
+      
+      if (token) {
+        console.log('FCM 토큰:', token);
+        await sendTokenToServer(token);
+      }
+    }
+  } catch (err) {
+    console.error('Firebase 초기화 실패:', err);
   }
-}).catch((err) => {
-  console.log('토큰 가져오기 에러:', err);
-});
+}
+
+// 초기화 실행
+initializeFirebaseMessaging();
 
 // 포그라운드 메시지 수신
 messaging.onMessage((payload) => {

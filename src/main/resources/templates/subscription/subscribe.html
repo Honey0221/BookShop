@@ -2,12 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/layout}">
-      <head>
-        <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
-<script src="/js/firebase-init.js"></script>
-      </head>
-
 <th:block layout:fragment="css">
     <style>
         .subscription-container {
@@ -251,10 +245,18 @@
 </div>
 
 <th:block layout:fragment="script">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+    <script th:src="@{/js/firebase-init.js}"></script>
     <script th:inline="javascript">
         let selectedType = '';
         
         $(document).ready(function() {
+            // 메시징 권한 요청 상태 확인
+            Notification.requestPermission()
+                .then((permission) => {
+                    console.log('알림 권한 상태:', permission);
+                });
             // 페이지 로드 시 구독 상태 확인
             $.ajax({
                 url: '/subscription/check',
