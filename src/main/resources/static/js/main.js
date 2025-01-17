@@ -22,45 +22,45 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 중간 카테고리 로드 함수
-  const loadMidCategories = function () {
-    const mainCategories = document.querySelectorAll('.main-category-header');
-    mainCategories.forEach(mainCategoryElement => {
-      const mainCategory = mainCategoryElement.getAttribute('data-category');
-      const midCategoriesContainer = mainCategoryElement.nextElementSibling;
-      const midCategoriesList = midCategoriesContainer.querySelector('.mid-categories-list');
+  // // 중간 카테고리 로드 함수
+  // const loadMidCategories = function () {
+  //   const mainCategories = document.querySelectorAll('.main-category-header');
+  //   mainCategories.forEach(mainCategoryElement => {
+  //     const mainCategory = mainCategoryElement.getAttribute('data-category');
+  //     const midCategoriesContainer = mainCategoryElement.nextElementSibling;
+  //     const midCategoriesList = midCategoriesContainer.querySelector('.mid-categories-list');
 
-      // 메인 카테고리 클릭 이벤트 추가
-      mainCategoryElement.addEventListener('click', function () {
-        window.location.href = `/book-list/category?main=${encodeURIComponent(mainCategory)}`;
-      });
+  //     // 메인 카테고리 클릭 이벤트 추가
+  //     mainCategoryElement.addEventListener('click', function () {
+  //       window.location.href = `/book-list/category?main=${encodeURIComponent(mainCategory)}`;
+  //     });
 
-      fetch(`/api/categories/${encodeURIComponent(mainCategory)}/mid`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(midCategories => {
-          const midCategoriesHtml = midCategories.map(midCat => `
-            <li class="mid-category-item">
-              <a href="/book-list/category?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCat)}">
-                ${midCat}
-              </a>
-            </li>
-          `).join('');
+  //     fetch(`/api/categories/${encodeURIComponent(mainCategory)}/mid`)
+  //       .then(response => {
+  //         if (!response.ok) {
+  //           throw new Error(`HTTP error! status: ${response.status}`);
+  //         }
+  //         return response.json();
+  //       })
+  //       .then(midCategories => {
+  //         const midCategoriesHtml = midCategories.map(midCat => `
+  //           <li class="mid-category-item">
+  //             <a href="/book-list/category?main=${encodeURIComponent(mainCategory)}&mid=${encodeURIComponent(midCat)}">
+  //               ${midCat}
+  //             </a>
+  //           </li>
+  //         `).join('');
 
-          midCategoriesList.innerHTML = midCategoriesHtml;
-        })
-        .catch(error => {
-          console.error('Error loading mid categories:', error);
-        });
-    });
-  };
+  //         midCategoriesList.innerHTML = midCategoriesHtml;
+  //       })
+  //       .catch(error => {
+  //         console.error('Error loading mid categories:', error);
+  //       });
+  //   });
+  // };
 
-  // 페이지 로드 시 중간 카테고리 로드
-  loadMidCategories();
+  // // 페이지 로드 시 중간 카테고리 로드
+  // loadMidCategories();
 
   // 스와이퍼 공통 설정
   const commonSwiperConfig = {

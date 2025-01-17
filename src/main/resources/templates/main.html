@@ -41,42 +41,45 @@
   <!-- 메인 네비게이션 영역을 별도 클래스로 분리 -->
   <div class="main-navigation">
     <ul class="main-categories">
-      <li class="fixed-menu-item">
-        <a href="/book-list/best">
-          베스트
-          <span class="best-badge">BEST</span>
+      <li class="category-circle">
+        <a href="/book-list/best" class="category-icon">
+          <i class="fas fa-crown"></i>
+          <span>베스트</span>
         </a>
       </li>
-      <li class="fixed-menu-item">
-        <a href="/book-list/new">
-          신상품
-          <span class="new-badge">NEW</span>
+      <li class="category-circle">
+        <a href="/book-list/new" class="category-icon">
+          <i class="fas fa-star"></i>
+          <span>신상품</span>
         </a>
       </li>
-
-
-      <li style="border-left: 1px solid #e0e0e0; margin: 0 10px;"></li>
-
-      <li class="category-item" th:each="mainCat : ${mainCategories}">
-        <div class="main-category-header" th:data-category="${mainCat}">
-          <span th:text="${mainCat}">메인카테고리</span>
-        </div>
-        <div class="mid-categories" th:id="'mid-' + ${#strings.replace(mainCat, ' ', '-')}">
-          <ul class="mid-categories-list">
-            <!-- 중간 카테고리가 여기에 로드됨 -->
-          </ul>
-        </div>
+      <li class="category-circle">
+        <a href="/book-list/category?main=ebook" class="category-icon">
+          <i class="fas fa-e"></i>
+          <span>ebook</span>
+        </a>
       </li>
-
-      <li style="border-left: 1px solid #e0e0e0; margin: 0 10px;"></li>
-      <li class="fixed-menu-item">
-        <a href="/faq">
-          자주묻는질문
+      <li class="category-circle">
+        <a href="/book-list/category?main=국내도서" class="category-icon">
+          <i class="fas fa-book"></i>
+          <span>국내도서</span>
+        </a>
+      </li>
+      <li class="category-circle">
+        <a href="/book-list/category?main=서양도서" class="category-icon">
+          <i class="fas fa-book-atlas"></i>
+          <span>서양도서</span>
+        </a>
+      </li>
+      <li class="category-circle">
+        <a href="/faq" class="category-icon">
+          <i class="fas fa-circle-question"></i>
+          <span>자주묻는질문</span>
         </a>
       </li>
     </ul>
   </div>
-
+  
   <!-- 탭 메뉴 추가 -->
   <div class="tab-container">
     <div class="tab-menu">
