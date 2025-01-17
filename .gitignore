@@ -36,3 +36,7 @@ src/main/resources/application-oauth.properties
 src/main/resources/application-mail.properties
 
 target/
+src/main/resources/application.yml
+src/main/resources/firebase-admin-sdk.json
+target/generated-sources/*
+
