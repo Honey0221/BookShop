@@ -374,7 +374,7 @@
 .recent-products-sidebar {
   position: fixed;
   right: 20px;
-  top: 50%;
+  top: 45%;
   transform: translateY(-50%);
   width: 200px;
   background: white;
@@ -1196,6 +1196,44 @@
   transform: translateY(-2px);
 }
 
+.main-cover {
+  margin: 20px auto;
+  width: 70%;
+  height: 150px;
+  border-radius: 10px;
+  background: #f5f5f5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.cover-text {
+  color: #333;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cover-text h1 {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 2.5em;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.cover-text h1 .highlight {
+  color: #4CAF50;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cover-text p {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 1.1em;
+  font-weight: 300;
+  opacity: 0.9;
+}
+
 /* 모바일 반응형 처리 */
 @media (max-width: 768px) {
   .main-categories {
@@ -1216,5 +1254,18 @@
 
   .category-icon span {
     font-size: 11px;
+  }
+
+  .main-cover {
+    width: 90%;
+    height: 130px;
+  }
+
+  .cover-text h1 {
+    font-size: 2em;
+  }
+
+  .cover-text p {
+    font-size: 1em;
   }
 }
