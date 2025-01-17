@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 메시지 추가 함수들
   function addUserMessage(text) {
     const message = document.createElement('div');
-    message.className = 'message user-message';
+    message.className = 'message ai-user-message';
     message.textContent = text;
     aiChatMessages.appendChild(message);
     aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
@@ -431,12 +431,4 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error loading chat history:', error);
       });
   }
-
-  // 메시지 전송 이벤트 수정
-  chatServiceSend.addEventListener('click', sendMessage);
-  chatServiceInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
-  });
 });

@@ -79,7 +79,7 @@
       </li>
     </ul>
   </div>
-  
+
   <!-- 탭 메뉴 추가 -->
   <div class="tab-container">
     <div class="tab-menu">
@@ -225,59 +225,17 @@
           </div>
         </div>
       </div>
-      <!-- 최근 본 상품 사이드바 -->
-      <div class="recent-products-sidebar" th:if="${#authorization.expression('isAuthenticated()')}">
-        <div class="recent-products-title">최근 본 상품</div>
-        <div class="recent-products-list">
-          <a th:href="@{/item(bookId=${book.id})}" class="recent-product-item" th:each="book : ${recentViewedBooks}">
-            <img th:src="${book.imageUrl}" th:alt="${book.title}" class="recent-product-image">
-          </a>
-        </div>
-      </div>
-
-      <div class="chat-bot-icon" th:if="${#authorization.expression('isAuthenticated()')}">
-        <i class="fas fa-comments"></i>
-      </div>
-
-      <div class="chat-modal">
-        <div class="chat-header">
-          <span>AI 도서 추천 챗봇</span>
-          <span class="chat-close">&times;</span>
-        </div>
-        <div class="chat-messages">
-          <!-- 메시지들이 여기에 동적으로 추가됨 -->
-        </div>
-        <div class="chat-input-container">
-          <input type="text" class="chat-input" placeholder="메시지를 입력하세요...">
-          <button class="chat-send">전송</button>
-        </div>
-      </div>
-
-      <!-- 1:1 채팅 아이콘 -->
-      <div class="chat-service-icon" th:if="${#authorization.expression('isAuthenticated()')}">
-        <i class="fas fa-headset"></i>
-      </div>
-
-      <!-- 1:1 채팅 모달 -->
-      <div class="chat-service-modal">
-        <div class="chat-service-header">
-          <span>1:1 문의 채팅</span>
-          <span class="chat-service-close">&times;</span>
-        </div>
-        <div class="chat-service-messages">
-          <!-- 메시지들이 여기에 동적으로 추가됨 -->
-        </div>
-        <div class="chat-input-container">
-          <input type="text" class="chat-service-input" placeholder="메시지를 입력하세요...">
-          <button class="chat-service-send">
-            <i class="fas fa-paper-plane"></i>
-          </button>
-        </div>
-      </div>
     </div>
   </div>
-
-  <!-- 나머지 기존 코드 -->
+  <!-- 최근 본 상품 사이드바 -->
+  <div class="recent-products-sidebar" th:if="${#authorization.expression('isAuthenticated()')}">
+    <div class="recent-products-title">최근 본 상품</div>
+    <div class="recent-products-list">
+      <a th:href="@{/item(bookId=${book.id})}" class="recent-product-item" th:each="book : ${recentViewedBooks}">
+        <img th:src="${book.imageUrl}" th:alt="${book.title}" class="recent-product-image">
+      </a>
+    </div>
+  </div>
   <div class="chat-bot-icon" th:if="${#authorization.expression('isAuthenticated()')}">
     <i class="fas fa-comments"></i>
   </div>
@@ -292,7 +250,9 @@
     </div>
     <div class="chat-input-container">
       <input type="text" class="chat-input" placeholder="메시지를 입력하세요...">
-      <button class="chat-send">전송</button>
+      <button class="chat-send">
+        <i class="fas fa-paper-plane"></i>
+      </button>
     </div>
   </div>
 
