@@ -22,6 +22,9 @@
    - 검색창과 검색 버튼 제공
    - GET 방식으로 /book-list/search 엔드포인트에 검색어 전송
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stylish&display=swap" rel="stylesheet">
 <div th:fragment="header">
   <nav class="navbar navbar-expand-lg">
     <div class="container" style="width: 58%; margin-left: 21%; margin-right: 21%;">
@@ -94,12 +97,14 @@
     }
 
     .nav-link.menu-item {
+      font-family: 'Stylish', sans-serif;
       color: #555;
       font-weight: 500;
       padding: 0.5rem 1rem;
       margin: 0 0.2rem;
       border-radius: 8px;
       transition: all 0.3s ease;
+      font-size: 1.2em;
     }
 
     .nav-link.menu-item:hover {
