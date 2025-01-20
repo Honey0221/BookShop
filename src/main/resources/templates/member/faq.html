@@ -8,74 +8,199 @@
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <style>
-    .faq-categories {
-      margin: 20px 0;
+    .faq-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
     }
 
-    .category-btn {
-      padding: 8px 16px;
-      margin-right: 10px;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      text-decoration: none;
+    .faq-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .faq-header h1 {
+      font-size: 28px;
       color: #333;
     }
 
-    .category-btn.active {
-      background-color: #007bff;
-      color: white;
-    }
-
     .faq-item {
-      border: 1px solid #ddd;
-      margin-bottom: 10px;
-      border-radius: 5px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 8px;
     }
 
-    .question {
-      padding: 15px;
-      background-color: #f8f9fa;
+    .faq-question {
+      padding: 20px;
       cursor: pointer;
+      position: relative;
+      font-size: 16px;
+      color: #333;
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
     }
 
-    .answer {
-      padding: 15px;
+    .faq-question:hover {
+      background-color: #f8f9fa;
+    }
+
+    .faq-question::before {
+      content: 'Q';
+      font-weight: bold;
+      color: #2196F3;
+      margin-right: 15px;
+      font-size: 18px;
+    }
+
+    .faq-question::after {
+      content: '';
+      position: absolute;
+      right: 20px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid #999;
+      border-bottom: 2px solid #999;
+      transform: rotate(45deg);
+      transition: transform 0.3s ease;
+    }
+
+    .faq-question.active::after {
+      transform: rotate(-135deg);
+    }
+
+    .faq-answer {
+      padding: 0 20px 20px 55px;
       display: none;
+      color: #666;
+      line-height: 1.6;
+      position: relative;
     }
 
-    .action-buttons {
+    .faq-answer.show {
+      display: block;
+    }
+
+    .admin-buttons {
       display: flex;
       gap: 10px;
+      margin-left: auto;
+      margin-right: 40px;
+    }
+
+    .admin-buttons button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .edit-btn {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .delete-btn {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+
+    .create-btn {
+      background-color: #2196F3;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .faq-categories {
+      display: flex;
+      gap: 12px;
+      margin: 30px 0;
+      padding: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* IE and Edge */
+    }
+
+    .faq-categories::-webkit-scrollbar {
+      display: none;
+      /* Chrome, Safari, Opera */
+    }
+
+    .category-btn {
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      border: 1px solid #e0e0e0;
+      background-color: white;
+      color: #666;
+    }
+
+    .category-btn:hover {
+      background-color: #f5f5f5;
+      color: #333;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-btn.active {
+      background-color: #2196F3;
+      color: white;
+      border-color: #2196F3;
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 768px) {
+      .faq-categories {
+        gap: 8px;
+        margin: 20px 0;
+      }
+
+      .category-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
     }
   </style>
 </head>
 
 <div layout:fragment="content">
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center">
+  <div class="faq-container">
+    <div class="faq-header">
       <h1>자주묻는 질문</h1>
-      <button sec:authorize="hasRole('ADMIN')" class="btn btn-primary" onclick="openCreateModal()">FAQ 등록</button>
+      <button sec:authorize="hasRole('ADMIN')" class="create-btn" onclick="openCreateModal()">FAQ 등록</button>
     </div>
-
     <div class="faq-categories">
-      <a th:href="@{/faq}" class="category-btn" th:classappend="${category == null ? 'active' : ''}">전체보기</a>
+      <a th:href="@{/faq}" class="category-btn" th:classappend="${category == null ? 'active' : ''}">
+        <i class="fas fa-list-ul"></i> 전체보기
+      </a>
       <a th:each="cat : ${T(com.bbook.constant.FAQCategory).values()}" th:href="@{/faq/{category}(category=${cat})}"
         th:text="${cat.getDescription()}" th:classappend="${category != null && category == cat ? 'active' : ''}"
-        class="category-btn">카테고리</a>
+        class="category-btn">
+        카테고리
+      </a>
     </div>
-
     <div class="faq-list">
       <div th:each="faq : ${faqs}" class="faq-item">
-        <div class="question" onclick="toggleAnswer(this)">
+        <div class="faq-question" onclick="toggleAnswer(this)">
           <span th:text="${faq.question}">질문</span>
-          <div class="action-buttons" sec:authorize="hasRole('ADMIN')">
-            <button class="btn btn-sm btn-outline-primary" th:onclick="'openEditModal(' + ${faq.id} + ')'">수정</button>
-            <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteFAQ(' + ${faq.id} + ')'">삭제</button>
+          <div class="admin-buttons" sec:authorize="hasRole('ADMIN')">
+            <button class="edit-btn" th:onclick="'openEditModal(' + ${faq.id} + ')'">수정</button>
+            <button class="delete-btn" th:onclick="'deleteFAQ(' + ${faq.id} + ')'">삭제</button>
           </div>
         </div>
-        <div class="answer" th:text="${faq.answer}">답변</div>
+        <div class="faq-answer" th:text="${faq.answer}">답변</div>
       </div>
     </div>
   </div>
@@ -126,8 +251,9 @@
     });
 
     function toggleAnswer(element) {
+      element.classList.toggle('active');
       const answer = element.nextElementSibling;
-      answer.style.display = answer.style.display === 'none' ? 'block' : 'none';
+      answer.classList.toggle('show');
     }
 
     function openCreateModal() {
