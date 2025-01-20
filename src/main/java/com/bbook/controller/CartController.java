@@ -20,8 +20,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.bbook.constant.ActivityType;
 import com.bbook.dto.CartDetailDto;
 import com.bbook.dto.CartBookDto;
+import com.bbook.dto.BookRecommendationDto;
 import com.bbook.service.CartService;
 import com.bbook.service.MemberActivityService;
+import com.bbook.entity.Member;
+import com.bbook.entity.Subscription;
+import com.bbook.repository.MemberRepository;
+import com.bbook.repository.SubscriptionRepository;
+import jakarta.persistence.EntityNotFoundException;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +37,8 @@ import lombok.RequiredArgsConstructor;
 public class CartController {
 	private final CartService cartService;
 	private final MemberActivityService memberActivityService;
+	private final MemberRepository memberRepository;
+	private final SubscriptionRepository subscriptionRepository;
 
 	/**
 	 * 장바구니에 상품을 추가하는 API 엔드포인트
@@ -82,8 +90,22 @@ public class CartController {
 		// 현재 사용자의 장바구니 목록 조회
 		List<CartDetailDto> cartDetailList = cartService.getCartList(
 				principal.getName());
-		// 뷰에 장바구니 아이템 목록 전달
+
+		// 구독 상태 확인
+		Member member = memberRepository.findByEmail(principal.getName())
+				.orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
+		Subscription subscription = subscriptionRepository.findByMemberId(member.getId())
+				.orElse(null);
+		boolean isSubscriber = subscription != null && subscription.isActive();
+
+		// 맞춤 추천 도서 조회
+		List<BookRecommendationDto> personalizedBooks = memberActivityService
+				.getHybridRecommendations(principal.getName());
+
+		// 뷰에 장바구니 아이템 목록과 구독 상태 전달
 		model.addAttribute("cartBooks", cartDetailList);
+		model.addAttribute("isSubscriber", isSubscriber);
+		model.addAttribute("personalizedBooks", personalizedBooks);
 		return "cart/cart";
 	}
 

@@ -34,7 +34,14 @@ public class AdminOrderService {
     public Page<AdminOrderDto> searchOrders(OrderSearchDto searchDto, Pageable pageable) {
         log.info("주문 검색 시작 - 검색 조건: {}", searchDto);
         return orderRepository.searchOrders(searchDto, pageable)
-                .map(AdminOrderDto::of);
+                .map(order -> {
+                    AdminOrderDto dto = AdminOrderDto.of(order);
+                    // 주문 시점의 구독 상태 확인
+                    boolean isSubscriber = subscriptionRepository.existsByMemberAndEndDateAfter(
+                            order.getMember(), order.getOrderDate());
+                    dto.setSubscriber(isSubscriber);
+                    return dto;
+                });
     }
 
     public AdminOrderDto getOrderDetail(String merchantUid) {
@@ -42,7 +49,14 @@ public class AdminOrderService {
             log.info("주문 상세 조회 시작 - merchantUid: {}", merchantUid);
             Order order = orderRepository.findByMerchantUid(merchantUid)
                     .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
-            return AdminOrderDto.of(order);
+
+            // 주문 시점의 구독 상태 확인
+            boolean isSubscriber = subscriptionRepository.existsByMemberAndEndDateAfter(
+                    order.getMember(), order.getOrderDate());
+
+            AdminOrderDto dto = AdminOrderDto.of(order);
+            dto.setSubscriber(isSubscriber);
+            return dto;
         } catch (Exception e) {
             log.error("주문 상세 조회 중 오류가 발생했습니다.", e);
             throw new RuntimeException("주문 상세 조회 중 오류가 발생했습니다.", e);

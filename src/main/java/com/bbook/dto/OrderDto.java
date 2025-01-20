@@ -5,6 +5,9 @@ import com.bbook.entity.Order;
 import com.bbook.entity.Book;
 import lombok.Getter;
 import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.validation.constraints.NotBlank;
 
 @Getter
 @Setter
@@ -33,6 +36,21 @@ public class OrderDto {
 	private Integer discountAmount = 0; // 쿠폰 할인 금액
 	private Boolean isCouponUsed = false; // 쿠폰 사용 여부
 
+	// 주문 상품 목록 추가
+	private List<OrderBookDto> orderBookDtoList = new ArrayList<>();
+
+	// 추가된 필드
+	private String detailAddress;
+
+	private String postcode;
+
+	@NotBlank(message = "배송 요청사항을 선택해주세요")
+	private String deliveryRequest;
+
+	private String customRequest; // 직접 입력 시 사용되는 필드
+
+	private String gatePassword; // 공동현관 비밀번호
+
 	// Order 엔티티를 OrderDto로 변환하는 정적 팩토리 메서드
 	public static OrderDto of(Order order) {
 		OrderDto orderDto = new OrderDto();
@@ -51,8 +69,11 @@ public class OrderDto {
 		orderDto.setImpUid(order.getImpUid());
 		orderDto.setShippingFee(order.getShippingFee());
 
+		// Member 정보 설정
 		orderDto.setEmail(order.getMember().getEmail());
-		orderDto.setName(order.getMember().getNickname());
+		orderDto.setName(order.getMember().getName());
+		orderDto.setPhone(order.getMember().getPhone());
+		orderDto.setAddress(order.getMember().getAddress());
 		orderDto.setOrderStatus(order.getOrderStatus());
 		orderDto.setImageUrl(book.getImageUrl());
 
@@ -61,6 +82,12 @@ public class OrderDto {
 		orderDto.setEarnedPoints(order.getEarnedPoints());
 		orderDto.setDiscountAmount(order.getDiscountAmount());
 		orderDto.setIsCouponUsed(order.getIsCouponUsed());
+
+		// 주문 상품 목록 설정
+		order.getOrderBooks().forEach(orderBook -> {
+			OrderBookDto orderBookDto = new OrderBookDto(orderBook, orderBook.getBook().getImageUrl());
+			orderDto.getOrderBookDtoList().add(orderBookDto);
+		});
 
 		return orderDto;
 	}

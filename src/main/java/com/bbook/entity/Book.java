@@ -41,8 +41,11 @@ public class Book {
   @Column(nullable = false)
   private Integer price;
 
-  @Column
+  @Column(name = "stock", nullable = false)
   private Integer stock;
+
+  @Column(name = "sales", columnDefinition = "integer default 0")
+  private Integer sales;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;
@@ -71,15 +74,15 @@ public class Book {
   @Column(nullable = false)
   private String title;
 
-	@Lob
-	@Column(columnDefinition = "LONGTEXT")
-	private String description;
+  @Lob
+  @Column(columnDefinition = "LONGTEXT")
+  private String description;
 
   @Column(name = "view_count", columnDefinition = "bigint default 0")
   private Long viewCount;
 
-	@Column(columnDefinition = "TEXT")
-	private String trailerUrl;
+  @Column(columnDefinition = "TEXT")
+  private String trailerUrl;
 
   public void updateBook(BookFormDto bookFormDto) {
     this.title = bookFormDto.getTitle();
@@ -93,21 +96,23 @@ public class Book {
     this.detailCategory = bookFormDto.getDetailCategory();
     this.description = bookFormDto.getDescription();
   }
-  	public void removeStock(int stockNumber) {
-		int restStock = this.stock - stockNumber; // 10, 5 / 10, 20
-		if (restStock < 0) {
-			throw new OutOfStockException(
-					"상품의 재고가 부족합니다.(현재 재고 수량: " + this.stock + ")");
-		}
-		this.stock = restStock; // 5
-	}
 
-	public String getDetailCategory() {
-		return detailCategory != null ? detailCategory : "";
-	}
+  public void removeStock(int stockNumber) {
+    int restStock = this.stock - stockNumber; // 10, 5 / 10, 20
+    if (restStock < 0) {
+      throw new OutOfStockException(
+          "상품의 재고가 부족합니다.(현재 재고 수량: " + this.stock + ")");
+    }
+    this.stock = restStock; // 5
+    this.sales += stockNumber; // 판매량 증가
+  }
 
-	public void addStock(int stockNumber) {
-		this.stock += stockNumber;
-	}
+  public String getDetailCategory() {
+    return detailCategory != null ? detailCategory : "";
+  }
+
+  public void addStock(int stockNumber) {
+    this.stock += stockNumber;
+  }
 
 }

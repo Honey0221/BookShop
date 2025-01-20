@@ -15,6 +15,9 @@
 <th:block layout:fragment="script">
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Swiper JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <!-- Custom JavaScript -->
@@ -22,172 +25,259 @@
 </th:block>
 
 <div layout:fragment="content">
+    <!-- TOP 버튼 -->
+    <div class="floating_wrapper">
+        <a href="#" class="btn_go_top" title="최상위 화면으로">
+            <span>TOP</span>
+        </a>
+    </div>
+
     <div class="cart_wrap">
         <!-- 장바구니 헤더 -->
-        <div class="cart_header">
-            <h1 class="cart_title">장바구니</h1>
-            <div class="cart_tab_wrap">
-                <ul class="cart_tab_list">
-                    <li class="cart_tab_item active">
-                        <span class="tab_text">일반배송(<span th:text="${#lists.size(cartBooks)}">0</span>)</span>
-                    </li>
-                </ul>
+        <div class="cart_top_wrap sps">
+            <div class="cart_top_inner">
+                <div class="cart_title_box">
+                    <div class="title_wrap">
+                        <h1 class="title_heading">장바구니 (<span th:text="${#lists.size(cartBooks)}">0</span>)</h1>
+                        <div class="right_area">
+                            <ol class="step_round_text_list">
+                                <li class="step_item active"><span class="step_num">1</span>장바구니</li>
+                                <li class="step_item"><span class="step_num">2</span>주문/결제</li>
+                                <li class="step_item"><span class="step_num">3</span>주문완료</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- 장바구니 컨텐츠 -->
-        <div class="cart_content">
-            <!-- 전체 선택 영역 -->
-            <div class="cart_select_wrap">
-                <div class="left_area">
-                    <span class="form_chk">
-                        <input type="checkbox" id="checkall" onclick="checkAll()">
-                        <label for="checkall">전체선택</label>
-                    </span>
-                    <button type="button" class="btn_delete_selected" onclick="deleteSelectedCartBooks()">선택삭제</button>
-                </div>
-                <div class="right_area">
-                    <button type="button" class="btn_shipping_info">배송비 안내</button>
-                </div>
-            </div>
-
-            <!-- 상품 리스트 -->
-            <div class="cart_list_wrap">
-                <!-- 접기/펼치기 헤더 추가 -->
-                <div class="cart_list_header">
-                    <div class="list_summary">
-                        <span class="list_title">담은 상품</span>
-                        <span class="list_count">총 <strong th:text="${#lists.size(cartBooks)}">0</strong>개</span>
+        <div class="cart_content_wrap">
+            <!-- 좌측: 상품 목록 영역 -->
+            <div class="cart_product_area">
+                <!-- 전체 선택 영역 -->
+                <div class="cart_select_wrap">
+                    <div class="left_area">
+                        <span class="form_chk">
+                            <input type="checkbox" id="checkall" onclick="checkAll()">
+                            <label for="checkall">전체선택</label>
+                        </span>
+                        <button type="button" class="btn_delete_selected" onclick="deleteSelectedCartBooks()">
+                            <i class="fas fa-trash-alt"></i>
+                            <span class="hidden">선택삭제</span>
+                        </button>
                     </div>
-                    <button type="button" class="btn_toggle" onclick="toggleCartList(this)">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
                 </div>
-                
-                <!-- 상품 목록 컨테이너 -->
-                <div class="cart_items_container">
-                    <ul class="cart_list">
-                        <li class="cart_item" th:each="cartItem : ${cartBooks}">
-                            <div class="item_wrap">
-                                <!-- 체크박스 -->
-                                <div class="check_area">
-                                    <span class="form_chk">
-                                        <input type="checkbox" name="cartChkBox" 
-                                               th:id="${'chk_' + cartItem.cartBookId}"
-                                               th:value="${cartItem.cartBookId}"
-                                               onclick="uncheck()">
-                                        <label th:for="${'chk_' + cartItem.cartBookId}"></label>
-                                    </span>
-                                </div>
-                                
-                                <!-- 상품 정보 -->
-                                <div class="item_info_area">
-                                    <div class="item_thumb">
-                                        <img th:src="${cartItem.imageUrl}" 
-                                             th:alt="${cartItem.bookName}"
-                                             class="item_img">
+
+                <!-- 상품 리스트 -->
+                <div class="cart_list_wrap">
+                    <!-- 접기/펼치기 헤더 -->
+                    <div class="cart_list_header">
+                        <div class="list_summary">
+                            <span class="list_title">담은 상품</span>
+                            <span class="list_count">총 <strong th:text="${#lists.size(cartBooks)}">0</strong>개</span>
+                        </div>
+                        <button type="button" class="btn_toggle" onclick="toggleCartList(this)">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 상품 목록 컨테이너 -->
+                    <div class="cart_items_container">
+                        <ul class="cart_list">
+                            <li class="cart_item" th:each="cartItem : ${cartBooks}">
+                                <div class="item_wrap">
+                                    <!-- 체크박스 -->
+                                    <div class="check_area">
+                                        <span class="form_chk">
+                                            <input type="checkbox" name="cartChkBox" 
+                                                   th:id="${'chk_' + cartItem.cartBookId}"
+                                                   th:value="${cartItem.cartBookId}"
+                                                   onclick="uncheck()">
+                                            <label th:for="${'chk_' + cartItem.cartBookId}"></label>
+                                        </span>
                                     </div>
-                                    <div class="item_info">
-                                        <div class="item_title" th:text="${cartItem.bookName}"></div>
-                                        <div class="item_price">
-                                            <span class="price" th:id="'price_' + ${cartItem.cartBookId}"
-                                                  th:data-price="${cartItem.price}"
-                                                  th:text="${#numbers.formatInteger(cartItem.price, 0, 'COMMA')} + '원'">
-                                            </span>
+                                    
+                                    <!-- 상품 정보 -->
+                                    <div class="item_info_area">
+                                        <div class="item_thumb">
+                                            <img th:src="${cartItem.imageUrl}" 
+                                                 th:alt="${cartItem.bookName}"
+                                                 class="item_img">
+                                        </div>
+                                        <div class="item_info">
+                                            <div class="item_title" th:text="${cartItem.bookName}"></div>
+                                            <div class="item_price">
+                                                <span class="price" th:id="'price_' + ${cartItem.cartBookId}"
+                                                      th:data-price="${cartItem.price}"
+                                                      th:text="${#numbers.formatInteger(cartItem.price, 0, 'COMMA')} + '원'">
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- 수량 조절 -->
-                                <div class="quantity_area">
-                                    <div class="quantity_box">
-                                        <button type="button" class="btn_minus" th:data-id="${cartItem.cartBookId}" onclick="decreaseCount(this)">-</button>
-                                        <input type="number" name="count" 
-                                               th:id="'count_' + ${cartItem.cartBookId}"
-                                               th:value="${cartItem.count}" 
-                                               th:data-id="${cartItem.cartBookId}"
-                                               th:data-stock="${cartItem.stock}"
-                                               min="1"
-                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                                               onchange="changeCount(this)"
-                                               onkeyup="if(event.keyCode === 13) updateQuantity(this)">
-                                        <button type="button" class="btn_plus" th:data-id="${cartItem.cartBookId}" th:data-stock="${cartItem.stock}" onclick="increaseCount(this)">+</button>
+                                    <!-- 수량 조절 -->
+                                    <div class="quantity_area">
+                                        <div class="quantity_box">
+                                            <button type="button" class="btn_minus" th:data-id="${cartItem.cartBookId}" onclick="decreaseCount(this)">-</button>
+                                            <input type="number" name="count" 
+                                                   th:id="'count_' + ${cartItem.cartBookId}"
+                                                   th:value="${cartItem.count}" 
+                                                   th:data-id="${cartItem.cartBookId}"
+                                                   th:data-stock="${cartItem.stock}"
+                                                   min="1"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                                   onchange="changeCount(this)"
+                                                   onkeyup="if(event.keyCode === 13) updateQuantity(this)">
+                                            <button type="button" class="btn_plus" th:data-id="${cartItem.cartBookId}" th:data-stock="${cartItem.stock}" onclick="increaseCount(this)">+</button>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <!-- 주문 금액 -->
-                                <div class="price_area">
-                                    <span class="total_price" th:id="'totalPrice_'+${cartItem.cartBookId}"
-                                          th:text="${#numbers.formatInteger(cartItem.price * cartItem.count, 0, 'COMMA')} + '원'">
-                                    </span>
-                                </div>
+                                    <!-- 주문 금액 -->
+                                    <div class="price_area">
+                                        <span class="total_price" th:id="'totalPrice_'+${cartItem.cartBookId}"
+                                              th:text="${#numbers.formatInteger(cartItem.price * cartItem.count, 0, 'COMMA')} + '원'">
+                                        </span>
+                                    </div>
 
-                                <!-- 삭제 버튼 -->
-                                <button type="button" class="btn_item_delete"
-                                        th:data-id="${cartItem.cartBookId}"
-                                        onclick="deleteCartBook(this)">
-                                    <span class="hidden">삭제</span>
-                                </button>
-                            </div>
-                        </li>
-                    </ul>
+                                    <!-- 삭제 버튼 -->
+                                    <button type="button" class="btn_item_delete"
+                                            th:data-id="${cartItem.cartBookId}"
+                                            onclick="deleteCartBook(this)">
+                                        <span class="hidden">삭제</span>
+                                    </button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <!-- 주문 요약 -->
-            <div class="order_summary_wrap">
-                <dl class="summary_list">
-                    <div class="summary_item">
-                        <dt>상품금액</dt>
-                        <dd><span id="totalPrice">0</span>원</dd>
+            <!-- 우측: 주문 영역 -->
+            <div class="cart_order_area">
+                <div class="order_info_wrap">
+                    <div class="order_summary" th:data-is-subscriber="${isSubscriber}">
+                        <h3 class="info_title">결제 정보</h3>
+                        <dl class="summary_list">
+                            <div class="summary_item">
+                                <dt>상품금액</dt>
+                                <dd><span id="totalPrice">0</span>원</dd>
+                            </div>
+                            <div class="summary_item">
+                                <dt>
+                                    배송비
+                                    <span class="ico_question" onclick="openShippingModal()">
+                                        <i class="fas fa-circle-question"></i>
+                                    </span>
+                                </dt>
+                                <dd><span id="deliveryFee">0</span>원</dd>
+                            </div>
+                            <div class="summary_item total">
+                                <dt>결제예정금액</dt>
+                                <dd><span id="orderTotalPrice" class="price_spot">0</span>원</dd>
+                            </div>
+                            <div class="summary_item points">
+                                <dt>
+                                    적립 예정 포인트
+                                    <span class="ico_question" onclick="openPointsModal()">
+                                        <i class="fas fa-circle-question"></i>
+                                    </span>
+                                </dt>
+                                <dd><span id="expectedPoints" class="point_spot">0</span>P</dd>
+                            </div>
+                        </dl>
                     </div>
-                    <div class="summary_item">
-                        <dt>배송비</dt>
-                        <dd><span id="deliveryFee">0</span>원</dd>
-                    </div>
-                    <div class="summary_item total">
-                        <dt>결제예정금액</dt>
-                        <dd><span id="orderTotalPrice" class="price_spot">0</span>원</dd>
-                    </div>
-                </dl>
-            </div>
 
-            <!-- 주문 버튼 -->
-            <div class="order_button_wrap">
-                <button type="button" class="btn_continue" onclick="location.href='/'">쇼핑계속하기</button>
-                <button type="button" class="btn_order" onclick="orders()">주문하기</button>
+                    <div class="order_button_wrap">
+                        <button type="button" class="btn_continue" onclick="location.href='/'">쇼핑계속하기</button>
+                        <button type="button" class="btn_order" onclick="orders()">주문하기</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 배송비 안내 모달 -->
-    <div class="modal" id="shippingInfoModal" style="display: none;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">배송비 안내</h5>
-                    <button type="button" class="close" onclick="closeModal()">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="shipping-info">
-                        <p class="main-info">
-                            <i class="fas fa-truck"></i>
-                            <strong>15,000원 이상 구매 시 무료배송</strong>
-                        </p>
-                        <div class="detail-info-box">
-                            <ul class="detail-info">
-                                <li><i class="fas fa-circle-info"></i> 15,000원 미만 주문 시 배송비 3,000원이 부과됩니다.</li>
-                                <li><i class="fas fa-circle-info"></i> 도서산간 지역은 추가 배송비가 발생할 수 있습니다.</li>
-                                <li><i class="fas fa-clock"></i> 평일 오후 2시 이전 주문건 당일 출고</li>
-                                <li><i class="fas fa-box"></i> 안전한 배송을 위해 모든 제품은 안전포장 처리됩니다.</li>
-                            </ul>
+    <!-- 맞춤 추천 상품 -->
+    <div class="recommendation-container" th:if="${#authorization.expression('isAuthenticated()')}">
+        <h3 class="section-title">
+            <i class="fas fa-magic"></i>
+            이런 책은 어떠세요?
+            <span class="new-badge">AI</span>
+        </h3>
+        <div class="swiper personalized-swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" th:each="book : ${personalizedBooks}">
+                    <div class="book-card" th:data-book-id="${book.bookId}">
+                        <img class="book-image" th:src="${book.imageUrl}" th:alt="${book.title}">
+                        <div class="book-info">
+                            <h4 class="book-title" th:text="${book.title}">책 제목</h4>
+                            <div class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                                가격
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">닫기</button>
+            </div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+
+    <!-- 장바구니 유의사항 -->
+    <div class="cart_notice_wrap">
+        <h3 class="notice_title">장바구니 유의사항</h3>
+        <div class="notice_content">
+            <ul class="notice_list">
+                <li class="notice_item">택배 배송일정은 기본배송지 기준으로 예상일이 노출됩니다.</li>
+                <li class="notice_item">상품별 배송일정이 서로 다를시 가장 늦은 일정의 상품 기준으로 모두 함께 배송됩니다.</li>
+                <li class="notice_item">배송지 수정시 예상일이 변경 될 수 있으며, 주문서에서 배송일정을 꼭 확인하시기 바랍니다.</li>
+                <li class="notice_item">쿠폰, 통합포인트 사용시 적립예정포인트가 변동 될 수 있습니다.</li>
+                <li class="notice_item">주문완료 후 배송지 변경은 불가능합니다.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 배송비 안내 모달 -->
+    <div class="modal" id="shippingInfoModal">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3>배송비 안내</h3>
+                <button type="button" class="btn_close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal_body">
+                <div class="shipping_info">
+                    <p class="info_title">배송비 정책</p>
+                    <ul class="info_list">
+                        <li>15,000원 이상 구매 시 무료배송</li>
+                        <li>15,000원 미만 구매 시 배송비 3,000원</li>
+                        <li>구독 회원은 모든 주문 무료배송</li>
+                    </ul>
+                    <p class="info_notice">※ 배송비는 주문 금액에 따라 자동으로 계산됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포인트 안내 모달 -->
+    <div class="modal" id="pointsInfoModal">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3>포인트 적립 안내</h3>
+                <button type="button" class="btn_close" onclick="closePointsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal_body">
+                <div class="points_info">
+                    <ul class="info_list">
+                        <li><i class="fas fa-crown"></i> 구독회원: 결제금액의 10% 적립</li>
+                        <li><i class="fas fa-user"></i> 일반회원: 결제금액의 5% 적립</li>
+                        <li><i class="fas fa-circle-info"></i> 적립금은 다음 주문 시 사용 가능합니다.</li>
+                        <li><i class="fas fa-circle-info"></i> 적립금은 100P 단위로 사용 가능합니다.</li>
+                        <li><i class="fas fa-clock"></i> 적립금은 결제 완료 후 즉시 적립됩니다.</li>
+                    </ul>
                 </div>
             </div>
         </div>

@@ -27,6 +27,7 @@ import com.bbook.config.SecurityUtil;
 import com.bbook.repository.OrderRepository;
 import com.bbook.repository.SubscriptionRepository;
 import com.bbook.entity.Subscription;
+import com.bbook.dto.OrderBookDto;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -152,6 +153,10 @@ public class OrderController {
 				Book book = bookRepository.findById(bookId)
 						.orElseThrow(() -> new EntityNotFoundException("Book not found"));
 
+				// Member 정보 가져오기
+				Member member = memberRepository.findByEmail(email)
+						.orElseThrow(() -> new EntityNotFoundException("Member not found"));
+
 				// 주문 정보 설정
 				orderDto.setEmail(email);
 				orderDto.setOrderName(book.getTitle());
@@ -159,6 +164,16 @@ public class OrderController {
 				orderDto.setTotalPrice((long) (book.getPrice() * orderDto.getCount()));
 				orderDto.setMerchantUid("ORDER-" + System.currentTimeMillis());
 				orderDto.setOriginalPrice(orderDto.getTotalPrice());
+
+				// Member 정보 설정
+				orderDto.setName(member.getName());
+				orderDto.setPhone(member.getPhone());
+				orderDto.setAddress(member.getAddress());
+
+				// OrderBookDto 생성 및 추가
+				OrderBook orderBook = OrderBook.createOrderBook(book, orderDto.getCount());
+				OrderBookDto orderBookDto = new OrderBookDto(orderBook, book.getImageUrl());
+				orderDto.getOrderBookDtoList().add(orderBookDto);
 
 				// 주문 정보를 세션에 저장 (실제 주문 생성은 결제 완료 후에 수행)
 				session.setAttribute("orderDto", orderDto);
@@ -231,9 +246,6 @@ public class OrderController {
 							usedPoints != null ? usedPoints : 0,
 							couponDiscountAmount != null ? couponDiscountAmount : 0);
 
-					// 2. 주문 생성 성공 후 장바구니 비우기
-					cartService.deleteCartBooks(cartOrderDtoList, email);
-
 					Member member = memberRepository.findByEmail(email)
 							.orElseThrow(() -> new IllegalStateException("회원을 찾을 수 없습니다."));
 
@@ -258,15 +270,20 @@ public class OrderController {
 						savedOrder.setEarnedPoints(earnedPoints);
 					}
 					orderRepository.save(savedOrder);
-					// 장바구니 주문의 경우
+
+					// 재고 확인 및 알림을 장바구니 비우기 전에 수행
 					for (CartOrderDto cartOrderDto : cartOrderDtoList) {
 						CartBook cartBook = cartBookRepository.findById(cartOrderDto.getCartBookId())
 								.orElseThrow(() -> new EntityNotFoundException("장바구니 상품을 찾을 수 없습니다."));
-						Book book = cartBook.getBook();
-						if (book != null && book.getStock() == 0) {
-							slackNotificationService.sendStockAlert(book);
+						Book bookItem = cartBook.getBook();
+						if (bookItem != null && bookItem.getStock() <= 0) {
+							slackNotificationService.sendStockAlert(bookItem);
 						}
 					}
+
+					// 2. 주문 생성 성공 후 장바구니 비우기
+					cartService.deleteCartBooks(cartOrderDtoList, email);
+
 					processPointsAndCoupons(member, usedPoints, couponDiscountAmount, request.getAmount(),
 							session);
 					session.removeAttribute("cartOrderDtoList");
@@ -322,18 +339,17 @@ public class OrderController {
 					orderRepository.save(order);
 					orderId = order.getId();
 
+					// 단일 상품 재고 확인 및 알림
+					if (book != null && book.getStock() <= 0) {
+						slackNotificationService.sendStockAlert(book);
+					}
+
 					// 2. 장바구니에서 해당 상품이 있다면 삭제
 					Cart cart = cartRepository.findByMemberId(member.getId());
 					if (cart != null) {
 						CartBook cartBook = cartBookRepository.findByCartIdAndBookId(cart.getId(), book.getId());
 						if (cartBook != null) {
 							cartBookRepository.delete(cartBook);
-						}
-					}
-					// 단일 상품 주문의 경우
-					if (orderDto != null) {
-						if (book.getStock() == 0) {
-							slackNotificationService.sendStockAlert(book);
 						}
 					}
 					processPointsAndCoupons(member, usedPoints, couponDiscountAmount, request.getAmount(), session);
@@ -397,6 +413,15 @@ public class OrderController {
 			Order order = orderService.findById(orderId);
 			OrderDto orderDto = OrderDto.of(order);
 			model.addAttribute("order", orderDto);
+
+			// 추천 도서 데이터 추가
+			List<Book> collaborativeBooks = orderService.getCollaborativeRecommendations(order.getMember().getId());
+			if (collaborativeBooks.isEmpty()) {
+				// 추천 도서가 없는 경우 인기 도서로 대체
+				collaborativeBooks = bookRepository.findTop10ByOrderBySalesDesc();
+			}
+			model.addAttribute("collaborativeBooks", collaborativeBooks);
+
 			return "order/success";
 		} catch (EntityNotFoundException e) {
 			return "redirect:/";
@@ -724,6 +749,35 @@ public class OrderController {
 		} catch (Exception e) {
 			response.put("success", false);
 			response.put("message", "쿠폰 취소 중 오류가 발생했습니다: " + e.getMessage());
+			return ResponseEntity.badRequest().body(response);
+		}
+	}
+
+	@PostMapping("/order/save-address")
+	@ResponseBody
+	public ResponseEntity<Map<String, Object>> saveAddress(@RequestBody Map<String, String> addressData,
+			Principal principal) {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			Member member = memberRepository.findByEmail(principal.getName())
+					.orElseThrow(() -> new IllegalStateException("회원을 찾을 수 없습니다."));
+
+			// 회원 정보 업데이트
+			member.setName(addressData.get("receiverName"));
+			member.setPhone(addressData.get("receiverPhone"));
+			member.setAddress(String.format("[%s] %s %s",
+					addressData.get("postcode"),
+					addressData.get("address"),
+					addressData.get("detailAddress")));
+
+			memberRepository.save(member);
+
+			response.put("success", true);
+			response.put("message", "배송지가 저장되었습니다.");
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			response.put("success", false);
+			response.put("message", "배송지 저장 중 오류가 발생했습니다: " + e.getMessage());
 			return ResponseEntity.badRequest().body(response);
 		}
 	}

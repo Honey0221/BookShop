@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import com.bbook.constant.OrderStatus;
 import com.bbook.entity.Order;
 import com.bbook.dto.OrderSearchDto;
+import com.bbook.entity.Book;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -85,4 +86,29 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 			"group by o.id " +
 			"order by o.orderDate desc")
 	Page<Order> searchOrders(@Param("searchDto") OrderSearchDto searchDto, Pageable pageable);
+
+	/**
+	 * 회원의 주문 내역을 최신순으로 조회합니다.
+	 */
+	List<Order> findByMemberIdOrderByOrderDateDesc(Long memberId);
+
+	/**
+	 * 비슷한 책을 구매한 다른 회원들이 구매한 책을 추천합니다.
+	 */
+	@Query("SELECT DISTINCT b FROM Book b " +
+			"JOIN OrderBook ob ON b = ob.book " +
+			"JOIN Order o ON ob.order = o " +
+			"WHERE o.member.id IN (" +
+			"    SELECT DISTINCT o2.member.id " +
+			"    FROM Order o2 " +
+			"    JOIN o2.orderBooks ob2 " +
+			"    WHERE ob2.book.id IN :bookIds " +
+			"    AND o2.member.id != :memberId" +
+			") " +
+			"AND b.id NOT IN :bookIds " +
+			"ORDER BY b.sales DESC")
+	List<Book> findCollaborativeBooks(
+			@Param("bookIds") List<Long> bookIds,
+			@Param("memberId") Long memberId,
+			@Param("limit") int limit);
 }

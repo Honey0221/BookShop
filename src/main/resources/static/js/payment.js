@@ -4,169 +4,275 @@
     IMP.init("imp80047713");
 })();
 
-// 카카오페이 결제 처리
-function requestPay() {
-    const merchantUid = `ORDER-${new Date().getTime()}`;
-    
-    // 최종 결제 금액 계산
-    let finalAmount = orderDto.totalPrice;
-    
-    const paymentData = {
-        pg: "kakaopay.TC0ONETIME",
-        pay_method: "card",
-        merchant_uid: merchantUid,
-        name: orderDto.orderName,
-        amount: finalAmount,
-        buyer_email: orderDto.email,
-        buyer_name: orderDto.name,
-        buyer_tel: orderDto.phone,
-        buyer_addr: orderDto.address
-    };
+$(document).ready(function() {
 
-    window.IMP.request_pay(paymentData, function(rsp) {
-        if (rsp.success) {
-            verifyPayment(rsp);
+    // 스크롤 이벤트 처리
+    $(window).scroll(function() {
+        var scrollTop = $(window).scrollTop();
+        
+        // 상단 헤더 고정
+        if (scrollTop > 192) {
+            $('.payment_top_wrap').addClass('sps-blw');
+            $('.payment_content_wrap').css('margin-top', $('.payment_top_wrap').outerHeight());
         } else {
-            Swal.fire({
-                icon: 'error',
-                title: '결제 실패',
-                text: "결제에 실패했습니다. " + rsp.error_msg,
-                confirmButtonColor: '#4E73DF'
-            });
+            $('.payment_top_wrap').removeClass('sps-blw');
+            $('.payment_content_wrap').css('margin-top', '40px');
         }
     });
-}
 
-// 일반 카드 결제 처리
-function requestCardPayment() {
-    const merchantUid = `ORDER-${new Date().getTime()}`;
-    
-    const paymentData = {
-        pg: "nice_v2.iamport03m",
-        pay_method: "card",
-        merchant_uid: merchantUid,
-        name: orderDto.orderName,
-        amount: orderDto.totalPrice,
-        buyer_email: orderDto.email,
-        buyer_name: orderDto.name,
-        buyer_tel: orderDto.phone,
-        buyer_addr: orderDto.address
-    };
+    // 초기 금액 계산
+    calculateTotalPrice();
 
-    window.IMP.request_pay(paymentData, function(rsp) {
-        if (rsp.success) {
-            verifyPayment(rsp);
-        } else {
-            handlePaymentError(rsp);
+    // 모달 외부 클릭 시 닫기
+    $(window).click(function(e) {
+        if (e.target == $("#shippingInfoModal")[0]) {
+            $("#shippingInfoModal").hide();
+        }
+        if (e.target == $("#pointsInfoModal")[0]) {
+            $("#pointsInfoModal").hide();
         }
     });
-}
+});
 
-// 결제 검증 및 주문 생성
-function verifyPayment(rsp) {
-    // 응답 데이터 검증
-    console.log("Payment Response:", rsp);
+// 결제 금액 계산 함수
+function calculateTotalPrice() {
+    var originalPrice = parseInt($('#productPrice').text().replace(/[^0-9]/g, ''));
+    var pointDiscount = parseInt($('#pointDiscount').text().replace(/[^0-9]/g, '')) || 0;
+    var couponDiscount = parseInt($('#couponDiscount').text().replace(/[^0-9]/g, '')) || 0;
+    var shippingFee = 0;
+    var finalPrice = 0;
     
-    if (!rsp.success) {
-        handlePaymentError(rsp.error_msg || '결제에 실패했습니다.');
-        return;
-    }
-
-    if (!rsp.imp_uid || !rsp.merchant_uid) {
-        handlePaymentError('결제 정보가 올바르지 않습니다.');
-        return;
-    }
-
-    // PaymentDto 필드명과 정확히 일치하도록 수정
-    const verificationData = {
-        imp_uid: rsp.imp_uid,
-        merchant_uid: rsp.merchant_uid,
-        amount: rsp.paid_amount
-    };
-
-    console.log("Sending verification data:", verificationData);
-
-    // 결제 정보가 준비될 때까지 잠시 대기
-    setTimeout(() => {
-        // 결제 검증 요청
-        $.ajax({
-            url: '/orders/verify',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(verificationData),
-            success: function(response) {
-                console.log("Verification Response:", response);
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '결제 성공',
-                        text: '주문이 완료되었습니다.',
-                        confirmButtonColor: '#4E73DF'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            location.href = '/order/success/' + response.orderId;
-                        }
-                    });
-                } else {
-                    handlePaymentError(response.message || '결제 검증에 실패했습니다.');
-                    cancelPayment(rsp.imp_uid, rsp.merchant_uid);
-                }
-            },
-            error: function(xhr) {
-                console.error('Verification Error:', xhr.responseJSON);
-                handlePaymentError('결제 검증 중 오류가 발생했습니다.');
-                cancelPayment(rsp.imp_uid, rsp.merchant_uid);
-            }
-        });
-    }, 2000); // 2초 대기
-}
-
-// 결제 취소 함수
-function cancelPayment(impUid, merchantUid) {
+    // 구독자 여부 확인 후 배송비 계산
     $.ajax({
-        url: '/orders/cancel',
+        url: '/subscription/check',
+        method: 'GET',
+        async: false, // 동기 처리로 변경
+        success: function(response) {
+            // 구독자는 무료배송, 비구독자는 15000원 미만일 때 3000원
+            shippingFee = response.isSubscriber ? 0 : (originalPrice < 15000 ? 3000 : 0);
+            
+            // 배송비 표시
+            $('#deliveryFee').text(shippingFee.toLocaleString() + '원');
+
+            // 최종 금액 계산
+            finalPrice = originalPrice - pointDiscount - couponDiscount + shippingFee;
+            $('#finalTotalPrice').text(finalPrice.toLocaleString() + '원');
+
+            // 적립 예정 포인트 계산 (구독자 10%, 일반회원 5%)
+            var pointRate = response.isSubscriber ? 0.1 : 0.05;
+            var expectedPoints = Math.floor(finalPrice * pointRate);
+            $('#expectedPoints').text(expectedPoints.toLocaleString() + 'P');
+        },
+        error: function() {
+            // 에러 시 기본 배송비 정책 적용
+            shippingFee = originalPrice < 15000 ? 3000 : 0;
+            $('#deliveryFee').text(shippingFee.toLocaleString() + '원');
+
+            // 최종 금액 계산
+            finalPrice = originalPrice - pointDiscount - couponDiscount + shippingFee;
+            $('#finalTotalPrice').text(finalPrice.toLocaleString() + '원');
+
+            // 에러 시 기본값으로 5% 적립
+            var expectedPoints = Math.floor(finalPrice * 0.05);
+            $('#expectedPoints').text(expectedPoints.toLocaleString() + 'P');
+        }
+    });
+
+    return {
+        originalPrice: originalPrice,
+        pointDiscount: pointDiscount,
+        couponDiscount: couponDiscount,
+        shippingFee: shippingFee,
+        finalPrice: finalPrice
+    };
+}
+
+// 포인트 적용
+function applyPoint() {
+    var pointInput = $('#usePoint');
+    var usePoint = parseInt(pointInput.val()) || 0;
+    var maxPoint = parseInt(pointInput.attr('max'));
+    var currentPrice = calculateTotalPrice().finalPrice;
+
+    if (usePoint % 100 !== 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: '포인트 사용',
+            text: '포인트는 100P 단위로 사용 가능합니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        pointInput.val(Math.floor(usePoint / 100) * 100);
+        return;
+    }
+
+    if (usePoint > maxPoint) {
+        Swal.fire({
+            icon: 'warning',
+            title: '포인트 사용',
+            text: '보유 포인트를 초과하여 사용할 수 없습니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        pointInput.val(maxPoint);
+        return;
+    }
+
+    if (usePoint > currentPrice) {
+        Swal.fire({
+            icon: 'warning',
+            title: '포인트 사용',
+            text: '결제 금액을 초과하여 사용할 수 없습니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        pointInput.val(currentPrice);
+        return;
+    }
+
+    $.ajax({
+        url: '/order/apply-points',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-            impUid: impUid,
-            merchantUid: merchantUid,
-            reason: '결제 검증 실패'
-        }),
+        data: JSON.stringify({ points: usePoint }),
         success: function(response) {
+            $('#pointDiscount').text('-' + usePoint.toLocaleString() + '원');
+            calculateTotalPrice();
+            
             Swal.fire({
-                icon: 'info',
-                title: '결제 취소',
-                text: '결제가 취소되었습니다.',
+                icon: 'success',
+                title: '포인트 적용 완료',
+                text: usePoint.toLocaleString() + 'P가 적용되었습니다.',
                 confirmButtonColor: '#4E73DF'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    location.href = '/cart';
-                }
             });
         },
         error: function(xhr) {
-            console.error('취소 오류:', xhr.responseJSON);
+            console.error('포인트 적용 실패:', xhr);
             Swal.fire({
                 icon: 'error',
-                title: '결제 취소 실패',
-                text: '결제 취소 중 오류가 발생했습니다. 고객센터에 문의해주세요.',
+                title: '포인트 적용 실패',
+                text: '포인트 적용 중 오류가 발생했습니다.',
                 confirmButtonColor: '#4E73DF'
             });
         }
     });
 }
 
-// 결제 에러 처리
-function handlePaymentError(message) {
-    Swal.fire({
-        icon: 'error',
-        title: '결제 오류',
-        text: message || '결제 처리 중 오류가 발생했습니다.',
-        confirmButtonColor: '#4E73DF'
+// 포인트 취소
+function cancelPoint() {
+    $('#usePoint').val('');
+    $('#pointDiscount').text('0원');
+    calculateTotalPrice();
+    
+    // 세션의 포인트 사용 정보 제거
+    $.ajax({
+        url: '/order/cancel-points',
+        type: 'POST',
+        success: function(response) {
+            Swal.fire({
+                icon: 'success',
+                title: '포인트 취소 완료',
+                text: '포인트가 취소되었습니다.',
+                confirmButtonColor: '#4E73DF'
+            });
+        },
+        error: function(xhr) {
+            console.error('포인트 취소 실패:', xhr);
+            Swal.fire({
+                icon: 'error',
+                title: '포인트 취소 실패',
+                text: '포인트 취소 중 오류가 발생했습니다.',
+                confirmButtonColor: '#4E73DF'
+            });
+        }
     });
 }
 
-// 결제 방식 선택
+// 쿠폰 적용
+function applyCoupon() {
+    var couponSelect = $('#couponSelect');
+    var couponAmount = parseInt(couponSelect.val()) || 0;
+    var orderAmount = calculateTotalPrice().originalPrice;
+
+    if (orderAmount < 15000) {
+        Swal.fire({
+            icon: 'warning',
+            title: '쿠폰 사용',
+            text: '15,000원 이상 구매 시 쿠폰을 사용할 수 있습니다.',
+            confirmButtonColor: '#4E73DF'
+        });
+        couponSelect.val('');
+        return;
+    }
+
+    // 세션에 쿠폰 사용 정보 저장
+    $.ajax({
+        url: '/order/apply-coupon',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ 
+            orderAmount: orderAmount,
+            couponAmount: couponAmount
+        }),
+        success: function(response) {
+            if (response.success) {
+                $('#couponDiscount').text('-' + couponAmount.toLocaleString() + '원');
+                calculateTotalPrice();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: '쿠폰 적용 완료',
+                    text: response.message,
+                    confirmButtonColor: '#4E73DF'
+                });
+            }
+        },
+        error: function(xhr) {
+            var errorMessage = '쿠폰 적용 중 오류가 발생했습니다.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: '쿠폰 적용 실패',
+                text: errorMessage,
+                confirmButtonColor: '#4E73DF'
+            });
+            couponSelect.val('');
+            $('#couponDiscount').text('0원');
+            calculateTotalPrice();
+        }
+    });
+}
+
+// 쿠폰 취소
+function cancelCoupon() {
+    $('#couponSelect').val('');
+    $('#couponDiscount').text('0원');
+    calculateTotalPrice();
+    
+    // 세션의 쿠폰 사용 정보 제거
+    $.ajax({
+        url: '/order/cancel-coupon',
+        type: 'POST',
+        success: function(response) {
+            Swal.fire({
+                icon: 'success',
+                title: '쿠폰 취소 완료',
+                text: '쿠폰이 취소되었습니다.',
+                confirmButtonColor: '#4E73DF'
+            });
+        },
+        error: function(xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: '쿠폰 취소 실패',
+                text: '쿠폰 취소 중 오류가 발생했습니다.',
+                confirmButtonColor: '#4E73DF'
+            });
+        }
+    });
+}
+
+// 결제 요청
 function requestPayment() {
     const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
     
@@ -189,447 +295,135 @@ function requestPayment() {
     }
 }
 
-// 결제 수단 선택 UI 처리
-function selectPaymentMethod(method) {
-    document.querySelectorAll('.payment-method-option').forEach(option => {
-        option.classList.remove('selected');
+// 카카오페이 결제
+function requestPay() {
+    const priceInfo = calculateTotalPrice();
+    
+    IMP.request_pay({
+        pg: "kakaopay",
+        pay_method: "card",
+        merchant_uid: `ORDER-${new Date().getTime()}`,
+        name: orderDto.orderName,
+        amount: priceInfo.finalPrice,
+        buyer_email: orderDto.email,
+        buyer_name: orderDto.name,
+        buyer_tel: orderDto.phone,
+        buyer_addr: orderDto.address
+    }, function(rsp) {
+        verifyPayment(rsp);
     });
-    
-    const selectedOption = document.querySelector(`#${method}`).closest('.payment-method-option');
-    selectedOption.classList.add('selected');
-    
-    document.querySelector(`#${method}`).checked = true;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('OrderDto data:', orderDto);
-    calculateTotalWithShipping().catch(console.error);
-});
+// 신용카드 결제
+function requestCardPayment() {
+    const priceInfo = calculateTotalPrice();
+    
+    IMP.request_pay({
+        pg: "html5_inicis",
+        pay_method: "card",
+        merchant_uid: `ORDER-${new Date().getTime()}`,
+        name: orderDto.orderName,
+        amount: priceInfo.finalPrice,
+        buyer_email: orderDto.email,
+        buyer_name: orderDto.name,
+        buyer_tel: orderDto.phone,
+        buyer_addr: orderDto.address,
+        card_quota: [1,2,3,4,5,6]  // 할부 개월 수 옵션
+    }, function(rsp) {
+        verifyPayment(rsp);
+    });
+}
 
-async function calculateTotalWithShipping() {
-    // 순수 상품 금액 계산 (이 값은 변경되지 않음)
-    const originalPrice = Number(orderDto.totalPrice) || 0;
-    const quantity = Number(orderDto.count) || 1;
+// 결제 검증
+function verifyPayment(rsp) {
+    console.log("Payment Response:", rsp);
     
-    // 개별 상품 가격 계산 (이 값도 변경되지 않음)
-    const unitPrice = Math.floor(originalPrice / quantity);
-    
-    // 배송비 계산 (비동기)
-    const shippingFee = await calculateShippingFee(originalPrice);
-    
-    // 화면 업데이트
-    if (!isNaN(originalPrice)) {
-        // 개별 상품 가격 표시 (변경되지 않음)
-        document.querySelectorAll('.item-price').forEach(el => {
-            el.textContent = unitPrice.toLocaleString() + '원';
-        });
-        
-        // 상품 총액 표시 (순수 상품 금액 - 변경되지 않음)
-        document.getElementById('productPrice').textContent = 
-            originalPrice.toLocaleString() + '원';
-        
-        // 배송비 표시
-        document.getElementById('deliveryFee').textContent = 
-            shippingFee.toLocaleString() + '원';
-        
-        // 사용된 포인트와 쿠폰 할인액 가져오기 (화면에 표시된 할인 금액 기준)
-        const pointDiscountText = document.getElementById('pointDiscount').textContent;
-        const couponDiscountText = document.getElementById('couponDiscount').textContent;
-        
-        // 할인 금액 추출 (- 기호와 '원' 제거 후 숫자만 추출)
-        const usedPoints = parseInt(pointDiscountText.replace(/[^0-9]/g, "")) || 0;
-        const usedCoupon = parseInt(couponDiscountText.replace(/[^0-9]/g, "")) || 0;
-        
-        // 최종 금액 계산 및 표시 (순수 상품 금액 + 배송비 - 포인트 - 쿠폰)
-        const finalTotal = originalPrice + shippingFee - usedPoints - usedCoupon;
-        document.getElementById('finalTotalPrice').textContent = 
-            finalTotal.toLocaleString() + '원';
-            
-        // orderDto의 totalPrice 업데이트 (결제에 사용될 최종 금액)
-        orderDto.totalPrice = finalTotal;
+    if (!rsp.success) {
+        handlePaymentError(rsp.error_msg || '결제에 실패했습니다.');
+        return;
     }
+
+    const verificationData = {
+        imp_uid: rsp.imp_uid,
+        merchant_uid: rsp.merchant_uid,
+        amount: rsp.paid_amount
+    };
+
+    console.log("Sending verification data:", verificationData);
+
+    $.ajax({
+        url: '/orders/verify',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(verificationData),
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '결제 성공',
+                    text: '주문이 완료되었습니다.',
+                    confirmButtonColor: '#4E73DF'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.href = '/order/success/' + response.orderId;
+                    }
+                });
+            } else {
+                handlePaymentError(response.message || '결제 검증에 실패했습니다.');
+                cancelPayment(rsp.imp_uid, rsp.merchant_uid);
+            }
+        },
+        error: function(xhr) {
+            console.error('Verification Error:', xhr.responseJSON);
+            handlePaymentError('결제 검증 중 오류가 발생했습니다.');
+            cancelPayment(rsp.imp_uid, rsp.merchant_uid);
+        }
+    });
 }
 
-function showShippingInfo() {
-    document.getElementById('shippingInfoModal').style.display = 'block';
+// 결제 오류 처리
+function handlePaymentError(message) {
+    Swal.fire({
+        icon: 'error',
+        title: '결제 실패',
+        text: message,
+        confirmButtonColor: '#4E73DF'
+    });
+}
+
+// 배송비 안내 모달
+function openShippingModal() {
+    $("#shippingInfoModal").show();
 }
 
 function closeModal() {
-    document.getElementById('shippingInfoModal').style.display = 'none';
+    $("#shippingInfoModal").hide();
 }
 
-// 모달 외부 클릭시 닫기
-window.onclick = function(event) {
-    const modal = document.getElementById('shippingInfoModal');
-    if (event.target == modal) {
-        modal.style.display = 'none';
+// 모달 외부 클릭 시 닫기
+$(window).click(function(e) {
+    if (e.target == $("#shippingInfoModal")[0]) {
+        $("#shippingInfoModal").hide();
     }
-}
+});
 
-// Point system functions
-async function applyPoint() {
-    const pointInput = document.getElementById('usePoint');
-    const pointDiscount = document.getElementById('pointDiscount');
-    const applyBtn = document.querySelector('.point-apply-btn');
-    const cancelBtn = document.querySelector('.point-cancel-btn');
-    let points = parseInt(pointInput.value) || 0;
+// 결제 수단 선택 함수
+function selectPaymentMethod(method) {
+    // 라디오 버튼 선택
+    document.querySelector(`input[value="${method}"]`).checked = true;
     
-    // 현재 상품 금액과 배송비 계산
-    const productPrice = parseInt(document.getElementById('productPrice').textContent.replace(/[^0-9]/g, "")) || 0;
-    const shippingFee = parseInt(document.getElementById('deliveryFee').textContent.replace(/[^0-9]/g, "")) || 0;
-    const couponDiscount = parseInt(document.getElementById('couponDiscount').textContent.replace(/[^0-9]/g, "")) || 0;
-    
-    // 최종 결제 가능 금액 (상품금액 + 배송비 - 쿠폰할인)
-    const maxPayableAmount = productPrice + shippingFee - couponDiscount;
-    
-    // 포인트가 최종 결제 금액보다 큰 경우
-    if (points > maxPayableAmount) {
-        Swal.fire({
-            icon: 'warning',
-            title: '포인트 사용 제한',
-            text: `최대 ${maxPayableAmount.toLocaleString()}P까지 사용 가능합니다.`,
-            confirmButtonColor: '#4E73DF'
-        });
-        pointInput.value = 0;
-        pointDiscount.textContent = '0원';
-        return;
-    }
-    
-    // 포인트가 100단위가 아닌 경우
-    if (points % 100 !== 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: '포인트 사용 제한',
-            text: '포인트는 100P 단위로만 사용 가능합니다.',
-            confirmButtonColor: '#4E73DF'
-        });
-        pointInput.value = 0;
-        pointDiscount.textContent = '0원';
-        return;
-    }
-    
-    $.ajax({
-        url: '/order/apply-points',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ points: points }),
-        success: function(response) {
-            if (response.success) {
-                points = response.appliedPoints;
-                pointInput.value = points;
-                pointInput.disabled = true;
-                applyBtn.disabled = true;
-                cancelBtn.disabled = false;
-                pointDiscount.textContent = (points > 0 ? '-' : '') + points.toLocaleString() + '원';
-                calculateTotalWithShipping().catch(console.error);
-                Swal.fire({
-                    icon: 'success',
-                    title: '포인트 적용 완료',
-                    text: response.message,
-                    confirmButtonColor: '#4E73DF'
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: '포인트 적용 실패',
-                    text: response.message,
-                    confirmButtonColor: '#4E73DF'
-                });
-                pointInput.value = 0;
-                pointDiscount.textContent = '0원';
-                calculateTotalWithShipping().catch(console.error);
-            }
-        },
-        error: function(xhr) {
-            const response = xhr.responseJSON;
-            Swal.fire({
-                icon: 'error',
-                title: '오류 발생',
-                text: response?.message || '포인트 적용 중 오류가 발생했습니다.',
-                confirmButtonColor: '#4E73DF'
-            });
-            pointInput.value = 0;
-            pointDiscount.textContent = '0원';
-            calculateTotalWithShipping().catch(console.error);
-        }
+    // 선택된 스타일 적용
+    document.querySelectorAll('.payment_method_option').forEach(option => {
+        option.classList.remove('selected');
     });
+    document.querySelector(`input[value="${method}"]`).closest('.payment_method_option').classList.add('selected');
 }
 
-// 포인트/쿠폰 취소 시 원래 금액으로 복원하는 함수
-async function restoreOriginalPrice() {
-    // 현재 화면에 표시된 할인 정보 가져오기
-    const productPrice = parseInt(document.getElementById('productPrice').textContent.replace(/[^0-9]/g, "")) || 0;
-    const shippingFee = parseInt(document.getElementById('deliveryFee').textContent.replace(/[^0-9]/g, "")) || 0;
-    const pointDiscountText = document.getElementById('pointDiscount').textContent;
-    const couponDiscountText = document.getElementById('couponDiscount').textContent;
-    
-    // 할인 금액 추출
-    const pointDiscount = parseInt(pointDiscountText.replace(/[^0-9]/g, "")) || 0;
-    const couponDiscount = parseInt(couponDiscountText.replace(/[^0-9]/g, "")) || 0;
-    
-    // 최종 금액 계산 (상품금액 + 배송비 - 포인트할인 - 쿠폰할인)
-    const restoredTotal = productPrice + shippingFee - pointDiscount - couponDiscount;
-    
-    // 화면 업데이트
-    document.getElementById('finalTotalPrice').textContent = restoredTotal.toLocaleString() + '원';
-    
-    // orderDto 업데이트
-    orderDto.totalPrice = restoredTotal;
-    
-    return restoredTotal;
+// 포인트 모달 열기/닫기 함수
+function openPointsModal() {
+    $("#pointsInfoModal").show();
 }
 
-function cancelPoint() {
-    const pointInput = document.getElementById('usePoint');
-    const pointDiscount = document.getElementById('pointDiscount');
-    const applyBtn = document.querySelector('.point-apply-btn');
-    const cancelBtn = document.querySelector('.point-cancel-btn');
-
-    Swal.fire({
-        title: '포인트 취소',
-        text: '적용된 포인트를 취소하시겠습니까?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#4E73DF',
-        cancelButtonColor: '#d33',
-        confirmButtonText: '확인',
-        cancelButtonText: '취소'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: '/order/cancel-points',
-                type: 'POST',
-                contentType: 'application/json',
-                success: function(response) {
-                    if (response.success) {
-                        // 포인트 입력 필드 초기화 및 활성화
-                        pointInput.value = '';
-                        pointInput.disabled = false;
-                        applyBtn.disabled = false;
-                        cancelBtn.disabled = true;
-                        pointDiscount.textContent = '0원';
-                        
-                        // 서버에서 받은 업데이트된 금액으로 화면 갱신
-                        document.getElementById('finalTotalPrice').textContent = 
-                            response.updatedTotalPrice.toLocaleString() + '원';
-                        // orderDto 업데이트
-                        orderDto.totalPrice = response.updatedTotalPrice;
-                        
-                        Swal.fire({
-                            icon: 'success',
-                            title: '포인트 취소 완료',
-                            text: '적용된 포인트가 취소되었습니다.',
-                            confirmButtonColor: '#4E73DF'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '포인트 취소 실패',
-                            text: response.message || '포인트 취소에 실패했습니다.',
-                            confirmButtonColor: '#4E73DF'
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    const response = xhr.responseJSON;
-                    Swal.fire({
-                        icon: 'error',
-                        title: '오류 발생',
-                        text: response?.message || '포인트 취소 중 오류가 발생했습니다.',
-                        confirmButtonColor: '#4E73DF'
-                    });
-                }
-            });
-        }
-    });
+function closePointsModal() {
+    $("#pointsInfoModal").hide();
 }
-
-// Coupon system functions
-async function applyCoupon() {
-    const productPrice = parseInt($("#productPrice").text().replace(/[^0-9]/g, "")) || 0;
-    const selectedCoupon = $("#couponSelect").val();
-    const applyCouponBtn = document.getElementById('applyCouponBtn');
-    const cancelCouponBtn = document.getElementById('cancelCouponBtn');
-    
-    if (!selectedCoupon) {
-        Swal.fire({
-            icon: 'warning',
-            title: '쿠폰 선택',
-            text: '쿠폰을 선택해주세요.',
-            confirmButtonColor: '#4E73DF'
-        });
-        return;
-    }
-    
-    if (productPrice < 15000) {
-        Swal.fire({
-            icon: 'warning',
-            title: '쿠폰 사용 불가',
-            text: '15,000원 이상 구매 시에만 쿠폰을 사용할 수 있습니다.',
-            confirmButtonColor: '#4E73DF'
-        });
-        return;
-    }
-
-    $.ajax({
-        url: '/order/apply-coupon',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({
-            orderAmount: productPrice,
-            couponAmount: parseInt(selectedCoupon)
-        }),
-        success: function(response) {
-            if (response.success) {
-                const discountAmount = response.discountAmount;
-                $("#couponDiscount").text((discountAmount > 0 ? '-' : '') + discountAmount.toLocaleString() + "원");
-                $("#couponSelect").prop("disabled", true);
-                applyCouponBtn.disabled = true;
-                cancelCouponBtn.disabled = false;
-                calculateTotalWithShipping().catch(console.error);
-                Swal.fire({
-                    icon: 'success',
-                    title: '쿠폰 적용 완료',
-                    text: '쿠폰이 적용되었습니다.',
-                    confirmButtonColor: '#4E73DF'
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: '쿠폰 적용 실패',
-                    text: response.message || "쿠폰 적용에 실패했습니다.",
-                    confirmButtonColor: '#4E73DF'
-                });
-            }
-        },
-        error: function(xhr) {
-            const errorMessage = xhr.responseJSON ? xhr.responseJSON.message : "쿠폰 적용에 실패했습니다.";
-            Swal.fire({
-                icon: 'error',
-                title: '오류 발생',
-                text: errorMessage,
-                confirmButtonColor: '#4E73DF'
-            });
-            $("#couponSelect").val("");
-        }
-    });
-}
-
-// 쿠폰 취소
-function cancelCoupon() {
-    const couponSelect = document.getElementById('couponSelect');
-    const applyCouponBtn = document.getElementById('applyCouponBtn');
-    const cancelCouponBtn = document.getElementById('cancelCouponBtn');
-    
-    if (couponSelect.disabled) {
-        Swal.fire({
-            title: '쿠폰 취소',
-            text: '적용된 쿠폰을 취소하시겠습니까?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#4E73DF',
-            cancelButtonColor: '#d33',
-            confirmButtonText: '확인',
-            cancelButtonText: '취소'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '/order/cancel-coupon',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    success: function(response) {
-                        if (response.success) {
-                            couponSelect.value = '';
-                            couponSelect.disabled = false;
-                            applyCouponBtn.disabled = false;
-                            cancelCouponBtn.disabled = true;
-                            document.getElementById('couponDiscount').textContent = '0원';
-                            
-                            // 서버에서 받은 업데이트된 총 금액으로 화면 갱신
-                            document.getElementById('finalTotalPrice').textContent = 
-                                response.updatedTotalPrice.toLocaleString() + '원';
-                            orderDto.totalPrice = response.updatedTotalPrice;
-                            
-                            Swal.fire({
-                                icon: 'success',
-                                title: '쿠폰 취소 완료',
-                                text: '적용된 쿠폰이 취소되었습니다.',
-                                confirmButtonColor: '#4E73DF'
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: '쿠폰 취소 실패',
-                                text: response.message || '쿠폰 취소에 실패했습니다.',
-                                confirmButtonColor: '#4E73DF'
-                            });
-                        }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        Swal.fire({
-                            icon: 'error',
-                            title: '오류 발생',
-                            text: response?.message || '쿠폰 취소 중 오류가 발생했습니다.',
-                            confirmButtonColor: '#4E73DF'
-                        });
-                    }
-                });
-            }
-        });
-    } else {
-        Swal.fire({
-            icon: 'warning',
-            title: '알림',
-            text: '적용된 쿠폰이 없습니다.',
-            confirmButtonColor: '#4E73DF'
-        });
-    }
-}
-
-// 배송비 계산 로직 수정
-function calculateShippingFee(originalPrice) {
-    // 먼저 서버에 구독 여부 확인 요청
-    return fetch('/subscription/check', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.isSubscriber) {
-            // 구독 회원은 무조건 무료 배송
-            return 0;
-        } else {
-            // 비구독 회원은 15,000원 미만일 때만 배송비 부과
-            return originalPrice < 15000 ? 3000 : 0;
-        }
-    })
-    .catch(error => {
-        console.error('구독 확인 중 오류 발생:', error);
-        // 오류 발생 시 기존 로직으로 처리
-        return originalPrice < 15000 ? 3000 : 0;
-    });
-}
-
-// 기존의 배송비 계산 부분을 async/await로 수정
-async function updateTotalPrice() {
-    const originalPrice = calculateOriginalPrice();
-    const shippingFee = await calculateShippingFee(originalPrice);
-    const usedPoints = parseInt(document.getElementById('pointInput').value) || 0;
-    const couponDiscount = parseInt(document.getElementById('couponDiscountAmount').value) || 0;
-    
-    const totalPrice = originalPrice + shippingFee - usedPoints - couponDiscount;
-    
-    document.getElementById('shippingFee').textContent = shippingFee.toLocaleString() + '원';
-    document.getElementById('totalPrice').textContent = totalPrice.toLocaleString() + '원';
-    
-    return {
-        originalPrice: originalPrice,
-        shippingFee: shippingFee,
-        totalPrice: totalPrice
-    };
-}
-
-// 쿠폰 취소

@@ -14,6 +14,7 @@ import com.bbook.dto.CartDetailDto;
 import com.bbook.dto.CartBookDto;
 import com.bbook.dto.CartOrderDto;
 import com.bbook.dto.OrderDto;
+import com.bbook.dto.OrderBookDto;
 import com.bbook.entity.Book;
 import com.bbook.entity.Cart;
 import com.bbook.entity.CartBook;
@@ -274,10 +275,21 @@ public class CartService {
 		orderDto.setTotalPrice(totalPrice); // 최종 결제 금액 설정
 		orderDto.setCount(calculateTotalCount(cartBooks));
 		orderDto.setEmail(email);
-		orderDto.setName(member.getNickname());
+		orderDto.setName(member.getName());
+		orderDto.setPhone(member.getPhone());
+		orderDto.setAddress(member.getAddress());
 		orderDto.setIsCouponUsed(false); // 초기값 설정
 		orderDto.setUsedPoints(0); // 초기값 설정
 		orderDto.setDiscountAmount(0); // 초기값 설정
+
+		// 주문 상품 목록 설정
+		for (CartBook cartBook : cartBooks) {
+			Book book = cartBook.getBook();
+			OrderBookDto orderBookDto = new OrderBookDto(
+					OrderBook.createOrderBook(book, cartBook.getCount()),
+					book.getImageUrl());
+			orderDto.getOrderBookDtoList().add(orderBookDto);
+		}
 
 		// 첫 번째 상품의 대표 이미지 URL 설정
 		if (!cartBooks.isEmpty()) {

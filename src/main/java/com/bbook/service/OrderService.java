@@ -26,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 
 /**
  * 주문 관련 비즈니스 로직을 처리하는 서비스 클래스
@@ -242,5 +243,30 @@ public class OrderService {
 	public boolean hasUserPurchasedBook(Long memberId, Long bookId) {
 		return orderRepository
 				.existsByMemberIdAndBookIdAndStatus(memberId, bookId, OrderStatus.PAID);
+	}
+
+	/**
+	 * 비슷한 취향의 회원들이 구매한 책을 추천합니다.
+	 * 
+	 * @param memberId 회원 ID
+	 * @return 추천 도서 목록
+	 */
+	public List<Book> getCollaborativeRecommendations(Long memberId) {
+		// 1. 회원의 최근 주문 내역에서 책 ID 목록 가져오기
+		List<Long> recentBookIds = orderRepository.findByMemberIdOrderByOrderDateDesc(memberId)
+				.stream()
+				.flatMap(order -> order.getOrderBooks().stream())
+				.map(orderBook -> orderBook.getBook().getId())
+				.distinct()
+				.limit(5)
+				.collect(Collectors.toList());
+
+		if (recentBookIds.isEmpty()) {
+			// 주문 내역이 없는 경우 인기 도서 반환
+			return bookRepository.findTop10ByOrderBySalesDesc();
+		}
+
+		// 2. 비슷한 책을 구매한 다른 회원들의 주문 내역에서 책 추천
+		return orderRepository.findCollaborativeBooks(recentBookIds, memberId, 10);
 	}
 }

@@ -33,6 +33,10 @@ public class Member extends BaseEntity {
     @Column(unique = true)
     private String nickname;
 
+    private String name;
+    private String phone;
+    private String address;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -47,7 +51,7 @@ public class Member extends BaseEntity {
     private LocalDateTime createAt; // 등록일
 
     @Column
-    private LocalDateTime subscriptionExpiryDate; 
+    private LocalDateTime subscriptionExpiryDate;
 
     public LocalDateTime getSubscriptionExpiryDate() {
         return subscriptionExpiryDate;
@@ -93,5 +97,9 @@ public class Member extends BaseEntity {
     // 포인트 설정 메소드
     public void setPoint(long point) {
         this.point = Math.max(0, point); // 음수가 되지 않도록 보장
+    }
+
+    public boolean isSubscriber() {
+        return subscriptionExpiryDate != null && subscriptionExpiryDate.isAfter(LocalDateTime.now());
     }
 }

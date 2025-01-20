@@ -4,183 +4,426 @@
       layout:decorate="~{layouts/layout}">
 
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/payment.css}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <div layout:fragment="content">
-    <div class="payment-container">
-        <div class="payment-header">
-            <h2>주문/결제</h2>
-        </div>
 
-        <div class="order-items">
-            <h3>주문 상품</h3>
-            <div class="order-item-container">
-                <div class="order-item">
-                    <div class="item-image-container">
-                        <img th:src="${orderDto.imageUrl}" 
-                             class="item-image" 
-                             th:alt="${orderDto.orderName}">
-                    </div>
-                    <span class="item-name" th:text="${orderDto.orderName}">상품명</span>
-                    <span class="item-quantity" th:text="'수량: ' + ${orderDto.count} + '개'">수량</span>
-                    <span class="item-price">가격</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="delivery-info">
-            <h3>배송 정보</h3>
-            <table class="info-table">
-                <tr>
-                    <th>받는 사람</th>
-                    <td th:text="${orderDto.name}">수령인</td>
-                </tr>
-                <tr>
-                    <th>연락처</th>
-                    <td th:text="${orderDto.phone}">연락처</td>
-                </tr>
-                <tr>
-                    <th>배송 주소</th>
-                    <td th:text="${orderDto.address}">주소</td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="point-info">
-            <h3>포인트 사용</h3>
-            <div class="point-container">
-                <div class="available-points">
-                    <span>사용 가능한 포인트:</span>
-                    <span th:text="${#numbers.formatInteger(memberPoint, 0, 'COMMA') + 'P'}">0P</span>
-                </div>
-                <div class="point-input-container">
-                    <input type="number" id="usePoint" name="pointDiscount" placeholder="사용할 포인트를 입력하세요"
-                           th:max="${memberPoint}" min="0" step="100">
-                    <button type="button" class="point-apply-btn" onclick="applyPoint()">적용</button>
-                    <button type="button" class="point-cancel-btn" onclick="cancelPoint()">취소</button>
-                </div>
-                <p class="point-notice">* 포인트는 100P 단위로 사용 가능합니다.</p>
-            </div>
-        </div>
-
-        <div class="coupon-info">
-            <h4>쿠폰 사용</h4>
-            <div class="available-coupons">
-                <select id="couponSelect" class="form-select">
-                    <option value="">쿠폰을 선택하세요</option>
-                    <option th:each="coupon : ${availableCoupons}" 
-                            th:value="${coupon.discountAmount}"
-                            th:text="${coupon.discountAmount + '원 할인 쿠폰'}">1,000원 할인 쿠폰</option>
-                </select>
-                <button type="button" id="applyCouponBtn" class="coupon-apply-btn" onclick="applyCoupon()">적용</button>
-                <button type="button" id="cancelCouponBtn" class="coupon-cancel-btn" onclick="cancelCoupon()">취소</button>
-            </div>
-            <p class="coupon-notice">* 15,000원 이상 구매 시 사용 가능</p>
-            <p class="coupon-count" th:if="${not #lists.isEmpty(availableCoupons)}" 
-               th:text="'사용 가능한 쿠폰: ' + ${#lists.size(availableCoupons)} + '장'">
-               사용 가능한 쿠폰: 0장
-            </p>
-            <p class="no-coupon" th:if="${#lists.isEmpty(availableCoupons)}">
-                사용 가능한 쿠폰이 없습니다.
-            </p>
-        </div>
-
-        <div class="payment-methods">
-            <h3>결제 수단 선택</h3>
-            <div class="payment-method-option" onclick="selectPaymentMethod('kakaopay')" id="kakaopay-option">
-                <label>
-                    <input type="radio" name="paymentMethod" id="kakaopay" value="kakaopay">
-                    <i class="fas fa-comment"></i>
-                    카카오페이
-                </label>
-            </div>
-            <div class="payment-method-option" onclick="selectPaymentMethod('card')" id="card-option">
-                <label>
-                    <input type="radio" name="paymentMethod" id="card" value="card">
-                    <i class="far fa-credit-card"></i>
-                    신용/체크카드
-                </label>
-            </div>
-        </div>
-
-        <div class="payment-summary">
-            <h4>결제 금액</h4>
-            <div class="price-details">
-                <div class="price-row">
-                    <span>상품 금액</span>
-                    <span id="productPrice" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA') + '원'}"></span>
-                </div>
-                <div class="price-row">
-                    <span>배송비</span>
-                    <span id="deliveryFee" onclick="showShippingInfo()" style="cursor: pointer;">
-                        <i class="fas fa-info-circle"></i>
-                        <span>0원</span>
-                    </span>
-                </div>
-                <div class="price-row">
-                    <span>포인트 사용</span>
-                    <span id="pointDiscount">0원</span>
-                </div>
-                <div class="price-row">
-                    <span>쿠폰 할인</span>
-                    <span id="couponDiscount">0원</span>
-                </div>
-                <div class="price-row total">
-                    <span>최종 결제 금액</span>
-                    <span id="finalTotalPrice" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA') + '원'}"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal" id="shippingInfoModal">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">배송비 안내</h5>
-                        <button type="button" class="close" onclick="closeModal()">
-                            <span>&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="shipping-info">
-                            <p class="main-info">
-                                <i class="fas fa-truck"></i>
-                                <strong>15,000원 이상 구매 시 무료배송</strong>
-                            </p>
-                            <div class="detail-info-box">
-                                <ul class="detail-info">
-                                    <li><i class="fas fa-circle-info"></i> 15,000원 미만 주문 시 배송비 3,000원이 부과됩니다.</li>
-                                    <li><i class="fas fa-circle-info"></i> 도서산간 지역은 추가 배송비가 발생할 수 있습니다.</li>
-                                    <li><i class="fas fa-clock"></i> 평일 오후 2시 이전 주문건 당일 출고</li>
-                                    <li><i class="fas fa-box"></i> 안전한 배송을 위해 모든 제품은 안전포장 처리됩니다.</li>
-                                </ul>
-                            </div>
+    <div class="payment_wrap">
+        <!-- 결제 헤더 -->
+        <div class="payment_top_wrap sps">
+            <div class="payment_top_inner">
+                <div class="payment_title_box">
+                    <div class="title_wrap">
+                        <h1 class="title_heading">주문/결제</h1>
+                        <div class="right_area">
+                            <ol class="step_round_text_list">
+                                <li class="step_item">
+                                    <span class="step_num">1</span>
+                                    <span class="step_text">장바구니</span>
+                                </li>
+                                <li class="step_item active">
+                                    <span class="step_num">2</span>
+                                    <span class="step_text">주문/결제</span>
+                                </li>
+                                <li class="step_item">
+                                    <span class="step_num">3</span>
+                                    <span class="step_text">주문완료</span>
+                                </li>
+                            </ol>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">닫기</button>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="payment-button-wrapper">
-            <button class="payment-button" onclick="requestPayment()">
-                결제하기
-            </button>
+        <div class="payment_content_wrap">
+            <!-- 좌측: 주문 정보 영역 -->
+            <div class="payment_info_area">
+                <!-- 배송지 정보 -->
+                <div class="tbl_row_wrap">
+                    <table class="tbl_row">
+                        <colgroup>
+                            <col style="width: 210px;">
+                            <col style="width: auto;">
+                        </colgroup>
+                        <tbody>
+                            <tr>
+                                <th scope="row" class="align_top">배송지 정보</th>
+                                <td class="align_top">
+                                    <div class="btn_wrap full">
+                                        <button type="button" class="btn_ip btn_line_primary" onclick="useExistingAddress()">
+                                            <span class="ico_location_primary"></span>
+                                            <span class="text fw_medium">기존 배송지 사용</span>
+                                        </button>
+                                        <button type="button" class="btn_ip btn_line_gray" onclick="openAddressSearch()">
+                                            <span class="ico_write_black"></span>
+                                            <span class="text fw_medium">배송지 입력</span>
+                                        </button>
+                                    </div>
+                                    <!-- 배송지 정보 표시 -->
+                                    <div class="address_info_box hidden">
+                                        <div class="address_name">
+                                            <i class="fas fa-map-marker-alt ico_location_primary"></i>
+                                            <span class="name">
+                                                <span class="text"></span>
+                                            </span>
+                                            <span class="phone_number"></span>
+                                        </div>
+                                        <div class="address_text"></div>
+                                    </div>
+                                    <!-- 주소 입력 폼 -->
+                                    <div class="address_form hidden" id="addressForm">
+                                        <div class="form_row">
+                                            <input type="text" id="receiverName" placeholder="받는 분 성함" th:value="${orderDto.name}">
+                                        </div>
+                                        <div class="form_row">
+                                            <input type="text" id="receiverPhone" placeholder="받는 분 연락처 (- 없이 입력)" th:value="${orderDto.phone}">
+                                        </div>
+                                        <div class="form_row">
+                                            <input type="text" id="postcode" placeholder="우편번호" readonly>
+                                            <button type="button" onclick="execDaumPostcode()" class="btn_address_search">주소 찾기</button>
+                                        </div>
+                                        <div class="form_row">
+                                            <input type="text" id="address" placeholder="주소" readonly>
+                                        </div>
+                                        <div class="form_row">
+                                            <input type="text" id="detailAddress" placeholder="상세주소">
+                                        </div>
+                                        <div class="form_row button_row">
+                                            <button type="button" class="btn_save_address" onclick="saveAddress()">저장</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="align_top">배송요청사항</th>
+                                <td class="align_top">
+                                    <div class="form_wrap type_lg">
+                                        <div class="form_box">
+                                            <div class="form_cont">
+                                                <select class="form_select" id="deliveryRequest" name="deliveryRequest"onchange="handleDeliveryRequest(this.value)">
+                                                    <option value="">배송 시 요청사항을 선택해주세요</option>
+                                                    <option value="DOOR">부재 시 문 앞에 놓아주세요</option>
+                                                    <option value="SECURITY">부재 시 경비실에 맡겨주세요</option>
+                                                    <option value="CALL">배송 전 연락 부탁드립니다</option>
+                                                    <option value="CUSTOM">직접 입력</option>
+                                                </select>
+                                                <div class="custom_request hidden" id="customRequestBox">
+                                                    <input type="text" class="form_ip" id="customRequest" 
+                                                           placeholder="배송 시 요청사항을 입력해주세요 (최대 50자)" 
+                                                           maxlength="50">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="align_top">공동현관 출입방법</th>
+                                <td class="align_top">
+                                    <div class="form_wrap type_lg">
+                                        <div class="form_box">
+                                            <div class="form_cont">
+                                                <ul class="chk_row_list">
+                                                    <li class="chk_row_item">
+                                                        <span class="form_rdo">
+                                                            <input id="doorPassword_01" type="radio" name="doorPassword" checked onchange="toggleGateMessage(true)">
+                                                            <label for="doorPassword_01">공동현관 비밀번호</label>
+                                                        </span>
+                                                    </li>
+                                                    <li class="chk_row_item">
+                                                        <span class="form_rdo">
+                                                            <input id="doorPassword_02" type="radio" name="doorPassword" onchange="toggleGateMessage(false)">
+                                                            <label for="doorPassword_02">자유출입 가능</label>
+                                                        </span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="form_cont" data-form-gatemessage="form">
+                                                <input type="text" class="form_ip" id="gatePassword" name="gatePassword"
+                                                       title="공동현관 출입번호" placeholder="예시) 0000#" maxlength="32">
+                                                <p class="info_text font_size_xxs">※ 공동현관 출입방법이 부정확한 경우, 배송이 공동현관 앞에 배송되거나 반송될 수 있습니다.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 주문 상품 정보 -->
+                <div class="order_items_wrap">
+                    <div class="cart_list_wrap">
+                        <!-- 접기/펼치기 헤더 -->
+                        <div class="cart_list_header">
+                            <div class="list_summary">
+                                <span class="list_title">주문 상품</span>
+                                <span class="list_count">총 <strong th:text="${#lists.size(orderDto.orderBookDtoList)}">0</strong>개</span>
+                            </div>
+                            <button type="button" class="btn_toggle" onclick="toggleCartList(this)">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- 상품 목록 컨테이너 -->
+                        <div class="cart_items_container">
+                            <ul class="cart_list">
+                                <li class="cart_item" th:each="orderBook : ${orderDto.orderBookDtoList}">
+                                    <div class="item_wrap">
+                                        <!-- 상품 정보 -->
+                                        <div class="item_info_area">
+                                            <div class="item_thumb">
+                                                <img th:src="${orderBook.imgUrl}" 
+                                                     th:alt="${orderBook.bookName}"
+                                                     class="item_img">
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title" th:text="${orderBook.bookName}"></div>
+                                                <div class="item_price">
+                                                    <span class="price" th:text="${#numbers.formatInteger(orderBook.orderPrice, 0, 'COMMA')} + '원'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 수량 표시 -->
+                                        <div class="quantity_area">
+                                            <div class="quantity_box">
+                                                <span th:text="'수량: ' + ${orderBook.count} + '개'"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- 주문 금액 -->
+                                        <div class="price_area">
+                                            <span class="total_price" th:text="${#numbers.formatInteger(orderBook.orderPrice * orderBook.count, 0, 'COMMA')} + '원'"></span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결제 수단 -->
+                <div class="payment_method_wrap">
+                    <div class="cart_list_wrap">
+                        <!-- 헤더 -->
+                        <div class="cart_list_header">
+                            <div class="list_summary">
+                                <span class="list_title">결제 수단</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 결제 수단 목록 -->
+                        <div class="cart_items_container">
+                            <ul class="cart_list">
+                                <li class="cart_item payment_method_option" onclick="selectPaymentMethod('kakaopay')">
+                                    <div class="item_wrap">
+                                        <!-- 결제 수단 정보 -->
+                                        <div class="item_info_area">
+                                            <div class="item_thumb payment_icon">
+                                                <i class="fas fa-comment payment_logo kakao"></i>
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title">카카오페이</div>
+                                                <div class="item_description">카카오페이로 간편하게 결제하세요</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 라디오 버튼 -->
+                                        <div class="form_chk">
+                                            <input type="radio" id="method_kakaopay" name="paymentMethod" value="kakaopay">
+                                            <label for="method_kakaopay"></label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="cart_item payment_method_option" onclick="selectPaymentMethod('card')">
+                                    <div class="item_wrap">
+                                        <!-- 결제 수단 정보 -->
+                                        <div class="item_info_area">
+                                            <div class="item_thumb payment_icon">
+                                                <i class="fas fa-credit-card payment_logo card"></i>
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title">신용카드</div>
+                                                <div class="item_description">모든 신용/체크카드 사용 가능</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 라디오 버튼 -->
+                                        <div class="form_chk">
+                                            <input type="radio" id="method_card" name="paymentMethod" value="card">
+                                            <label for="method_card"></label>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 포인트/쿠폰 사용 -->
+                <div class="discount_info_wrap">
+                    <div class="tbl_row_wrap">
+                        <table class="tbl_row">
+                            <colgroup>
+                                <col style="width: 210px;">
+                                <col style="width: auto;">
+                            </colgroup>
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="align_top">포인트 사용</th>
+                                    <td class="align_top">
+                                        <div class="point_content">
+                                            <div class="available_points">
+                                                <span>사용 가능한 포인트:</span>
+                                                <span th:text="${#numbers.formatInteger(memberPoint, 0, 'COMMA') + 'P'}" class="point_amount"></span>
+                                            </div>
+                                            <div class="point_input_wrap">
+                                                <input type="number" id="usePoint" name="pointDiscount"
+                                                       th:max="${memberPoint}" min="0" step="100"
+                                                       placeholder="사용할 포인트를 입력하세요">
+                                                <div class="point_buttons">
+                                                    <button type="button" class="btn_apply" onclick="applyPoint()">적용</button>
+                                                    <button type="button" class="btn_cancel" onclick="cancelPoint()">취소</button>
+                                                </div>
+                                            </div>
+                                            <p class="point_notice">* 포인트는 100P 단위로 사용 가능합니다.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="align_top">쿠폰 사용</th>
+                                    <td class="align_top">
+                                        <div class="coupon_content">
+                                            <div class="coupon_select_wrap">
+                                                <select id="couponSelect">
+                                                    <option value="">쿠폰을 선택하세요</option>
+                                                    <option th:each="coupon : ${availableCoupons}"
+                                                            th:value="${coupon.discountAmount}"
+                                                            th:text="${coupon.discountAmount + '원 할인 쿠폰'}">
+                                                    </option>
+                                                </select>
+                                                <div class="coupon_buttons">
+                                                    <button type="button" class="btn_apply" onclick="applyCoupon()">적용</button>
+                                                    <button type="button" class="btn_cancel" onclick="cancelCoupon()">취소</button>
+                                                </div>
+                                            </div>
+                                            <p class="coupon_notice">* 15,000원 이상 구매 시 사용 가능</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 우측: 결제 금액 영역 -->
+            <div class="payment_summary_area">
+                <div class="summary_content">
+                    <h3 class="title_heading">결제 금액</h3>
+                    <div class="price_details">
+                        <div class="price_row">
+                            <span>상품 금액</span>
+                            <span id="productPrice" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA') + '원'}"></span>
+                        </div>
+                        <div class="price_row">
+                            <dt>
+                                배송비
+                                <span class="ico_question" onclick="openShippingModal()">
+                                    <i class="fas fa-circle-question"></i>
+                                </span>
+                            </dt>
+                            <span id="deliveryFee">0원</span>
+                        </div>
+                        <div class="price_row">
+                            <span>포인트 사용</span>
+                            <span id="pointDiscount">0원</span>
+                        </div>
+                        <div class="price_row">
+                            <span>쿠폰 할인</span>
+                            <span id="couponDiscount">0원</span>
+                        </div>
+                        <div class="price_row total">
+                            <span>최종 결제 금액</span>
+                            <span id="finalTotalPrice" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA') + '원'}"></span>
+                        </div>
+                        <div class="price_row points">
+                            <span>
+                                적립 예정 포인트
+                                <span class="ico_question" onclick="openPointsModal()">
+                                    <i class="fas fa-circle-question"></i>
+                                </span>
+                            </span>
+                            <span id="expectedPoints">0P</span>
+                        </div>
+                    </div>
+
+                    <!-- 결제하기 버튼 -->
+                    <button type="button" class="btn_payment" onclick="requestPayment()">
+                        결제하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 배송비 안내 모달 -->
+    <div class="modal" id="shippingInfoModal">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3>배송비 안내</h3>
+                <button type="button" class="btn_close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal_body">
+                <div class="shipping_info">
+                    <p class="info_title">배송비 정책</p>
+                    <ul class="info_list">
+                        <li>15,000원 이상 구매 시 무료배송</li>
+                        <li>15,000원 미만 구매 시 배송비 3,000원</li>
+                        <li>구독 회원은 모든 주문 무료배송</li>
+                    </ul>
+                    <p class="info_notice">※ 배송비는 주문 금액에 따라 자동으로 계산됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포인트 안내 모달 -->
+    <div class="modal" id="pointsInfoModal">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3>포인트 적립 안내</h3>
+                <button type="button" class="btn_close" onclick="closePointsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal_body">
+                <div class="points_info">
+                    <ul class="info_list">
+                        <li><i class="fas fa-crown"></i> 구독회원: 결제금액의 10% 적립</li>
+                        <li><i class="fas fa-user"></i> 일반회원: 결제금액의 5% 적립</li>
+                        <li><i class="fas fa-circle-info"></i> 적립금은 다음 주문 시 사용 가능합니다.</li>
+                        <li><i class="fas fa-circle-info"></i> 적립금은 100P 단위로 사용 가능합니다.</li>
+                        <li><i class="fas fa-clock"></i> 적립금은 결제 완료 후 즉시 적립됩니다.</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <th:block layout:fragment="script">
-    <!-- jQuery -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <!-- iamport.payment.js -->
     <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <!-- 다음 우편번호 서비스 -->
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <script th:inline="javascript">
-        /*<![CDATA[*/
         var orderDto = {
             orderName: /*[[${orderDto.orderName}]]*/ '',
             totalPrice: /*[[${orderDto.totalPrice}]]*/ 0,
@@ -189,7 +432,225 @@
             phone: /*[[${orderDto.phone}]]*/ '',
             address: /*[[${orderDto.address}]]*/ ''
         };
-        /*]]>*/
+
+        console.log('orderDto:', orderDto); // 디버깅을 위한 로그 추가
+
+        // 배송 요청사항 처리
+        function handleDeliveryRequest(value) {
+            const customRequestBox = document.getElementById('customRequestBox');
+            if (value === 'CUSTOM') {
+                customRequestBox.classList.remove('hidden');
+            } else {
+                customRequestBox.classList.add('hidden');
+                document.getElementById('customRequest').value = '';
+            }
+        }
+
+        // 배송지 저장
+        function saveAddress() {
+            const addressData = {
+                receiverName: document.getElementById('receiverName').value,
+                receiverPhone: document.getElementById('receiverPhone').value,
+                postcode: document.getElementById('postcode').value,
+                address: document.getElementById('address').value,
+                detailAddress: document.getElementById('detailAddress').value,
+            };
+
+            // 유효성 검사
+            if (!addressData.receiverName) {
+                alert('받는 분 성함을 입력해주세요.');
+                return;
+            }
+            if (!addressData.receiverPhone) {
+                alert('받는 분 연락처를 입력해주세요.');
+                return;
+            }
+            if (!addressData.postcode || !addressData.address) {
+                alert('주소를 입력해주세요.');
+                return;
+            }
+
+            // 서버로 배송지 정보 전송
+            fetch('/order/save-address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(addressData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('배송지가 저장되었습니다.');
+                    // 주소 정보 업데이트
+                    updateAddressDisplay(addressData);
+                    // 주소 입력 폼 숨기기
+                    document.getElementById('addressForm').classList.add('hidden');
+                    // 배송지 정보 유효성 검사 실행
+                    validateDeliveryInfo();
+                } else {
+                    alert(data.message || '배송지 저장에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('배송지 저장 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 주소 표시 업데이트
+        function updateAddressDisplay(addressData) {
+            const addressInfoBox = document.querySelector('.address_info_box');
+            const btnWrap = document.querySelector('.btn_wrap.full');
+            
+            // 주소 정보 업데이트
+            const nameSpan = addressInfoBox.querySelector('.name .text');
+            const phoneSpan = addressInfoBox.querySelector('.phone_number');
+            const addressSpan = addressInfoBox.querySelector('.address_text');
+
+            nameSpan.textContent = addressData.receiverName;
+            phoneSpan.textContent = addressData.receiverPhone;
+            addressSpan.textContent = `[${addressData.postcode}] ${addressData.address} ${addressData.detailAddress}`;
+
+            // 버튼 숨기고 주소 정보 표시
+            btnWrap.classList.add('hidden');
+            addressInfoBox.classList.remove('hidden');
+
+            // 배송지 정보 유효성 검사 실행
+            validateDeliveryInfo();
+        }
+
+        // 공동현관 출입방법 토글
+        function toggleGateMessage(show) {
+            const gateMessageForm = document.querySelector('[data-form-gatemessage="form"]');
+            if (show) {
+                gateMessageForm.style.display = 'block';
+            } else {
+                gateMessageForm.style.display = 'none';
+                document.getElementById('gateMessage').value = '';
+            }
+        }
+
+        // 배송지 입력 폼 토글
+        function openAddressSearch() {
+            const addressForm = document.getElementById('addressForm');
+            addressForm.classList.remove('hidden');
+        }
+
+        // 다음 우편번호 서비스
+        function execDaumPostcode() {
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    document.getElementById('postcode').value = data.zonecode;
+                    document.getElementById('address').value = data.address;
+                    document.getElementById('detailAddress').focus();
+                }
+            }).open();
+        }
+
+        // 페이지 로드 시 초기 상태 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            // 공동현관 출입방법 초기 상태 설정
+            const doorPassword = document.querySelector('input[name="doorPassword"]:checked');
+            if (doorPassword) {
+                toggleGateMessage(doorPassword.id === 'doorPassword_01');
+            }
+        });
+
+        // e목록 토글 함수
+        function toggleCartList(button) {
+            const container = document.querySelector('.cart_items_container');
+            const icon = button.querySelector('i');
+            
+            if (container.classList.contains('expanded')) {
+                // 접기
+                container.classList.remove('expanded');
+                container.classList.add('collapsed');
+                button.classList.add('collapsed');
+            } else {
+                // 펼치기
+                container.classList.remove('collapsed');
+                container.classList.add('expanded');
+                button.classList.remove('collapsed');
+            }
+        }
+
+        // 페이지 로드 시 기본적으로 펼쳐진 상태로 시작
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.cart_items_container');
+            container.classList.add('expanded');
+        });
+
+        // 배송지 정보 유효성 검사
+        function validateDeliveryInfo() {
+            const addressInfoBox = document.querySelector('.address_info_box');
+            const paymentButton = document.querySelector('.btn_payment');
+            
+            // 배송지 정보가 표시되어 있고, hidden 클래스가 없는 경우에만 결제 버튼 활성화
+            if (addressInfoBox && !addressInfoBox.classList.contains('hidden')) {
+                paymentButton.classList.remove('disabled');
+                paymentButton.disabled = false;
+            } else {
+                paymentButton.classList.add('disabled');
+                paymentButton.disabled = true;
+            }
+        }
+
+        // 페이지 로드 시 초기 상태 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            validateDeliveryInfo();
+        });
+
+        // 기존 배송지 사용
+        function useExistingAddress() {
+            console.log('기존 배송지 정보:', orderDto);
+
+            // orderDto 데이터 유효성 검사
+            if (!orderDto || !orderDto.name || !orderDto.phone || !orderDto.address) {
+                alert('저장된 배송지 정보가 없습니다. 새로운 배송지를 입력해주세요.');
+                openAddressSearch();
+                return;
+            }
+
+            const addressData = {
+                receiverName: orderDto.name || '',
+                receiverPhone: orderDto.phone || '',
+                address: orderDto.address || '',
+                postcode: '',
+                detailAddress: ''
+            };
+
+            // 주소에서 우편번호와 상세주소 분리 시도
+            try {
+                if (addressData.address && addressData.address.includes('[')) {
+                    const addressMatch = addressData.address.match(/\[(.*?)\](.*?)(?:$|\s*\((.+?)\))/);
+                    if (addressMatch) {
+                        addressData.postcode = addressMatch[1];
+                        addressData.address = addressMatch[2].trim();
+                        addressData.detailAddress = addressMatch[3] || '';
+                    }
+                }
+            } catch (error) {
+                console.error('주소 파싱 중 오류:', error);
+                addressData.address = orderDto.address;
+            }
+
+            // 입력 폼에 기존 정보 설정
+            document.getElementById('receiverName').value = addressData.receiverName;
+            document.getElementById('receiverPhone').value = addressData.receiverPhone;
+            document.getElementById('postcode').value = addressData.postcode;
+            document.getElementById('address').value = addressData.address;
+            document.getElementById('detailAddress').value = addressData.detailAddress;
+
+            // 주소 정보 표시 업데이트
+            updateAddressDisplay(addressData);
+            
+            // 주소 입력 폼 숨기기
+            document.getElementById('addressForm').classList.add('hidden');
+
+            // 배송지 정보 유효성 검사 실행
+            validateDeliveryInfo();
+        }
     </script>
     <script th:src="@{/js/payment.js}"></script>
 </th:block>

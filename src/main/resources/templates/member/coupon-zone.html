@@ -9,145 +9,226 @@
   <style>
     .coupon-zone-container {
       max-width: 1200px;
-      margin: 50px auto;
-      padding: 0 20px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+      padding-bottom: 1.5rem;
+    }
+
+    .page-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #1f8ce6, #3bacf0);
+      border-radius: 3px;
     }
 
     .page-title {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 30px;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 1rem;
     }
 
-    .page-title i {
-      color: #1f8ce6;
+    .page-subtitle {
+      color: #7f8c8d;
+      font-size: 1.1rem;
     }
 
-    .coupon-section {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      margin-bottom: 30px;
+    .section-container {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2.5rem;
+    }
+
+    .section-header {
+      background: linear-gradient(135deg, #1f8ce6 0%, #3bacf0 100%);
+      padding: 1rem 2rem;
+      color: white;
     }
 
     .section-title {
-      font-size: 20px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #1f8ce6;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .section-body {
+      padding: 2rem;
     }
 
     .join-benefit {
-      background: #f8f9fa;
+      background: linear-gradient(135deg, #f6f9fc 0%, #f1f7fb 100%);
       border-radius: 12px;
-      padding: 25px;
-      margin-bottom: 30px;
+      padding: 2rem;
     }
 
     .benefit-title {
-      font-size: 18px;
-      font-weight: bold;
+      font-size: 1.3rem;
+      font-weight: 600;
       color: #1f8ce6;
-      margin-bottom: 15px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .benefit-title i {
+      font-size: 1.4rem;
     }
 
     .benefit-description {
-      color: #666;
+      color: #64748b;
       line-height: 1.6;
-      margin-bottom: 20px;
+      margin-bottom: 1.5rem;
     }
 
     .benefit-highlight {
-      background: #e8f4fd;
-      padding: 15px;
-      border-radius: 8px;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
       font-weight: 500;
       color: #1f8ce6;
+      box-shadow: 0 2px 4px rgba(31, 140, 230, 0.1);
+      border-left: 4px solid #1f8ce6;
     }
 
     .discount-coupons {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.5rem;
     }
 
-    .coupon-item {
+    .coupon-card {
       position: relative;
-      background: #fff;
-      border: 2px solid #1f8ce6;
-      border-radius: 12px;
-      padding: 20px;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .coupon-item:hover {
+    .coupon-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .coupon-header {
+      background: linear-gradient(135deg, #1f8ce6 0%, #3bacf0 100%);
+      padding: 1.5rem;
+      color: white;
+      text-align: center;
     }
 
     .coupon-amount {
-      font-size: 24px;
-      font-weight: bold;
-      color: #1f8ce6;
-      margin-bottom: 10px;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .coupon-body {
+      padding: 1.5rem;
     }
 
     .coupon-info {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 15px;
+      font-size: 1rem;
+      color: #34495e;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed #ecf0f1;
     }
 
     .coupon-period {
-      font-size: 12px;
-      color: #999;
-      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #7f8c8d;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .coupon-period i {
+      color: #e74c3c;
     }
 
     .download-btn {
       width: 100%;
-      padding: 10px;
-      background: #1f8ce6;
+      padding: 1rem;
+      background: linear-gradient(135deg, #1f8ce6 0%, #3bacf0 100%);
       color: white;
       border: none;
-      border-radius: 6px;
-      font-weight: 500;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: all 0.3s ease;
     }
 
     .download-btn:hover {
-      background: #1a7ac5;
+      background: linear-gradient(135deg, #1a7ac5 0%, #3498db 100%);
+      transform: translateY(-2px);
     }
 
     .download-btn:disabled {
-      background: #ccc;
+      background: #cbd5e0;
       cursor: not-allowed;
+      transform: none;
     }
 
     .download-btn.downloaded {
-      background: #28a745;
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    }
+
+    .coupon-status {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-available {
+      background: rgba(46, 213, 115, 0.2);
+      color: #2ed573;
+    }
+
+    .status-used {
+      background: rgba(255, 71, 87, 0.15);
+      color: #ff4757;
     }
 
     @media (max-width: 768px) {
       .coupon-zone-container {
-        margin: 30px auto;
+        margin: 2rem auto;
+      }
+
+      .page-title {
+        font-size: 2rem;
       }
 
       .discount-coupons {
         grid-template-columns: 1fr;
       }
 
-      .coupon-section {
-        padding: 20px;
+      .section-body {
+        padding: 1.5rem;
+      }
+
+      .join-benefit {
+        padding: 1.5rem;
       }
     }
   </style>
@@ -155,39 +236,57 @@
 
 <div layout:fragment="content">
   <div class="coupon-zone-container">
-    <h1 class="page-title">
-      <i class="fas fa-gift"></i>
-      쿠폰존
-    </h1>
+    <div class="page-header">
+      <h1 class="page-title">쿠폰존</h1>
+      <p class="page-subtitle">다양한 할인 혜택을 만나보세요</p>
+    </div>
 
-    <div class="coupon-section">
-      <h2 class="section-title">가입 혜택</h2>
-      <div class="join-benefit">
-        <div class="benefit-title">신규 회원 전용 할인 쿠폰</div>
-        <p class="benefit-description">
-          B-Book 회원이 되시면 즉시 사용 가능한 1,000원 할인 쿠폰 10장이 자동으로 지급됩니다.<br>
-          15,000원 이상 구매 시 사용 가능하며, 주문 당 1장씩 사용하실 수 있습니다.
-        </p>
-        <div class="benefit-highlight">
-          회원가입 시 자동 지급되는 10장의 쿠폰으로 최대 10,000원 할인 혜택을 받아보세요!
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">가입 혜택</h2>
+      </div>
+      <div class="section-body">
+        <div class="join-benefit">
+          <div class="benefit-title">
+            <i class="fas fa-gift"></i>
+            신규 회원 전용 할인 쿠폰
+          </div>
+          <p class="benefit-description">
+            B-Book 회원이 되시면 즉시 사용 가능한 1,000원 할인 쿠폰 10장이 자동으로 지급됩니다.<br>
+            15,000원 이상 구매 시 사용 가능하며, 주문 당 1장씩 사용하실 수 있습니다.
+          </p>
+          <div class="benefit-highlight">
+            회원가입 시 자동 지급되는 10장의 쿠폰으로 최대 10,000원 할인 혜택을 받아보세요!
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="coupon-section">
-      <h2 class="section-title">할인 혜택</h2>
-      <div class="discount-coupons">
-        <div class="coupon-item">
-          <div class="coupon-amount">1,000원</div>
-          <div class="coupon-info">
-            <p>15,000원 이상 구매시 사용 가능</p>
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">할인 혜택</h2>
+      </div>
+      <div class="section-body">
+        <div class="discount-coupons">
+          <div class="coupon-card">
+            <div class="coupon-header">
+              <div class="coupon-amount">1,000원</div>
+              <div>할인 쿠폰</div>
+            </div>
+            <div class="coupon-body">
+              <div class="coupon-info">
+                <i class="fas fa-tags"></i>
+                15,000원 이상 구매시 사용 가능
+              </div>
+              <div class="coupon-period">
+                <i class="far fa-clock"></i>
+                발급일로부터 30일간 사용 가능
+              </div>
+              <button class="download-btn" onclick="downloadCoupon(event)">
+                <span>쿠폰받기</span>
+              </button>
+            </div>
           </div>
-          <div class="coupon-period">
-            발급일로부터 30일간 사용 가능
-          </div>
-          <button class="download-btn" onclick="downloadCoupon(event)">
-            <span>쿠폰받기</span>
-          </button>
         </div>
       </div>
     </div>

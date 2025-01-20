@@ -17,12 +17,16 @@ public class AdminOrderDto {
     private String memberName;
     private String email;
     private String orderName;
+    private Long originalPrice;
     private Long totalPrice;
     private Long shippingFee;
     private OrderStatus orderStatus;
     private LocalDateTime orderDate;
     private boolean subscriber;
     private List<OrderBookDto> orderBooks;
+    private Integer usedPoints;
+    private Integer discountAmount;
+    private Boolean isCouponUsed;
 
     @Getter
     @Setter
@@ -49,6 +53,7 @@ public class AdminOrderDto {
         dto.email = order.getMember().getEmail();
         dto.orderName = !order.getOrderBooks().isEmpty() ? order.getOrderBooks().get(0).getBook().getTitle() +
                 (order.getOrderBooks().size() > 1 ? " 외 " + (order.getOrderBooks().size() - 1) + "건" : "") : "주문 상품 없음";
+        dto.originalPrice = order.getOriginalPrice();
         dto.totalPrice = order.getTotalPrice();
         dto.shippingFee = order.getShippingFee();
         dto.orderStatus = order.getOrderStatus();
@@ -56,6 +61,9 @@ public class AdminOrderDto {
         dto.orderBooks = order.getOrderBooks().stream()
                 .map(OrderBookDto::of)
                 .collect(Collectors.toList());
+        dto.usedPoints = order.getUsedPoints();
+        dto.discountAmount = order.getDiscountAmount();
+        dto.isCouponUsed = order.getIsCouponUsed();
         return dto;
     }
 }

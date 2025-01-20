@@ -4,240 +4,450 @@
       layout:decorate="~{layouts/layout}">
 
 <head>
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}">
-</head>
-
-<th:block layout:fragment="css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/success.css}">
     <style>
-        .success-container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 0 20px;
+        .recommendation-container {
+            padding: 2rem 0;
+            margin: 2rem 0;
+            background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
         }
-
-        .success-header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 30px 0;
-            border-bottom: 2px solid #4E73DF;
-        }
-
-        .success-header h2 {
-            font-size: 28px;
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .success-header p {
-            color: #666;
-            font-size: 16px;
-        }
-
-        .order-info-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-
-        .order-info-title {
-            font-size: 18px;
+        
+        .section-title {
+            margin-bottom: 1.5rem;
+            padding: 0 1rem;
+            font-size: 1.25rem;
             font-weight: bold;
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .order-detail {
-            display: grid;
-            grid-template-columns: 120px 1fr;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .detail-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .detail-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             color: #333;
         }
 
-        .price-value {
+        .new-badge {
+            background: linear-gradient(45deg, #4E73DF, #6f8df7);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            box-shadow: 0 2px 4px rgba(78, 115, 223, 0.2);
+        }
+
+        .personalized-swiper {
+            padding: 1rem;
+            position: relative;
+        }
+
+        .swiper-slide {
+            width: auto;
+            height: auto;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            width: 200px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .book-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .book-info {
+            text-align: left;
+        }
+
+        .book-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            height: 2.8em;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .book-price {
             color: #4E73DF;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 1.1rem;
         }
 
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 40px;
-            margin-bottom: 100px;
-            padding-bottom: 20px;
-        }
-
-        .btn-action {
-            padding: 15px 40px;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: 500;
-            text-decoration: none;
+        .swiper-button-next,
+        .swiper-button-prev {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
 
-        .btn-primary {
-            background-color: #4E73DF;
-            color: white;
-            border: none;
+        .swiper-button-next:hover,
+        .swiper-button-prev:hover {
+            background: #4E73DF;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(78, 115, 223, 0.2);
         }
 
-        .btn-secondary {
-            background-color: #fff;
-            color: #4E73DF;
-            border: 1px solid #4E73DF;
-        }
-
-        .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .btn-primary:hover {
-            color: white;
-            background-color: #375abd;
-        }
-
-        .btn-secondary:hover {
-            color: #375abd;
-            border-color: #375abd;
-        }
-
-        .order-items {
-            margin-bottom: 30px;
-        }
-
-        .item-box {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .item-image {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-right: 20px;
-        }
-
-        .item-info {
-            flex-grow: 1;
-        }
-
-        .item-name {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .item-quantity {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .success-message {
-            background-color: #E8F1FF;
-            color: #4E73DF;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .total-price {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .total-price .detail-label,
-        .total-price .detail-value {
-            font-size: 16px;
+        .swiper-button-next::after,
+        .swiper-button-prev::after {
+            font-size: 1.2rem;
             font-weight: bold;
+            color: #4E73DF;
         }
 
-        .price-value {
-            color: #4E73DF;
+        .swiper-button-next:hover::after,
+        .swiper-button-prev:hover::after {
+            color: white;
+        }
+
+        .swiper-pagination-bullet {
+            width: 8px;
+            height: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: #4E73DF;
+            width: 24px;
+            border-radius: 4px;
         }
     </style>
-</th:block>
+</head>
 
-<div layout:fragment="content" class="success-container">
-    <div class="success-header">
-        <h2>주문이 완료되었습니다</h2>
-        <p>주문하신 상품의 결제가 정상적으로 완료되었습니다.</p>
+<div layout:fragment="content">
+    <!-- TOP 버튼 -->
+    <div class="floating_wrapper">
+        <a href="#" class="btn_go_top" title="최상위 화면으로">
+            <span>TOP</span>
+        </a>
     </div>
 
-    <div class="success-message">
-        주문하신 상품은 입력하신 배송지로 발송될 예정입니다.
+    <div class="payment_wrap">
+        <!-- 상단 헤더 -->
+        <div class="payment_top_wrap sps">
+            <div class="payment_top_inner">
+                <div class="title_wrap">
+                    <h1 class="title_heading">주문완료</h1>
+                    <div class="right_area">
+                        <ol class="step_round_text_list">
+                            <li class="step_item"><span class="step_num">1</span>장바구니</li>
+                            <li class="step_item"><span class="step_num">2</span>주문/결제</li>
+                            <li class="step_item active"><span class="step_num">3</span>주문완료</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="payment_content_wrap">
+            <!-- 좌측: 주문 정보 영역 -->
+            <div class="payment_info_area">
+                <!-- 주문 상품 정보 -->
+                <div class="order_items_wrap">
+                    <div class="cart_list_wrap">
+                        <div class="cart_list_header">
+                            <div class="list_summary">
+                                <span class="list_title">주문 상품</span>
+                                <span class="list_count">총 <strong th:text="${#lists.size(order.orderBookDtoList)}">0</strong>개</span>
+                            </div>
+                            <button type="button" class="btn_toggle" onclick="toggleCartList(this)">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="cart_items_container">
+                            <ul class="cart_list">
+                                <li class="cart_item" th:each="book : ${order.orderBookDtoList}">
+                                    <div class="item_wrap">
+                                        <div class="item_info_area">
+                                            <div class="item_thumb">
+                                                <img th:src="${book.imgUrl}" th:alt="${book.bookName}" class="item_img">
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title" th:text="${book.bookName}"></div>
+                                                <div class="item_price">
+                                                    <span class="price" th:text="${#numbers.formatInteger(book.orderPrice, 0, 'COMMA')} + '원'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="quantity_area">
+                                            <div class="quantity_box">
+                                                <span th:text="${book.count} + '개'"></span>
+                                            </div>
+                                        </div>
+                                        <div class="price_area">
+                                            <span class="total_price" th:text="${#numbers.formatInteger(book.orderPrice * book.count, 0, 'COMMA')} + '원'"></span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 배송 정보 -->
+                <div class="order_items_wrap">
+                    <div class="cart_list_wrap">
+                        <!-- 헤더 -->
+                        <div class="cart_list_header">
+                            <div class="list_summary">
+                                <span class="list_title">배송 정보</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 배송 정보 목록 -->
+                        <div class="cart_items_container">
+                            <ul class="cart_list">
+                                <li class="cart_item">
+                                    <div class="item_wrap">
+                                        <div class="item_info_area">
+                                            <div class="item_thumb payment_icon">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title">받는 분</div>
+                                                <div class="item_description" th:text="${order.name}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="cart_item">
+                                    <div class="item_wrap">
+                                        <div class="item_info_area">
+                                            <div class="item_thumb payment_icon">
+                                                <i class="fas fa-phone"></i>
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title">연락처</div>
+                                                <div class="item_description" th:text="${order.phone}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="cart_item">
+                                    <div class="item_wrap">
+                                        <div class="item_info_area">
+                                            <div class="item_thumb payment_icon">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </div>
+                                            <div class="item_info">
+                                                <div class="item_title">주소</div>
+                                                <div class="item_description">
+                                                    <div th:text="${order.address}"></div>
+                                                    <div th:if="${order.detailAddress}" th:text="${order.detailAddress}" style="margin-top: 4px; color: #666;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 우측: 결제 금액 영역 -->
+            <div class="payment_summary_area">
+                <div class="summary_content">
+                    <h3 class="info_title">결제 정보</h3>
+                    <div class="price_details">
+                        <div class="price_row">
+                            <span>상품금액</span>
+                            <span th:text="${#numbers.formatInteger(order.originalPrice, 0, 'COMMA')} + '원'"></span>
+                        </div>
+                        <div class="price_row">
+                            <span>배송비</span>
+                            <span th:text="${order.shippingFee == 0 ? '무료' : #numbers.formatInteger(order.shippingFee, 0, 'COMMA') + '원'}"></span>
+                        </div>
+                        <div class="price_row" th:if="${order.usedPoints > 0}">
+                            <span>포인트 사용</span>
+                            <span th:text="${'-' + #numbers.formatInteger(order.usedPoints, 0, 'COMMA')} + '원'"></span>
+                        </div>
+                        <div class="price_row" th:if="${order.isCouponUsed}">
+                            <span>쿠폰 할인</span>
+                            <span th:text="${'-' + #numbers.formatInteger(order.discountAmount, 0, 'COMMA')} + '원'"></span>
+                        </div>
+                        <div class="price_row total">
+                            <span>최종 결제 금액</span>
+                            <span th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + '원'"></span>
+                        </div>
+                        <div class="price_row points" th:if="${order.earnedPoints > 0}">
+                            <span>
+                                적립 예정 포인트
+                                <span class="ico_question" onclick="openPointsModal()">
+                                    <i class="fas fa-circle-question"></i>
+                                </span>
+                            </span>
+                            <span id="expectedPoints" th:text="${#numbers.formatInteger(order.earnedPoints, 0, 'COMMA')} + 'P'"></span>
+                        </div>
+                    </div>
+                    <div class="price_row">
+                        <span>주문 상태</span>
+                        <span th:text="${order.orderStatus}"></span>
+                    </div>
+                    <div class="order_button_wrap">
+                        <a href="/orders" class="btn_continue">주문 내역 확인</a>
+                        <a href="/" class="btn_order">쇼핑 계속하기</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="order-info-box">
-        <h3 class="order-info-title">주문 정보</h3>
-        <div class="order-detail">
-            <span class="detail-label">주문번호</span>
-            <span class="detail-value" th:text="${order.merchantUid}">ORDER-123456</span>
-        </div>
-        <div class="order-detail">
-            <span class="detail-label">주문명</span>
-            <span class="detail-value" th:text="${order.orderName}">상품명</span>
-        </div>
-        <div class="order-detail">
-            <span class="detail-label">상품 금액</span>
-            <span class="detail-value" th:text="${#numbers.formatInteger(order.originalPrice, 0, 'COMMA') + '원'}">0원</span>
-        </div>
-        <div class="order-detail">
-            <span class="detail-label">배송비</span>
-            <span class="detail-value" th:text="${order.shippingFee == 0 ? '무료' : #numbers.formatInteger(order.shippingFee, 0, 'COMMA') + '원'}">0원</span>
-        </div>
-        <div class="order-detail" th:if="${order.usedPoints > 0}">
-            <span class="detail-label">포인트 사용</span>
-            <span class="detail-value" th:text="${'-' + #numbers.formatInteger(order.usedPoints, 0, 'COMMA') + '원'}">0원</span>
-        </div>
-        <div class="order-detail" th:if="${order.isCouponUsed}">
-            <span class="detail-label">쿠폰 할인</span>
-            <span class="detail-value" th:text="${'-' + #numbers.formatInteger(order.discountAmount, 0, 'COMMA') + '원'}">0원</span>
-        </div>
-        <div class="order-detail total-price">
-            <span class="detail-label">최종 결제 금액</span>
-            <span class="detail-value price-value" th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA') + '원'}">0원</span>
-        </div>
-        <div class="order-detail" th:if="${order.earnedPoints > 0}">
-            <span class="detail-label">적립 예정 포인트</span>
-            <span class="detail-value earned-points" th:text="${#numbers.formatInteger(order.earnedPoints, 0, 'COMMA') + 'P'}">0P</span>
-        </div>
-        <div class="order-detail">
-            <span class="detail-label">주문 상태</span>
-            <span class="detail-value" th:text="${order.orderStatus}">결제완료</span>
+    <!-- 맞춤 추천 상품 -->
+    <div class="recommendation-container" th:if="${#authorization.expression('isAuthenticated()')}">
+        <h3 class="section-title">
+            <i class="fas fa-magic"></i>
+            이런 책은 어떠세요?
+            <span class="new-badge">AI</span>
+        </h3>
+        <div class="swiper personalized-swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" th:each="book : ${collaborativeBooks}">
+                    <div class="book-card" th:data-book-id="${book.id}">
+                        <img class="book-image" th:src="${book.imageUrl}" th:alt="${book.title}">
+                        <div class="book-info">
+                            <h4 class="book-title" th:text="${book.title}">책 제목</h4>
+                            <div class="book-price" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + '원'">
+                                가격
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-pagination"></div>
         </div>
     </div>
 
-    <div class="action-buttons">
-        <a href="/orders" class="btn-action btn-primary">주문 내역 확인</a>
-        <a href="/" class="btn-action btn-secondary">쇼핑 계속하기</a>
+    <!-- 포인트 안내 모달 -->
+    <div class="modal" id="pointsInfoModal">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3>포인트 적립 안내</h3>
+                <button type="button" class="btn_close" onclick="closePointsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal_body">
+                <div class="points_info">
+                    <ul class="info_list">
+                        <li><i class="fas fa-crown"></i> 구독회원: 결제금액의 10% 적립</li>
+                        <li><i class="fas fa-user"></i> 일반회원: 결제금액의 5% 적립</li>
+                        <li><i class="fas fa-circle-info"></i> 적립금은 다음 주문 시 사용 가능합니다.</li>
+                        <li><i class="fas fa-circle-info"></i> 적립금은 100P 단위로 사용 가능합니다.</li>
+                        <li><i class="fas fa-clock"></i> 적립금은 결제 완료 후 즉시 적립됩니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Swiper 초기화
+            new Swiper('.personalized-swiper', {
+                slidesPerView: 'auto',
+                spaceBetween: 20,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                breakpoints: {
+                    320: {
+                        slidesPerView: 2,
+                        spaceBetween: 10
+                    },
+                    480: {
+                        slidesPerView: 3,
+                        spaceBetween: 15
+                    },
+                    768: {
+                        slidesPerView: 4,
+                        spaceBetween: 20
+                    },
+                    1024: {
+                        slidesPerView: 5,
+                        spaceBetween: 20
+                    }
+                }
+            });
+        });
+
+        function toggleCartList(button) {
+            const container = button.closest('.cart_list_wrap').querySelector('.cart_items_container');
+            const icon = button.querySelector('i');
+            
+            if (container.classList.contains('collapsed')) {
+                container.classList.remove('collapsed');
+                container.classList.add('expanded');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                container.classList.remove('expanded');
+                container.classList.add('collapsed');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        function openPointsModal() {
+            document.getElementById('pointsInfoModal').style.display = 'block';
+        }
+
+        function closePointsModal() {
+            document.getElementById('pointsInfoModal').style.display = 'none';
+        }
+
+        // TOP 버튼 표시/숨김 처리
+        window.addEventListener('scroll', function() {
+            const topButton = document.querySelector('.btn_go_top');
+            if (window.scrollY > 200) {
+                topButton.classList.add('active');
+            } else {
+                topButton.classList.remove('active');
+            }
+        });
+
+        // TOP 버튼 클릭 시 최상단으로 스크롤
+        document.querySelector('.btn_go_top').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+    </script>
+</th:block>
 
 </html> 

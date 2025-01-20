@@ -14,6 +14,7 @@ import com.bbook.entity.Book;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
 	List<Book> findByAuthor(String author);
+
 	List<Book> findByMidCategory(String midCategory);
 
 	@Query("SELECT DISTINCT b.mainCategory FROM Book b WHERE b.mainCategory IS NOT NULL ORDER BY b.mainCategory")
@@ -107,6 +108,16 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
 	default List<Book> findTopBooksByCategory(String category, int limit) {
 		return findTopBooksByCategory(category, PageRequest.of(0, limit));
+	}
+
+	/**
+	 * 판매량이 가장 높은 상위 10개의 책을 조회합니다.
+	 */
+	@Query("SELECT b FROM Book b ORDER BY b.sales DESC")
+	List<Book> findTop10ByOrderBySalesDesc(Pageable pageable);
+
+	default List<Book> findTop10ByOrderBySalesDesc() {
+		return findTop10ByOrderBySalesDesc(PageRequest.of(0, 10));
 	}
 
 }

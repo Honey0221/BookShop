@@ -1,8 +1,66 @@
 $(document).ready(function() {
-    // 페이지 로드 시 초기 총 금액 계산
+    // Swiper 초기화
+    new Swiper('.personalized-swiper', {
+        slidesPerView: 'auto',
+        spaceBetween: 20,
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        breakpoints: {
+            320: {
+                slidesPerView: 2,
+                spaceBetween: 10
+            },
+            480: {
+                slidesPerView: 3,
+                spaceBetween: 15
+            },
+            768: {
+                slidesPerView: 4,
+                spaceBetween: 20
+            },
+            1024: {
+                slidesPerView: 5,
+                spaceBetween: 20
+            }
+        }
+    });
+
+    // 스크롤 이벤트 처리
+    $(window).scroll(function() {
+        var scrollTop = $(window).scrollTop();
+        
+        // 상단 헤더 고정
+        if (scrollTop > 192) {
+            $('.cart_top_wrap').addClass('sps-blw');
+            $('.cart_content_wrap').css('margin-top', $('.cart_top_wrap').outerHeight());
+        } else {
+            $('.cart_top_wrap').removeClass('sps-blw');
+            $('.cart_content_wrap').css('margin-top', 0);
+        }
+        
+        // TOP 버튼 표시/숨김
+        if (scrollTop > 500) {
+            $('.btn_go_top').addClass('active');
+        } else {
+            $('.btn_go_top').removeClass('active');
+        }
+    });
+
+    // TOP 버튼 클릭 이벤트
+    $('.btn_go_top').click(function(e) {
+        e.preventDefault();
+        $('html, body').animate({scrollTop: 0}, 300);
+    });
+
+    // 기존 코드 유지
     calculateCheckedPrice();
     
-    // 체크박스 변경 이벤트
     $("input[name=cartChkBox]").change(function() {
         calculateCheckedPrice();
     });
@@ -17,6 +75,9 @@ $(document).ready(function() {
     $(window).click(function(e) {
         if (e.target == $("#shippingInfoModal")[0]) {
             $("#shippingInfoModal").hide();
+        }
+        if (e.target == $("#pointsInfoModal")[0]) {
+            $("#pointsInfoModal").hide();
         }
     });
 });
@@ -38,17 +99,26 @@ function calculateCheckedPrice() {
         $("#totalPrice_" + cartBookId).html(cartBookTotal.toLocaleString() + "원");
     });
 
-    // 배송비 계산 (15,000원 미만 주문 시 3,000원)
-    if(orderTotalPrice > 0 && orderTotalPrice < 15000) {
+    // 구독자 여부 확인
+    var isSubscriber = $(".order_summary").data("is-subscriber") === true;
+
+    // 배송비 계산 (구독자는 무료, 일반회원은 15,000원 미만 주문 시 3,000원)
+    if (!isSubscriber && orderTotalPrice > 0 && orderTotalPrice < 15000) {
         deliveryFee = 3000;
-    } else {
-        deliveryFee = 0;
     }
+
+    // 최종 결제 금액 계산
+    var finalAmount = orderTotalPrice + deliveryFee;
 
     // 화면 업데이트
     $("#totalPrice").html(orderTotalPrice.toLocaleString());  // 순수 상품 금액
     $("#deliveryFee").html(deliveryFee.toLocaleString());    // 배송비
-    $("#orderTotalPrice").html((orderTotalPrice + deliveryFee).toLocaleString());  // 최종 결제 금액
+    $("#orderTotalPrice").html(finalAmount.toLocaleString());  // 최종 결제 금액
+    
+    // 적립 예정 포인트 계산 및 표시 (구독자 10%, 일반회원 5% 적립)
+    var pointRate = isSubscriber ? 0.1 : 0.05;
+    var expectedPoints = Math.floor(finalAmount * pointRate);
+    $("#expectedPoints").html(expectedPoints.toLocaleString());
 }
 
 // 전체 선택/해제 토글 함수
@@ -363,4 +433,19 @@ function updateTotalPrice() {
     $("#totalPrice").html(orderTotalPrice.toLocaleString());
     $("#deliveryFee").html(deliveryFee.toLocaleString());
     $("#orderTotalPrice").html((orderTotalPrice + deliveryFee).toLocaleString());
+}
+
+// 배송비 안내 모달 열기
+function openShippingModal() {
+    $("#shippingInfoModal").show();
+}
+
+// 포인트 안내 모달 열기
+function openPointsModal() {
+    $("#pointsInfoModal").show();
+}
+
+// 포인트 안내 모달 닫기
+function closePointsModal() {
+    $("#pointsInfoModal").hide();
 }
