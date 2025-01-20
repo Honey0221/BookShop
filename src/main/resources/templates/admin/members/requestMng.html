@@ -14,13 +14,19 @@
     <!-- 검색 영역 -->
     <div class="search-box">
       <form th:action="@{/admin/members/requestMng}" method="get">
-        <select name="searchType">
-          <option value="email">이메일</option>
-          <option value="title">제목</option>
-          <option value="status">상태</option>
-        </select>
-        <input type="text" name="searchKeyword" th:value="${param.searchKeyword}">
-        <button type="submit">검색</button>
+        <div class="search-wrapper">
+          <select name="searchType" class="search-type">
+            <option value="email">이메일</option>
+            <option value="title">제목</option>
+            <option value="status">상태</option>
+          </select>
+          <input type="text" name="searchKeyword" th:value="${param.searchKeyword}" class="search-input"
+            placeholder="검색어를 입력하세요">
+          <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>
+            <span>검색</span>
+          </button>
+        </div>
       </form>
     </div>
 
@@ -118,6 +124,91 @@
   </div>
 
   <style>
+    .search-box {
+      position: relative;
+      max-width: 500px;
+      margin: 20px 0;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 50px;
+      padding: 5px 5px 5px 20px;
+      transition: all 0.3s ease;
+    }
+
+    .search-wrapper:focus-within {
+      border-color: #2196F3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    .search-type {
+      border: none;
+      background: transparent;
+      color: #666;
+      padding: 8px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .search-type:focus {
+      color: #2196F3;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      padding: 8px 15px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      background: transparent;
+    }
+
+    .search-button {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .search-button:hover {
+      background-color: #1976D2;
+    }
+
+    @media (max-width: 768px) {
+      .search-wrapper {
+        padding: 3px 3px 3px 15px;
+      }
+
+      .search-type {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .search-input {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .search-button {
+        padding: 6px 15px;
+        font-size: 13px;
+      }
+    }
+
     .request-container {
       width: 60%;
       min-width: 800px;

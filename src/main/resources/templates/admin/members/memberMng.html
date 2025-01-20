@@ -223,6 +223,149 @@
         overflow-y: auto;
       }
     }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin: 40px 0;
+    }
+
+    .pagination a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 14px;
+      text-decoration: none;
+      color: #666;
+      transition: all 0.3s ease;
+      background-color: #fff;
+      border: 1px solid #e0e0e0;
+    }
+
+    .pagination a:hover {
+      background-color: #f5f5f5;
+      color: #333;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .pagination a.active {
+      background-color: #2196F3;
+      color: white;
+      border-color: #2196F3;
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    }
+
+    /* 이전/다음 버튼 */
+    .pagination .nav-btn {
+      font-size: 18px;
+      color: #999;
+    }
+
+    .pagination .nav-btn:hover {
+      color: #2196F3;
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 768px) {
+      .pagination {
+        gap: 4px;
+      }
+
+      .pagination a {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+      }
+    }
+
+    .search-container {
+      position: relative;
+      max-width: 500px;
+      margin: 20px 0;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 50px;
+      padding: 5px 5px 5px 20px;
+      transition: all 0.3s ease;
+    }
+
+    .search-wrapper:focus-within {
+      border-color: #2196F3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    .search-type {
+      border: none;
+      background: transparent;
+      color: #666;
+      padding: 8px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .search-type:focus {
+      color: #2196F3;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      padding: 8px 15px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      background: transparent;
+    }
+
+    .search-button {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .search-button:hover {
+      background-color: #1976D2;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+      .search-wrapper {
+        padding: 3px 3px 3px 15px;
+      }
+
+      .search-type {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .search-input {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .search-button {
+        padding: 6px 15px;
+        font-size: 13px;
+      }
+    }
   </style>
 </th:block>
 <th:block layout:fragment="script">
@@ -385,12 +528,15 @@
 
     <div class="search-box">
       <form th:action="@{/admin/members/memberMng}" method="get">
-        <select name="searchType">
+        <select name="searchType" class="search-type">
           <option value="email">이메일</option>
           <option value="nickname">닉네임</option>
         </select>
-        <input type="text" name="searchKeyword" th:value="${param.searchKeyword}">
-        <button type="submit">검색</button>
+        <input type="text" name="searchKeyword" th:value="${param.searchKeyword}" class="search-input"
+          placeholder="검색어를 입력하세요">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
         <div class="bulk-actions">
           <button type="button" onclick="openBulkEmailModal()" class="bulk-email-btn">선택회원 이메일 발송</button>
         </div>
@@ -426,10 +572,23 @@
 
     <!-- 페이징 처리 -->
     <div th:if="${pages != null}" class="pagination">
+      <!-- 이전 페이지 버튼 -->
+      <a th:if="${currentPage > 0}" th:href="@{/admin/members/memberMng(page=${currentPage - 1})}" class="nav-btn">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+
+      <!-- 페이지 번호 -->
       <span th:each="pageNum : ${#numbers.sequence(0, pages - 1)}">
         <a th:href="@{/admin/members/memberMng(page=${pageNum})}" th:text="${pageNum + 1}"
-          th:class="${pageNum == currentPage} ? 'active' : ''"></a>
+          th:class="${pageNum == currentPage} ? 'active' : ''">
+        </a>
       </span>
+
+      <!-- 다음 페이지 버튼 -->
+      <a th:if="${currentPage < pages - 1}" th:href="@{/admin/members/memberMng(page=${currentPage + 1})}"
+        class="nav-btn">
+        <i class="fas fa-chevron-right"></i>
+      </a>
     </div>
 
     <!-- 이메일 모달 -->
