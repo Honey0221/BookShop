@@ -10,12 +10,8 @@ $(document).ready(function() {
   $("#reviewForm").off("submit");
 
   // 새로운 이벤트 리스너 등록
-  $('#review-tab').on('shown.bs.tab', function (e) {
-    // 탭이 이미 로드되었는지 확인
-    if (!$(this).data('loaded')) {
-      loadReviews(0, "likes");
-      $(this).data('loaded', true);
-    }
+  $('#review-tab').on('shown.bs.tab', function () {
+    loadReviews(0, "likes");
   });
 
   // 리뷰 이미지 미리보기 함수
@@ -151,9 +147,6 @@ $(document).ready(function() {
     cleanupModal();
   });
 
-  // 총 가격 변수
-  const price = parseInt($("#totalPrice").text().replace(/[^0-9]/g, ""));
-
   // 수량 변경 시 총 가격 업데이트
   $("#quantity").change(function() {
     const quantity = parseInt($(this).val());
@@ -175,12 +168,6 @@ $(document).ready(function() {
       updateTotalPrice(quantity);
     }
   });
-
-  // 총 가격 업데이트 함수
-  function updateTotalPrice(quantity) {
-    const totalPrice = price * quantity;
-    $("#totalPrice").text(totalPrice.toLocaleString() + '원');
-  }
 
   // 카카오톡 공유 버튼 기능 클릭 이벤트
   $("#shareKakaoBtn").off('click').on('click', function(e) {
@@ -264,7 +251,6 @@ $(document).ready(function() {
   $("#reviewSort").change(function() {
     const sortType = $(this).val();
     loadReviews(0, sortType);
-    $('#review-tab').data('loaded', true);
   });
 
   // 리뷰 작성 모달창 취소 버튼 클릭 이벤트
@@ -289,7 +275,7 @@ $(document).ready(function() {
   function cleanupModal() {
     // backdrop 제거
     $('.modal-backdrop').remove();
-    
+
     // body 스타일 초기화
     $('body')
         .removeClass('modal-open')
@@ -298,12 +284,12 @@ $(document).ready(function() {
             'padding-right': ''
         })
         .removeAttr('style');
-    
+
     // html 스타일 초기화
     $('html')
         .css('overflow', '')
         .removeAttr('style');
-    
+
     // 스크롤바 강제 표시
     document.documentElement.style.overflowY = 'scroll';
   }
@@ -315,7 +301,37 @@ $(document).ready(function() {
     window.trailerChecked = true;
     checkBookTrailer();
   }
+
+  // 토글 버튼 이벤트
+  $('.btn-toggle').on('click', function() {
+    $('.button-container').collapse('toggle');
+  });
 });
+
+// 수량 업데이트 함수 추가
+function updateQuantity(change) {
+  const $quantity = $('#quantity');
+  const currentValue = parseInt($quantity.val());
+  const maxValue = parseInt($quantity.attr('max'));
+  const minValue = parseInt($quantity.attr('min'));
+
+  let newValue = currentValue + change;
+
+  // 최소값, 최대값 범위 확인
+  if (newValue < minValue) newValue = minValue;
+  if (newValue > maxValue) newValue = maxValue;
+
+  $quantity.val(newValue);
+
+  updateTotalPrice(newValue);
+}
+
+// 총 가격 업데이트 함수
+function updateTotalPrice(quantity) {
+  const price = parseInt($(".book-price span:last").text().replace(/[^0-9]/g, ""));
+  const totalPrice = price * quantity;
+  $("#totalPrice").text(totalPrice.toLocaleString() + '원');
+}
 
 // 리뷰 목록 조회
 function loadReviews(page = 0, sortType = 'likes') {
@@ -343,7 +359,8 @@ function loadReviews(page = 0, sortType = 'likes') {
       appendPagination(response);
       setupReviewEventListeners();
     },
-    error: function () {
+    error: function (error) {
+      console.error('리뷰 로드 실패', error);
       showAlert('리뷰 목록을 불러오는데 실패했습니다.', 'error');
     }
   });
@@ -390,7 +407,7 @@ function appendPagination(response) {
 
   if (!response.first) {
     paginationHtml += `<li class="page-item">
-      <a class="page-link" href="#" data-page="${response.number - 1}">이전</a>
+      <a class="page-link" href="#" data-page="${response.number - 1}">&lt;</a>
     </li>`;
   }
 
@@ -402,7 +419,7 @@ function appendPagination(response) {
 
   if (!response.last) {
     paginationHtml += `<li class="page-item">
-      <a class="page-link" href="#" data-page="${response.number + 1}">다음</a>
+      <a class="page-link" href="#" data-page="${response.number + 1}">&gt;</a>
     </li>`;
   }
 
@@ -692,7 +709,7 @@ function updateReviewCount() {
     url: `/reviews/count/${bookId}`,
     type: "Get",
     success: function(count) {
-      $("#review-tab").text(`리뷰(${count})`);
+      $("#review-tab").text(`리뷰 (${count})`);
     }
   });
 }
@@ -835,6 +852,7 @@ function addCart() {
         }
     });
 }
+
 // 재고 체크 함수
 function checkStock(quantity) {
     const stock = parseInt($("#stock").val());
@@ -846,6 +864,7 @@ function checkStock(quantity) {
     }
     return true;
 }
+
 // 북 트레일러 검사
 function checkBookTrailer() {
   const bookId = $("#bookId").val();

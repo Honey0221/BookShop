@@ -24,6 +24,28 @@
 
 <div layout:fragment="content">
   <div class="container">
+    <!-- 카테고리 표시 영역 -->
+    <div class="category-path mb-3">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a th:href="@{/book-list}">도서</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a th:href="@{/book-list/category(main=${book.mainCategory})}"
+               th:text="${book.mainCategory}">대분류</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a th:href="@{/book-list/category(main=${book.mainCategory}, mid=${book.midCategory})}"
+               th:text="${book.midCategory}">중분류</a>
+          </li>
+          <li class="breadcrumb-item" th:if="${book.detailCategory != null}">
+            <a th:href="@{/book-list/category(main=${book.mainCategory}, mid=${book.midCategory}, detail=${book.detailCategory})}"
+               th:text="${book.detailCategory}">상세 분류</a>
+          </li>
+        </ol>
+      </nav>
+    </div>
     <div class="row">
       <!-- 책 이미지 -->
       <div class="col-md-5">
@@ -36,8 +58,24 @@
       <!-- 책 정보 -->
       <div class="col-md-7">
         <div class="book-info">
-          <div class="d-flex align-items-center gap-2">
-            <h2 class="book-title" th:text="${book.title}"></h2>
+          <div class="book-title-section">
+            <div class="title-heart-wrapper">
+              <h2 class="book-title" th:text="${book.title}"></h2>
+              <div class="action-buttons">
+                <button type="button" class="btn btn-link p-0" id="loginBtn"
+                        sec:authorize="!isAuthenticated()">
+                  <i class="far fa-heart text-danger"></i>
+                </button>
+                <button type="button" class="btn btn-link p-0" id="wishBtn"
+                        sec:authorize="isAuthenticated()">
+                  <i class="far fa-heart text-danger"
+                     th:classappend="${isWished ? 'fas' : 'far'}"></i>
+                </button>
+                <button type="button" class="btn btn-link p-0" id="shareKakaoBtn">
+                  <i class="fas fa-share-alt text-primary"></i>
+                </button>
+              </div>
+            </div>
             <div class="average-rating">
               <span class="rating-stars text-warning">
                 <i class="fas fa-star"></i>
@@ -46,60 +84,51 @@
                     th:text="|${#numbers.formatDecimal(avgRating, 1, 1)}|">
               </span>
             </div>
-            <button type="button" class="btn btn-link p-0 ms-2" id="loginBtn"
-                    sec:authorize="!isAuthenticated()">
-              <i class="far fa-heart text-danger fs-5"></i>
-            </button>
-            <button type="button" class="btn btn-link p-0 ms-2" id="wishBtn"
-                    sec:authorize="isAuthenticated()">
-              <i class="far fa-heart text-danger fs-5"
-                 th:classappend="${isWished ? 'fas' : 'far'}"></i>
-            </button>
           </div>
-          <div class="book-author mb-3">
-            <span>저자:</span>
-            <span th:text="${book.author}"></span>
-          </div>
-          <div class="book-publisher mb-3">
-            <span>출판사:</span>
-            <span th:text="${book.publisher}"></span>
-          </div>
-          <div class="book-price mb-4">
-            <span>가격:</span>
-            <span
-              th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
-            </span>
+          <div class="book-basic-info">
+            <div class="book-author">
+              <span>저자</span>
+              <span th:text="${book.author}"></span>
+            </div>
+            <div class="book-publisher">
+              <span>출판사</span>
+              <span th:text="${book.publisher}"></span>
+            </div>
+            <div class="book-price">
+              <span>가격</span>
+              <span
+                th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
+              </span>
+            </div>
+            <div class="book-stock">
+              <span>재고</span>
+              <span th:text="${book.stock + '개'}"></span>
+            </div>
           </div>
 
           <input type="hidden" id="stock" th:value="${book.stock}">
 
-          <div class="quantity-group mb-4">
-            <label for="quantity">수량:</label>
-            <input type="number" id="quantity" name="quantity"
-                   class="form-control d-inline-block w-auto" value="1"
-                   min="1" th:max="${book.stock}">
-            <small class="text-muted d-block">재고: <span th:text="${book.stock}"></span>개</small>
+          <div class="quantity-group">
+            <label for="quantity">수량</label>
+            <div class="quantity-control">
+              <input type="number" id="quantity" name="quantity" value="1"
+                     min="1" th:max="${book.stock}">
+              <div class="quantity-arrows">
+                <button type="button" class="quantity-arrow up" onclick="updateQuantity(1)">
+                  <i class="fas fa-chevron-up"></i>
+                </button>
+                <button type="button" class="quantity-arrow down" onclick="updateQuantity(-1)">
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="total-price mb-4">
-            <span>총 결제 가격:</span>
+          <div class="total-price">
+            <span>총 결제 금액</span>
             <span id="totalPrice"
                   th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">
             </span>
-          </div>
-
-          <div class="button-group">
-            <button type="button" onclick="addCart()" class="btn btn-primary"
-                    id="cartBtn">
-              <i class="fas fa-shopping-cart"></i> 장바구니
-            </button>
-            <button type="button" onclick="order()" class="btn btn-success"
-                    id="orderBtn">
-              <i class="fas fa-credit-card"></i> 바로구매
-            </button>
-            <button type="button" class="btn btn-warning" id="shareKakaoBtn">
-              <i class="fas fa-share-alt"></i> 공유
-            </button>
           </div>
         </div>
       </div>
@@ -118,14 +147,14 @@
                href="#review" role="tab">리뷰</a>
           </li>
         </ul>
-        <div class="tab-content mt-3" id="bookTabContent">
+        <div class="tab-content" id="bookTabContent">
           <!-- 책 상세 설명 탭 영역 -->
           <div class="tab-pane fade show active" id="description"
                role="tabpanel">
             <p th:text="${book.description}"></p>
             <!-- 북 트레일러 섹션 -->
             <div class="book-trailer mt-5">
-              <h3 class="mb-4">북 트레일러</h3>
+              <h3>북 트레일러</h3>
               <div class="video-container">
                 <iframe th:src="${book.trailerUrl}" frameborder="0"
                         allow="accelerometer; autoplay;
@@ -138,49 +167,47 @@
           </div>
           <div class="tab-pane fade" id="review" role="tabpanel">
             <!-- 리뷰 통계 탭 영역 -->
-            <div class="review-statistics mb-4"
+            <div class="review-statistics"
                  sec:authorize="isAuthenticated()">
-              <div class="row">
+              <div class="row g-4">
                 <!-- 평점 통계 -->
-                <div class="col-md-6">
-                  <div class="rating-stats p-3 border rounded">
-                    <h5 class="mb-3">구매자 평점</h5>
-                    <div class="d-flex align-items-center mt-5 mb-3">
-                      <div class="average-rating-large me-3">
-                        <div class="text-warning text-center fs-4">
-                          <i class="fas fa-star"></i>
-                        </div>
-                        <span class="display-4">0.0</span>
+                <div class="col-lg-6">
+                  <div class="rating-stats border">
+                    <h5>구매자 평점</h5>
+                    <div class="average-rating-large">
+                      <div class="text-warning text-center fs-4">
+                        <i class="fas fa-star"></i>
                       </div>
-                      <div class="rating-bars">
-                        <!-- 평점 바 (5점부터 1점까지) -->
-                        <div th:each="i : ${#numbers.sequence(5, 1, -1)}" class="rating-bar-item">
-                          <div class="d-flex align-items-center">
-                            <small class="text-muted me-2" th:text="${i + '점'}">5점</small>
-                            <div class="progress flex-grow-1" style="height: 8px;">
-                              <div class="progress-bar bg-warning rating-bar"
-                                   th:data-rating="${i}"
-                                   role="progressbar"
-                                   style="width: 0%"
-                                   aria-valuenow="0"
-                                   aria-valuemin="0"
-                                   aria-valuemax="100">
-                              </div>
+                      <span class="display-4">0.0</span>
+                    </div>
+                    <div class="rating-bars">
+                      <!-- 평점 바 (5점부터 1점까지) -->
+                      <div th:each="i : ${#numbers.sequence(5, 1, -1)}" class="rating-bar-item">
+                        <div class="d-flex align-items-center">
+                          <small class="text-muted me-2" th:text="${i + '점'}">5점</small>
+                          <div class="progress flex-grow-1" style="height: 8px;">
+                            <div class="progress-bar bg-warning rating-bar"
+                                 th:data-rating="${i}"
+                                 role="progressbar"
+                                 style="width: 0%"
+                                 aria-valuenow="0"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
                             </div>
-                            <small class="text-muted ms-2 rating-percentage"
-                                   th:data-rating="${i}">0%</small>
                           </div>
+                          <small class="text-muted ms-2 rating-percentage"
+                                 th:data-rating="${i}">0%</small>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 <!-- 태그 통계 -->
-                <div class="col-md-6">
-                  <div class="tag-stats p-3 border rounded">
-                    <h5 class="mb-3">이 책의 특징</h5>
+                <div class="col-lg-6">
+                  <div class="tag-stats border">
+                    <h5 class="mb-4">이 책의 특징</h5>
                     <div class="tag-bars">
-                      <div class="most-common-tag mb-3">
+                      <div class="most-common-tag">
                         <p class="mb-2">가장 많이 선택된 태그</p>
                         <span class="most-common-tag-value">없음</span>
                       </div>
@@ -210,7 +237,7 @@
               </div>
             </div>
             <!-- 리뷰 버튼들 -->
-            <div class="d-flex justify-content-end align-items-center mb-3 gap-3"
+            <div class="d-flex justify-content-end align-items-center mb-2 gap-3"
               sec:authorize="isAuthenticated()">
               <select id="reviewSort" class="form-select" style="width: auto;">
                 <option value="likes">좋아요순</option>
@@ -413,11 +440,11 @@
     </div>
 
     <div class="row mt-5" th:if="${not #lists.isEmpty(authorBooks)}">
-      <h3 class="mb-3">작가의 다른 책들</h3>
+      <h3>작가의 다른 책들</h3>
       <div class="author-books">
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           <div class="col" th:each="authorBook : ${authorBooks}">
-            <div class="card h-100">
+            <div class="card">
               <a th:href="@{/item(bookId=${authorBook.id})}"
                  class="text-decoration-none">
                 <img th:src="${authorBook.imageUrl}" class="card-img-top"
@@ -434,12 +461,13 @@
         </div>
       </div>
     </div>
+
     <div class="row mt-5" th:if="${not #lists.isEmpty(categoryBooks)}">
-      <h3 class="mb-3">같은 카테고리 책들</h3>
+      <h3>같은 카테고리 책들</h3>
       <div class="category-books">
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           <div class="col" th:each="categoryBook : ${categoryBooks}">
-            <div class="card h-100">
+            <div class="card">
               <a th:href="@{/item(bookId=${categoryBook.id})}"
                  class="text-decoration-none">
                 <img th:src="${categoryBook.imageUrl}" class="card-img-top"
@@ -455,6 +483,28 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="fixed-bottom-buttons">
+    <div class="button-container collapse show">
+      <div class="button-group">
+        <button type="button" onclick="addCart()" class="btn btn-primary"
+                id="cartBtn">
+          <i class="fas fa-shopping-cart"></i> 장바구니
+        </button>
+        <button type="button" onclick="order()" class="btn btn-success"
+                id="orderBtn">
+          <i class="fas fa-credit-card"></i> 바로구매
+        </button>
+      </div>
+    </div>
+    <div class="toggle-button">
+      <button type="button" class="btn-toggle" data-bs-toggle="collapse"
+              data-bs-target=".button-container" aria-expanded="true"
+              aria-controls="button-container">
+        <i class="fas fa-chevron-down"></i>
+      </button>
     </div>
   </div>
 </div>

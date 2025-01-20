@@ -17,9 +17,14 @@
 
 <div layout:fragment="content">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>상품 관리</h2>
-      <div class="d-flex gap-2">
+    <div class="content-header mt-4 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="mb-0">상품 관리</h2>
+      </div>
+      <div class="d-flex gap-3">
         <button type="button" class="btn btn-primary btn-sm"
                 data-bs-toggle="modal"
                 data-bs-target="#addBookModal">
@@ -61,17 +66,23 @@
               </div>
 
               <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <label for="addAuthor" class="form-label">저자 <span
                     class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="addAuthor"
                          name="addAuthor" required>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <label for="addPublisher" class="form-label">출판사 <span
                     class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="addPublisher"
                          name="addPublisher" required>
+                </div>
+                <div class="col-md-2">
+                  <label for="addStock" class="form-label">재고 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="addStock"
+                         name="addStock" required min="0">
                 </div>
               </div>
 
@@ -109,23 +120,19 @@
                 </div>
               </div>
 
-              <div class="row mb-3">
-                <div class="col-md-3">
-                  <label for="addStock" class="form-label">재고 <span
-                    class="text-danger">*</span></label>
-                  <input type="number" class="form-control" id="addStock"
-                         name="addStock" required min="0">
-                </div>
-              </div>
-
               <div class="mb-3">
-                <label for="addBookImage" class="form-label">이미지 <span
-                  class="text-danger">*</span></label>
-                <input type="file" class="form-control" id="addBookImage"
-                       name="addBookImage" accept="image/*">
-                <div id="addImagePreview" class="mt-2"
-                     style="max-width: 200px;">
-                  <!-- 이미지 미리보기 영역 -->
+                <label class="form-label">이미지 <span class="text-danger">*</span></label>
+                <div class="file-input-wrapper">
+                  <label for="addBookImage" class="custom-file-upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    이미지를 선택하거나 여기에 드래그하세요
+                  </label>
+                  <input type="file" class="form-control" id="addBookImage"
+                         name="addBookImage" accept="image/*">
+                </div>
+                <div class="image-preview-wrapper">
+                  <img id="addImagePreview" src="" alt="이미지 미리보기"
+                       style="display: none;">
                 </div>
               </div>
 
@@ -177,17 +184,23 @@
               </div>
 
               <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <label for="editAuthor" class="form-label">저자 <span
                     class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="editAuthor"
                          name="editAuthor" required>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <label for="editPublisher" class="form-label">출판사 <span
                     class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="editPublisher"
                          name="editPublisher" required>
+                </div>
+                <div class="col-md-2">
+                  <label for="editStock" class="form-label">재고 <span
+                    class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="editStock"
+                         name="editStock" required min="0">
                 </div>
               </div>
 
@@ -225,23 +238,20 @@
                   </select>
                 </div>
               </div>
-              <div class="row mb-3">
-                <div class="col-md-3">
-                  <label for="editStock" class="form-label">재고 <span
-                    class="text-danger">*</span></label>
-                  <input type="number" class="form-control" id="editStock"
-                         name="editStock" required min="0">
-                </div>
-              </div>
 
               <div class="mb-3">
-                <label for="editBookImage" class="form-label">이미지 <span
-                  class="text-danger">*</span></label>
-                <input type="file" class="form-control" id="editBookImage"
-                       name="editBookImage" accept="image/*">
-                <div id="editImagePreview" class="mt-2"
-                     style="max-width: 200px;">
-                  <!-- 이미지 미리보기 영역 -->
+                <label class="form-label">이미지</label>
+                <div class="file-input-wrapper">
+                  <label for="editBookImage" class="custom-file-upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    이미지를 선택하거나 여기에 드래그하세요
+                  </label>
+                  <input type="file" class="form-control" id="editBookImage"
+                         name="editBookImage" accept="image/*">
+                </div>
+                <div class="image-preview-wrapper">
+                  <img id="editImagePreview" src="" alt="이미지 미리보기"
+                       style="display: none;">
                 </div>
               </div>
 
@@ -283,7 +293,7 @@
           <option value="createdAt,asc">오래된 등록순</option>
         </select>
         <select id="pageSize" class="form-select form-select-sm"
-                style="width: auto;">
+                style="width: 130px;">
           <option value="10">10개씩 보기</option>
           <option value="20">20개씩 보기</option>
           <option value="50">50개씩 보기</option>
@@ -333,9 +343,7 @@
           <td class="small"
               th:text="${#numbers.formatInteger(book.price, 0, 'COMMA')}"></td>
           <td>
-            <span th:class="${book.bookStatus.name() == 'SELL' ?
-                  'badge bg-success' : 'badge bg-danger'}"
-                  th:text="${book.bookStatus.name() == 'SELL' ? '판매중' : '품절'}"
+            <span th:text="${book.bookStatus.name() == 'SELL' ? '판매중' : '품절'}"
                   style="font-size: 0.75rem;">
             </span>
           </td>

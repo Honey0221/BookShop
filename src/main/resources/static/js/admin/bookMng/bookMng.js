@@ -14,7 +14,8 @@ import {
     handleImagePreview,
     handleNumericInput,
     saveBook,
-    resetForm
+    resetForm,
+    initFileInput
 } from './bookForm.js';
 
 export let searchParams = {
@@ -40,7 +41,7 @@ $(document).ready(function() {
     $('#addBookImage, #editBookImage').change(handleImagePreview);
 
     // 숫자 입력 필드 실시간 검사
-    $('#addPrice, #addStock, #editPrice, #editStock').on('input', handleNumericInput);
+    $('#addPrice, #editPrice').on('input', handleNumericInput);
 
     // 버튼 클릭 이벤트
     $('tbody').on('click', '.edit-btn', function() {
@@ -67,5 +68,7 @@ $(document).ready(function() {
       resetForm('#editBookForm');
     });
 
+    initFileInput('addBookImage', 'addImagePreview');
+    initFileInput('editBookImage', 'editImagePreview');
     loadBooks();
 });

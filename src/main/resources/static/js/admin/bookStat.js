@@ -5,6 +5,31 @@ const topViewedBooks = {};
 const topViewedCategories = {};
 
 $(document).ready(function() {
+  const commonChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        font: {
+          size: 18,
+          weight: 'bold'
+        },
+        padding: {
+          top: 10,
+          bottom: 20
+        }
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true
+        }
+      }
+    }
+  };
+
   // 모든 차트를 로드하는 함수
   function loadAllCharts() {
     loadStatusChart();
@@ -14,6 +39,7 @@ $(document).ready(function() {
     loadTopViewedBooksChart();
     loadTopViewedCategoriesChart();
   }
+
   // 도서 상태 분포
   function loadStatusChart() {
     $.get('/admin/stats/status', function(data) {
@@ -27,16 +53,12 @@ $(document).ready(function() {
           }]
         },
         options: {
-          responsive: true,
+          ...commonChartOptions,
           plugins: {
+            ...commonChartOptions.plugins,
             title: {
-              display: true,
-              text: '도서 상태 분포',
-              font: {
-                size: 24,
-                weight: 'bold'
-              },
-              padding: 20
+              ...commonChartOptions.title,
+              text: '도서 상태 분포'
             }
           }
         }
@@ -63,16 +85,12 @@ $(document).ready(function() {
           }]
         },
         options: {
-          responsive: true,
+          ...commonChartOptions,
           plugins: {
+            ...commonChartOptions.plugins,
             title: {
-              display: true,
-              text: '카테고리별 도서 분포',
-              font: {
-                size: 24,
-                weight: 'bold'
-              },
-              padding: 20
+              ...commonChartOptions.title,
+              text: '카테고리별 도서 분포'
             }
           }
         }
@@ -94,23 +112,12 @@ $(document).ready(function() {
           }]
         },
         options: {
-          responsive: true,
+          ...commonChartOptions,
           plugins: {
+            ...commonChartOptions.plugins,
             title: {
-              display: true,
-              text: '가격대별 도서 분포',
-              font: {
-                size: 24,
-                weight: 'bold'
-              },
-              padding: 20
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `${context.label}: ${context.formattedValue}권`;
-                }
-              }
+              ...commonChartOptions.title,
+              text: '가격대별 도서 분포'
             }
           }
         }
@@ -133,21 +140,17 @@ $(document).ready(function() {
           }]
         },
         options: {
-          responsive: true,
+          ...commonChartOptions,
           plugins: {
+            ...commonChartOptions.plugins,
             title: {
-              display: true,
-              text: '재고 부족 도서 Top 5',
-              font: {
-                size: 24,
-                weight: 'bold'
-              },
-              padding: 20
+              ...commonChartOptions.title,
+              text: '재고 부족 도서 Top 5'
             },
             tooltip: {
               callbacks: {
                 label: function(context) {
-                  return `${data.labels[context.dataIndex]}: ${context.formattedValue}권`;
+                  return `${context.formattedValue}권`;
                 }
               }
             }
@@ -173,21 +176,17 @@ $(document).ready(function() {
         },
         options: {
           indexAxis: 'y',
-          responsive: true,
+          ...commonChartOptions,
           plugins: {
+            ...commonChartOptions.plugins,
             title: {
-              display: true,
-              text: '인기 도서 Top 3',
-              font: {
-                size: 24,
-                weight: 'bold'
-              },
-              padding: 20
+              ...commonChartOptions.title,
+              text: '인기 도서 Top 3'
             },
             tooltip: {
               callbacks: {
                 label: function(context) {
-                  return `${data.labels[context.dataIndex]}: ${context.formattedValue}회`;
+                  return `${context.formattedValue}회`;
                 }
               }
             }
@@ -212,21 +211,17 @@ $(document).ready(function() {
         },
         options: {
           indexAxis: 'y',
-          responsive: true,
+          ...commonChartOptions,
           plugins: {
+            ...commonChartOptions.plugins,
             title: {
-              display: true,
-              text: '인기 카테고리 Top 3',
-              font: {
-                size: 24,
-                weight: 'bold'
-              },
-              padding: 20
+              ...commonChartOptions.title,
+              text: '인기 카테고리 Top 3'
             },
             tooltip: {
                callbacks: {
                    label: function(context) {
-                       return `${context.label}: ${context.formattedValue}회`;
+                       return `${context.formattedValue}회`;
                    }
                }
             }
@@ -239,10 +234,13 @@ $(document).ready(function() {
   loadAllCharts();
 
   $('#refreshStats').click(function() {
-    const icon = $(this).find('i');
+    const button = $(this);
+    const icon = button.find('i');
+
+    button.prop('disabled', true);
     icon.addClass('fa-spin');
 
-    $('.chart-container canvas').each(function() {
+    $('.stat-card canvas').each(function() {
       const chartInstance = Chart.getChart(this);
       if (chartInstance) {
         chartInstance.destroy();
@@ -252,6 +250,7 @@ $(document).ready(function() {
     loadAllCharts();
 
     setTimeout(() => {
+      button.prop('disabled', false);
       icon.removeClass('fa-spin');
     }, 1000);
   });

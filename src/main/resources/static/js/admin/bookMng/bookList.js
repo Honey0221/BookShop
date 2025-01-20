@@ -22,33 +22,31 @@ function updateTable(books) {
     tbody.empty();
 
     books.forEach(function(book) {
-      const tr = `
+        const tr = `
             <tr>
-              <td class="small">${book.id}</td>
-              <td class="text-start">${book.title}</td>
-              <td class="small">${book.author}</td>
-              <td class="small">${book.publisher}</td>
-              <td class="small">${book.stock}</td>
-              <td class="small">${book.price.toLocaleString()}</td>
-              <td>
-                  <span class="badge ${book.bookStatus === 'SELL' ? 'bg-success' : 'bg-danger'}">
-                      ${book.bookStatus === 'SELL' ? '판매중' : '품절'}
-                  </span>
-              </td>
-              <td class="small">${formatDate(book.createdAt)}</td>
-              <td>
-                  <div class="btn-group btn-group-sm">
-                      <button type="button" class="btn btn-sm btn-primary edit-btn" data-id="${book.id}">
-                          <i class="fas fa-edit"></i>
-                      </button>
-                      <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${book.id}">
-                          <i class="fas fa-trash"></i>
-                      </button>
-                  </div>
-              </td>
-          </tr>
-      `;
-      tbody.append(tr);
+                <td class="small">${book.id}</td>
+                <td class="text-start">${book.title}</td>
+                <td class="small">${book.author}</td>
+                <td class="small">${book.publisher}</td>
+                <td class="small">${book.stock}</td>
+                <td class="small">${book.price.toLocaleString()}</td>
+                <td>
+                    <span>${book.bookStatus === 'SELL' ? '판매중' : '품절'}</span>
+                </td>
+                <td class="small">${formatDate(book.createdAt)}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-id="${book.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${book.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.append(tr);
     });
 
     $('.edit-btn').click(function() {
@@ -137,10 +135,18 @@ export function handlePageSizeChange() {
 }
 
 export function handleEdit(bookId) {
-  // 도서 정보를 먼저 가져옴
-  $.get(`/admin/items/${bookId}`, function(book) {
-    // 카테고리 로드
-    loadCategories('edit').then(() => {
+  // 모달 표시 전에 카테고리와 도서 정보를 모두 로드
+  Promise.all([
+      // 카테고리 로드
+      loadCategories('edit'),
+      // 도서 정보 로드
+      new Promise((resolve, reject) => {
+          $.get(`/admin/items/${bookId}`)
+              .done(resolve)
+              .fail(reject);
+      })
+  ])
+  .then(([_, book]) => {
       // 폼 필드 채우기
       $('#editBookId').val(bookId);
       $('#editTitle').val(book.title);
@@ -148,26 +154,31 @@ export function handleEdit(bookId) {
       $('#editPublisher').val(book.publisher);
       $('#editPrice').val(book.price);
       $('#editStock').val(book.stock);
+      
+      // 카테고리 설정
       $('#editMainCategory').val(book.mainCategory);
       $('#editMidCategory').val(book.midCategory);
       $('#editSubCategory').val(book.subCategory);
       $('#editDetailCategory').val(book.detailCategory);
+      
       $('#editDescription').val(book.description);
 
       // 이미지 미리보기 업데이트
       if (book.imageUrl) {
-        $('#editImagePreview').html(
-          `<img src="${book.imageUrl}" class="img-fluid" alt="미리보기">`
-        );
+          $('#editImagePreview').attr('src', book.imageUrl).show();
+          // 파일 라벨 텍스트 업데이트
+          $('#editBookModal .custom-file-upload').html(
+          '<i class="fas fa-check"></i> 기존 이미지');
       } else {
-        $('#editImagePreview').empty();
+          $('#editImagePreview').hide();
+          $('#editBookModal .custom-file-upload').html(
+          '<i class="fas fa-cloud-upload-alt"></i> 이미지를 선택하거나 여기에 드래그하세요');
       }
 
-      $('#editBookModal').modal('show');
-    }).catch(error => {
-      console.error('카테고리 로드 실패:', error);
-      showAlert('카테고리 로드에 실패했습니다.', 'error');
-    });
+    $('#editBookModal').modal('show');
+  }).catch(error => {
+    console.error('데이터 로드 실패:', error);
+    showAlert('데이터 로드에 실패했습니다.', 'error');
   });
 }
 

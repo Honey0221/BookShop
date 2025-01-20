@@ -13,23 +13,32 @@
 
 <div layout:fragment="content">
   <div class="container">
-    <h2 class="mb-4">리뷰 클린봇</h2>
+    <div class="content-header mt-4 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="mb-0">리뷰 클린봇</h2>
+      </div>
+    </div>
+
     <!-- 분석 상태 표시 -->
     <div class="alert alert-info" role="alert">
-      <p style="margin-bottom: 0;">문제가 있는 리뷰 :
-        <span id="reviewCount" th:text="${reviews.size()}">0</span>
-        개</p>
+      <p class="mb-0">문제가 있는 리뷰 :
+        <span id="reviewCount" th:text="${reviews.size()}">0</span>개</p>
     </div>
 
     <!-- 분석 버튼 -->
     <div class="mb-4">
-      <button id="analyzeAllBtn" class="btn btn-primary">1번 책 리뷰 분석하기</button>
+      <button id="analyzeAllBtn" class="btn btn-primary">
+        <i class="fas fa-robot me-2"></i>리뷰 분석하기
+      </button>
     </div>
 
     <!-- 리뷰 목록 테이블 -->
     <div class="table-responsive">
       <table class="table">
-        <thead>
+        <thead class="table-light">
           <tr>
             <th>ID</th>
             <th>도서명</th>
@@ -53,8 +62,8 @@
             </td>
             <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd')}"></td>
             <td>
-              <span th:if="${review.blocked}" class="badge bg-danger">악플로 자동 차단</span>
-              <span th:if="${review.flagged && !review.blocked}" class="badge bg-warning">불쾌한 내용 포함</span>
+              <span th:if="${review.blocked}">자동 차단</span>
+              <span th:if="${review.flagged && !review.blocked}">검토 필요</span>
             </td>
             <td>
               <button class="btn btn-sm btn-danger delete-btn"
@@ -69,58 +78,56 @@
     </div>
 
     <!-- 페이지네이션 -->
-    <div class="d-flex justify-content-center" th:if="${pagination != null}">
-      <nav aria-label="Page navigation">
-        <ul class="pagination">
-          <!-- 처음 페이지로 -->
-          <li class="page-item"
-              th:classappend="${pagination.first} ? 'disabled'">
-            <a class="page-link" th:href="@{/admin/reviewCleanBot(page=0)}">
-              <span>&laquo;</span>
-            </a>
-          </li>
+    <nav th:if="${pagination != null}" aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <!-- 처음 페이지로 -->
+        <li class="page-item"
+            th:classappend="${pagination.first} ? 'disabled'">
+          <a class="page-link" th:href="@{/admin/reviewCleanBot(page=0)}">
+            <span>&laquo;</span>
+          </a>
+        </li>
 
-          <!-- 이전 페이지 -->
-          <li class="page-item"
-              th:classappend="${pagination.first} ? 'disabled'">
-            <a class="page-link"
-               th:href="@{/admin/reviewCleanBot(page=${pagination.number - 1})}">
-              <span>&lt;</span>
-            </a>
-          </li>
+        <!-- 이전 페이지 -->
+        <li class="page-item"
+            th:classappend="${pagination.first} ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/admin/reviewCleanBot(page=${pagination.number - 1})}">
+            <span>&lt;</span>
+          </a>
+        </li>
 
-          <!-- 페이지 번호 (현재 페이지 앞뒤로 2개씩만 표시) -->
-          <th:block th:with="start=${pagination.number - 2 < 0 ? 0 : pagination.number - 2}">
-            <th:block th:with="end=${pagination.number + 2 >= pagination.totalPages ? pagination.totalPages - 1 : pagination.number + 2}">
-              <li class="page-item"
-                th:each="pageNum : ${#numbers.sequence(start, end)}"
-                th:classappend="${pageNum == pagination.number} ? 'active'">
-                <a class="page-link"
-                  th:href="@{/admin/reviewCleanBot(page=${pageNum})}"
-                  th:text="${pageNum + 1}"></a>
-              </li>
-            </th:block>
+        <!-- 페이지 번호 (현재 페이지 앞뒤로 2개씩만 표시) -->
+        <th:block th:with="start=${pagination.number - 2 < 0 ? 0 : pagination.number - 2}">
+          <th:block th:with="end=${pagination.number + 2 >= pagination.totalPages ? pagination.totalPages - 1 : pagination.number + 2}">
+            <li class="page-item"
+              th:each="pageNum : ${#numbers.sequence(start, end)}"
+              th:classappend="${pageNum == pagination.number} ? 'active'">
+              <a class="page-link"
+                th:href="@{/admin/reviewCleanBot(page=${pageNum})}"
+                th:text="${pageNum + 1}"></a>
+            </li>
           </th:block>
+        </th:block>
 
-          <!-- 다음 페이지 -->
-          <li class="page-item"
-              th:classappend="${pagination.last} ? 'disabled'">
-            <a class="page-link"
-               th:href="@{/admin/reviewCleanBot(page=${pagination.number + 1})}">
-              <span>&gt;</span>
-            </a>
-          </li>
+        <!-- 다음 페이지 -->
+        <li class="page-item"
+            th:classappend="${pagination.last} ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/admin/reviewCleanBot(page=${pagination.number + 1})}">
+            <span>&gt;</span>
+          </a>
+        </li>
 
-          <!-- 마지막 페이지로 -->
-          <li class="page-item"
-              th:classappend="${pagination.last} ? 'disabled'">
-            <a class="page-link"
-               th:href="@{/admin/reviewCleanBot(page=${pagination.totalPages - 1})}">
-              <span>&raquo;</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
+        <!-- 마지막 페이지로 -->
+        <li class="page-item"
+            th:classappend="${pagination.last} ? 'disabled'">
+          <a class="page-link"
+             th:href="@{/admin/reviewCleanBot(page=${pagination.totalPages - 1})}">
+            <span>&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
   </div>
 </div>

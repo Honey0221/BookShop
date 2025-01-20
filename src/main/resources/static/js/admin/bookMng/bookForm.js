@@ -2,6 +2,42 @@ import { showAlert } from './utils.js';
 import { loadBooks } from './bookList.js';
 import { loadCategories } from './bookCategory.js';
 
+export function initFileInput(inputId, previewId) {
+  const $input = $(`#${inputId}`);
+  const $preview = $(`#${previewId}`);
+  const $label = $input.prev();
+
+  $input.on('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        $preview.attr('src', e.target.result).show();
+      }
+      reader.readAsDataURL(file);
+      $label.html(`<i class="fas fa-check"></i> ${file.name}`);
+    }
+  });
+
+  // 드래그 앤 드롭 지원
+  $label.on({
+    'dragover': function(e) {
+      e.preventDefault();
+      $(this).addClass('dragover');
+    },
+    'dragleave': function(e) {
+      e.preventDefault();
+      $(this).removeClass('dragover');
+    },
+    'drop': function(e) {
+      e.preventDefault();
+      $(this).removeClass('dragover');
+      $input[0].files = e.originalEvent.dataTransfer.files;
+      $input.trigger('change');
+    },
+  });
+}
+
 export function createBookFormDto(formId) {
   const prefix = formId === '#editBookForm' ? 'edit' : 'add';
   return {
@@ -72,6 +108,7 @@ function validateBookForm(formId) {
         { id: `${prefix}Title`, name: '제목' },
         { id: `${prefix}Author`, name: '저자' },
         { id: `${prefix}Publisher`, name: '출판사' },
+        { id: `${prefix}Stock`, name: '재고' },
         { id: `${prefix}MainCategory`, name: '대분류' },
         { id: `${prefix}MidCategory`, name: '중분류' },
         { id: `${prefix}SubCategory`, name: '소분류' }
@@ -83,7 +120,7 @@ function validateBookForm(formId) {
         }
     }
 
-    if (!validateNumericField('Price', '가격', formId) || !validateNumericField('Stock', '재고', formId)) {
+    if (!validateNumericField('Price', '가격', formId)) {
         return false;
     }
 
@@ -109,11 +146,18 @@ function validateField(field) {
 function validateNumericField(fieldId, fieldName, formId = '#addBookForm') {
     const prefix = formId === '#editBookForm' ? 'edit' : 'add';
     const value = parseInt($(`#${prefix}${fieldId}`).val());
-    if (isNaN(value) || value < 0) {
+
+    // 숫자가 아닌 문자 제거
+    const numericValue = value.replace(/[^\d]/g, '');
+
+    if (!numericValue || parseInt(numericValue) < 0) {
         showAlert('입력 오류', 'warning', `${fieldName}은(는) 0 이상의 숫자로 입력해주세요.`);
         $(`#${prefix}${fieldId}`).focus();
         return false;
     }
+
+    // 숫자로 변환된 값을 다시 입력 필드에 설정
+    $(`#${prefix}${fieldId}`).val(numericValue);
     return true;
 }
 
@@ -146,8 +190,10 @@ export function handleImagePreview() {
 
 export function handleNumericInput() {
     const value = $(this).val();
-    if (value && !/^\d*$/.test(value)) {
-        $(this).val(value.replace(/[^\d]/g, ''));
+    if (value) {
+        // 숫자가 아닌 문자 제거하고 콤마 추가
+        const numericValue = value.replace(/[^\d]/g, '');
+        $(this).val(numericValue);
     }
 }
 

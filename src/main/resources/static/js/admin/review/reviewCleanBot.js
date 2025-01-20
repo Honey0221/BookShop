@@ -43,7 +43,7 @@ function analyzeReview() {
         complete: function() {
           // 버튼 상태 복원
           $btn.prop('disabled', false);
-          $btn.html('1번 책 리뷰 분석하기');
+          $btn.html('리뷰 분석하기');
         }
       });
     }
